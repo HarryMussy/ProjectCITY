@@ -106,7 +106,6 @@ namespace CitySkylines0._5alphabeta
                 }
                 // Draw house image (assumes PNGs have transparency)
                 g.DrawImage(houseImages[imgIdx], house.coords.X, house.coords.Y, 60 * zoom, 60 * zoom);
-                Console.WriteLine($"Drawing house at {house.coords} with image index {imgIdx}");
             }
         }
 
