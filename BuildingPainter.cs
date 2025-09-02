@@ -81,7 +81,14 @@ namespace CitySkylines0._5alphabeta
                 }
                 else
                 {
-                    g.FillRectangle(moneyCostBrushSpace, mousePos.X - 30, mousePos.Y - 30, 60, 60);
+                    foreach (Node node in grid.nodes)
+                    {
+                        int isTrue = FindNearbyBuildableNodes(sender, mousePos, node);
+                        if (isTrue == 0 || isTrue == 1)
+                        {
+                            g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, 20, 20);
+                        }
+                    }
                     g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
                 }
             }
@@ -104,7 +111,8 @@ namespace CitySkylines0._5alphabeta
 
         private void LoadHouseImages()
         {
-            string houseFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gameArt", "Houses");
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses");
             houseImages = new List<Image>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
@@ -139,7 +147,7 @@ namespace CitySkylines0._5alphabeta
                         }
                     }
                     House newhouse = new House(1, new Size(30, 30), placement, "house");
-                    audioManager.PlayPlaceSound(@"audio\Effects\place.wav");
+                    audioManager.PlayPlaceSound();
                     grid.buildings.Add(newhouse);
                     grid.cash -= newhouse.cost;
 

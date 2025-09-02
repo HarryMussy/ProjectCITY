@@ -229,7 +229,7 @@
                     {
                         string roadname = nameProvider.GetRandomName();
                         Road newroad = new Road(4, startPoint.Value, endPoint, roadname);
-                        audioManager.PlayPlaceSound(@"audio\Effects\place.wav");
+                        audioManager.PlayPlaceSound();
                         newroad.intersections.Add(new IntersectingNode(startPoint.Value));
                         newroad.intersections.Add(new IntersectingNode(endPoint));// Creates 2 new points on the dge for every intersection#
                         grid.cash = grid.cash - Grid.RoadCashCost(startPoint.Value, endPoint);

@@ -53,8 +53,10 @@ public class AudioManager : IDisposable
 
 
 
-    public void PlayPlaceSound(string filePath)
+    public void PlayPlaceSound()
     {
+        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+        string filePath = Path.Combine(projectRoot, @$"gameAssets\audio\Effects\place.wav");
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Effect file not found", filePath);
 

@@ -122,7 +122,9 @@ namespace CitySkylines0._5alphabeta
         {
             Random rnd = new Random();
             int i = rnd.Next(1, 4);
-            audioManager.PlayTrack(@$"audio\Tracks\track{i}.wav", false);
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string filepath = Path.Combine(projectRoot, @$"gameAssets\audio\Tracks\track{i}.wav");
+            audioManager.PlayTrack(filepath, false);
         }
 
         public int GetFps()
@@ -274,12 +276,6 @@ namespace CitySkylines0._5alphabeta
             {
                 dx = Convert.ToInt32((currentMousePos.X - mouseXold) / zoomLevel);
                 dy = Convert.ToInt32((currentMousePos.Y - mouseYold) / zoomLevel);
-
-                foreach (Node node in grid.nodes)
-                {
-                    node.coords.X += dx;
-                    node.coords.Y += dy;
-                }
 
                 foreach (Edge edge in grid.edges)
                 {

@@ -32,7 +32,9 @@ public class Background
 
     private void LoadImages()
     {
-        string grassFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gameArt", "Grass", "GrassVar");
+        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+
+        string grassFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", "GrassVar");
         grassImages = new List<Image>();
 
         foreach (string path in Directory.GetFiles(grassFolder, "*.png"))
@@ -47,7 +49,7 @@ public class Background
             grassImages.Add(transparentBitmap);
         }
 
-        string waterFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gameArt", "Water");
+        string waterFolder = Path.Combine(projectRoot,"gameAssets", "gameArt", "Water");
         foreach (string path in Directory.GetFiles(waterFolder, "*.gif"))
         {
             string fileName = Path.GetFileName(path);
@@ -57,7 +59,7 @@ public class Background
         }
 
         // Load grass edge images
-        string edgeFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gameArt", "Grass", "GrassEdges");
+        string edgeFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", "GrassEdges");
         foreach (string path in Directory.GetFiles(edgeFolder, "*.png"))
         {
             string fileName = Path.GetFileNameWithoutExtension(path);
