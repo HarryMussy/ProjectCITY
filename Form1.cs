@@ -46,6 +46,7 @@ namespace CitySkylines0._5alphabeta
         Point a;
         public NameProvider nameProvider;
         InteractingObjectManager buttonManager;
+        public NecessitiesManager necessitiesManager;
         private readonly EdgePainter edgePainter;
         private readonly UIManager uiManager;
         private readonly BuildingPainter buildingPainter;
@@ -79,6 +80,7 @@ namespace CitySkylines0._5alphabeta
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             this.ClientSizeChanged += Form1_Resize;
+            necessitiesManager = new NecessitiesManager();
             backgroundMap = new Background(60, 60, this);
             grid = new Grid(60, 60, backgroundMap);
             smokeParticleManager = new SmokeParticleManager(grid);
@@ -160,7 +162,14 @@ namespace CitySkylines0._5alphabeta
             this.Invalidate();
             foreach (Building b in grid.buildings)
             {
-                grid.cash += b.tax;
+                bool necessitiesFilled = true;
+                foreach (Necessity n in b.necessities)
+                {
+                    if (!n.fulFilled) { necessitiesFilled = false; }
+                }
+                if (necessitiesFilled) { grid.cash += b.tax; }
+
+                necessitiesManager.UpdateGlobalNecessities(b);
             }
             foreach (Node n in grid.nodes)
             {

@@ -55,12 +55,16 @@ public class UIManager
         string doing = form.allOperations[form.currentOperation];
 
         int fps = form.fps;
-        form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, blackBrush, new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 10));
+        form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, blackBrush, new Point(20, 20));
         form.AddStrokeToText(sender, g, "Currently doing: " + doing, strokeWidth, font, blackBrush, new Point((int)zoomedBottomLeftX + 300, (int)zoomedBottomLeftY + 10));
         form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, blackBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
         form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, blackBrush, new Point(20,0));
+        form.AddStrokeToText(sender, g, "Energy Demand: " + form.necessitiesManager.globalElectricityStatus, strokeWidth, font, blackBrush, new Point(20, 40));
+        form.AddStrokeToText(sender, g, "Water Demand: " + form.necessitiesManager.globalWaterStatus, strokeWidth, font, blackBrush, new Point(20, 60));
 
-        g.DrawString(totalcash, font, whiteBrush, zoomedBottomLeftX + 10, zoomedBottomLeftY + 10);
+        g.DrawString("Energy Demand: " + form.necessitiesManager.globalElectricityStatus, font, whiteBrush, 20, 40);
+        g.DrawString("Water Demand: " + form.necessitiesManager.globalWaterStatus, font, whiteBrush, 20, 60);
+        g.DrawString(totalcash, font, whiteBrush, 20,20);
         g.DrawString("Currently doing: " + doing, font, whiteBrush, zoomedBottomLeftX + 300, zoomedBottomLeftY + 10);
         g.DrawString("-------------VOLUME-------------", font, whiteBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
         g.DrawString("FPS: " + Convert.ToString(fps), font, whiteBrush, 20, 0);

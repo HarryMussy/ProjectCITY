@@ -146,7 +146,7 @@ namespace CitySkylines0._5alphabeta
                             placement = n.coords;
                         }
                     }
-                    House newhouse = new House(1, new Size(30, 30), placement, "house");
+                    House newhouse = new House(new Size(30, 30), placement, "house");
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newhouse);
                     grid.cash -= newhouse.cost;

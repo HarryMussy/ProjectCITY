@@ -4,7 +4,7 @@
 
     public LoadingForm()
     {
-        this.StartPosition = FormStartPosition.CenterScreen;
+        /*this.StartPosition = FormStartPosition.CenterScreen;
         this.FormBorderStyle = FormBorderStyle.None;
         this.ShowInTaskbar = false;
         this.ClientSize = new Size(960, 540);
@@ -16,6 +16,6 @@
         string gifPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"gameArt\loadingScreen.gif");
         pictureBoxLoading.Image = Image.FromFile(gifPath);
 
-        this.Controls.Add(pictureBoxLoading);
+        this.Controls.Add(pictureBoxLoading);*/
     }
 }
