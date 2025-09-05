@@ -160,6 +160,9 @@ namespace CitySkylines0._5alphabeta
             smokeParticleManager.Update();
             fps = GetFps();
             this.Invalidate();
+
+            necessitiesManager.globalElectricityDemand = 0;
+            necessitiesManager.globalWaterDemand = 0;
             foreach (Building b in grid.buildings)
             {
                 bool necessitiesFilled = true;

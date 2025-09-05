@@ -31,23 +31,26 @@ namespace CitySkylines0._5alphabeta
 
         public void UpdateGlobalNecessities(Building b)
         {
-            b.necessities.ForEach(n =>
+            foreach (Necessity necessity in b.necessities)
             {
-                if (n.name == "Electricity")
+                if(necessity.name is "Energy")
                 {
-                    globalElectricityDemand += (int)n.demand;
+                    globalElectricityDemand += (int)necessity.demand;
                 }
-                else if (n.name == "Water")
+                else if(necessity.name is "Water")
                 {
-                    globalWaterDemand += (int)n.demand;
+                    globalWaterDemand += (int)necessity.demand;
                 }
-            });
+            }
+
+            globalElectricityStatus = $"{globalElectricitySupply} / {globalElectricityDemand}MW";
+            globalWaterStatus = $"{globalWaterSupply} / {globalWaterDemand}L";
         }
     }
 
     public class Necessity
     {
-        public string name { get; private set; }
+        public string name { get; set; }
         public float value { get; private set; }
         public float demand { get; private set; }
         public float decayRate { get; private set; } //the time it takes (in seconds) for the building to be abandoned
@@ -63,7 +66,7 @@ namespace CitySkylines0._5alphabeta
 
     public class Electricity : Necessity
     {
-        public Electricity(float demandIN) : base("Electricity", 0, 120, demandIN) { }
+        public Electricity(float demandIN) : base("Energy", 0, 120, demandIN) { }
     }
 
     public class Water : Necessity
