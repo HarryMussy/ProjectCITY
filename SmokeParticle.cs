@@ -131,7 +131,7 @@ namespace CitySkylines0._5alphabeta
         private DateTime lastChecked;
 
         private readonly HashSet<Edge> edgesWithSmoke = new();
-        private readonly HashSet<House> buildingsWithSmoke = new();
+        private readonly HashSet<Building> buildingsWithSmoke = new();
 
         // Store loaded smoke GIFs
         private List<Image> smokeGifs = new();
@@ -189,7 +189,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        public void SpawnSmokeOnNewEdgesAndBuildings(List<Edge> newEdges, List<House> newBuildings)
+        public void SpawnSmokeOnNewEdgesAndBuildings(List<Edge> newEdges, List<Building> newBuildings)
         {
             foreach (var edge in newEdges)
             {
@@ -230,7 +230,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        private void SpawnParticlesOnBuilding(House building)
+        private void SpawnParticlesOnBuilding(Building building)
         {
             var pos = new PointF(building.coords.X + building.size.Width / 2f, building.coords.Y + building.size.Height + 10);
 

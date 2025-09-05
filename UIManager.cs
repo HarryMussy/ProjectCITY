@@ -14,7 +14,7 @@ public class UIManager
     private Form1 form;
     private EventHandler roadButtonClickHandler;
     private EventHandler toggleNamesClickHandler;
-    private EventHandler houseBuildingClickHandler;
+    private EventHandler buildingButtonClickHandler;
     private EventHandler viewBuildingSpaceClickHandler;
     private EventHandler toggleGridViewClickHandler;
     private EventHandler volSlider;
@@ -30,7 +30,7 @@ public class UIManager
         this.form = form;
         roadButtonClickHandler = allEventHandlers[0];
         toggleNamesClickHandler = allEventHandlers[1];
-        houseBuildingClickHandler = allEventHandlers[2];
+        buildingButtonClickHandler = allEventHandlers[2];
         viewBuildingSpaceClickHandler = allEventHandlers[3];
         toggleGridViewClickHandler = allEventHandlers[4];
         volSlider = allEventHandlers[5];
@@ -73,7 +73,14 @@ public class UIManager
         {
             interactingObjectManager.CreateButton("ROAD", new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 10).Click += roadButtonClickHandler;
             interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
-            interactingObjectManager.CreateButton("HOUSE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6).Click += houseBuildingClickHandler;
+            interactingObjectManager.CreateButton("HOUSE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
+            interactingObjectManager.CreateButton("POWER PLANT", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
+            interactingObjectManager.CreateButton("HOUSE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
+            interactingObjectManager.CreateButton("WATER PUMP", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6)
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
             interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;

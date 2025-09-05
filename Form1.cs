@@ -23,6 +23,7 @@ namespace CitySkylines0._5alphabeta
 {
     public partial class Form1 : Form
     {
+        public string buildingType = "hello";
         public readonly Grid grid;
         private float zoomLevel = 1.0f;
         private Point currentMousePos;
@@ -34,7 +35,7 @@ namespace CitySkylines0._5alphabeta
         public Point screencentre;
         public bool movingtiles = false;
         public bool mousedown = false;
-        public string[] allOperations = new string[] { "None", "Building Roads", "Building Houses" };
+        public string[] allOperations = { "None", "Building Roads", "Building" };
         public int currentOperation = 0;
         public int mouseXold = 0;
         public int mouseYold = 0;
@@ -80,9 +81,9 @@ namespace CitySkylines0._5alphabeta
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             this.ClientSizeChanged += Form1_Resize;
-            necessitiesManager = new NecessitiesManager();
             backgroundMap = new Background(60, 60, this);
             grid = new Grid(60, 60, backgroundMap);
+            necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager(grid);
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, backgroundMap, g);
@@ -92,7 +93,7 @@ namespace CitySkylines0._5alphabeta
             
             allEventHandlers.Add(Form1_RoadButton);
             allEventHandlers.Add(Form1_ToggleNames);
-            allEventHandlers.Add(Form1_HouseBuilder);
+            allEventHandlers.Add((sender, e) => Form1_BuildingBuilder(sender, e, buildingType));
             allEventHandlers.Add(Form1_ViewBuildingSpaces);
             allEventHandlers.Add(Form1_toggleGrid);
             allEventHandlers.Add(Form1_ChangeVolume);
@@ -161,24 +162,28 @@ namespace CitySkylines0._5alphabeta
             fps = GetFps();
             this.Invalidate();
 
+            // Reset both demand and supply at the start of each tick
             necessitiesManager.globalElectricityDemand = 0;
             necessitiesManager.globalWaterDemand = 0;
+            necessitiesManager.globalElectricitySupply = 0;
+            necessitiesManager.globalWaterSupply = 0;
+
             foreach (Building b in grid.buildings)
             {
+                necessitiesManager.UpdateGlobalNecessities();
                 bool necessitiesFilled = true;
                 foreach (Necessity n in b.necessities)
                 {
-                    if (!n.fulFilled) { necessitiesFilled = false; }
+                    if (!n.fulFilled) { necessitiesFilled = false; break; }
                 }
                 if (necessitiesFilled) { grid.cash += b.tax; }
-
-                necessitiesManager.UpdateGlobalNecessities(b);
             }
             foreach (Node n in grid.nodes)
             {
                 n.IsNodeBuildable();
             }
 
+            buildingPainter.buildingType = buildingType;
             backgroundMap.UpdateWaterAnimations();
         }
 
@@ -220,6 +225,7 @@ namespace CitySkylines0._5alphabeta
             edgePainter.RoadPaint(sender, g, currentMousePos);
             smokeParticleManager.Draw(g);
             g.ResetTransform();
+
             uiManager.ConstructUI(sender, g);
         }
 
@@ -361,20 +367,23 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        private void Form1_HouseBuilder(object? sender, EventArgs e)
+        public void Form1_BuildingBuilder(object? sender, EventArgs e, string typeIn)
         {
             if (selectingBuildingPainting == false)
             {
                 notselecting = false;
                 selectingBuildingPainting = true;
                 selectingEdgePainting = false;
+                allOperations[2] = "Building " + typeIn.ToUpper();
                 currentOperation = 2;
+                buildingType = typeIn;
             }
             else
             {
                 notselecting = true;
                 selectingBuildingPainting = false;
                 selectingEdgePainting = false;
+                buildingType = "hello";
                 currentOperation = 0;
             }
         }

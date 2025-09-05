@@ -18,7 +18,9 @@ namespace CitySkylines0._5alphabeta
         public string globalElectricityStatus;
         public string globalWaterStatus;
 
-        public NecessitiesManager()
+        public Grid grid;
+
+        public NecessitiesManager(Grid grid)
         {
             globalElectricityDemand = 0;
             globalWaterDemand = 0;
@@ -27,25 +29,75 @@ namespace CitySkylines0._5alphabeta
 
             globalElectricityStatus = $"{globalElectricitySupply} / {globalElectricityDemand}MW";
             globalWaterStatus = $"{globalWaterSupply} / {globalWaterDemand}L";
+
+            this.grid = grid;   
         }
 
-        public void UpdateGlobalNecessities(Building b)
+        public void UpdateGlobalNecessities()
         {
-            foreach (Necessity necessity in b.necessities)
+            foreach (Building b in grid.buildings)
             {
-                if(necessity.name is "Energy")
+                foreach (Necessity necessity in b.necessities)
                 {
-                    globalElectricityDemand += (int)necessity.demand;
-                }
-                else if(necessity.name is "Water")
-                {
-                    globalWaterDemand += (int)necessity.demand;
+                    if (necessity.name is "Energy")
+                    {
+                        if (necessity.demand < 0) //if it's a power plant
+                        {
+                            globalElectricitySupply += (int)(-necessity.demand);
+                        }
+                        else
+                        {
+                            globalElectricityDemand += (int)necessity.demand;
+                        }
+                    }
+                    else if (necessity.name is "Water")
+                    {
+                        if (necessity.demand < 0) //if it's a water pump
+                        {
+                            globalWaterSupply += (int)(-necessity.demand);
+                        }
+                        else
+                        {
+                            globalWaterDemand += (int)necessity.demand;
+                        }
+
+                    }
                 }
             }
 
-            globalElectricityStatus = $"{globalElectricitySupply} / {globalElectricityDemand}MW";
+            foreach (Building b in grid.buildings)
+            {
+                foreach (Necessity necessity in b.necessities)
+                {
+                    if (necessity.name is "Energy")
+                    {
+                        if (globalElectricitySupply < globalElectricityDemand)
+                        {
+                            necessity.fulFilled = false;
+                        }
+                        else
+                        {
+                            necessity.fulFilled = true;
+                        }
+                    }
+                    else if (necessity.name is "Water")
+                    {
+
+                        if (globalWaterSupply < globalWaterDemand)
+                        {
+                            necessity.fulFilled = false;
+                        }
+                        else
+                        {
+                            necessity.fulFilled = true;
+                        }
+                    }
+                }
+            }
+                    globalElectricityStatus = $"{globalElectricitySupply} / {globalElectricityDemand}MW";
             globalWaterStatus = $"{globalWaterSupply} / {globalWaterDemand}L";
         }
+            
     }
 
     public class Necessity

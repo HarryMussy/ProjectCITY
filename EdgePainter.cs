@@ -237,7 +237,7 @@
                         grid.CheckIntersectingRoads();
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
-                        smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<House>());
+                        smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());
                         foreach (IntersectingNode n in newroad.intersections)
                         {
                             grid.roadIntersections.Add(n);
