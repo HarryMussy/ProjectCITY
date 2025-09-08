@@ -78,7 +78,6 @@ public class Background
             {
                 float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
                 bool isLand = noiseValue < landThreshold;
-
                 Point coords = new Point(x * 20, y * 20);
                 Node node = new Node(coords.X, coords.Y, null, false, nodeNumber++, isLand);
                 tiles.Add(node);
@@ -135,20 +134,20 @@ public class Background
             int gridX = i % width;
             int gridY = i / width;
 
-            // Helper to check if a neighbor index is in bounds
+            //helper to check if a neighbor index is in bounds
             bool InBounds(int x, int y) => x >= 0 && x < width && y >= 0 && y < height;
             int idx(int x, int y) => y * width + x;
 
-            // 8-way water checks (safe, based on list order)
-            bool hasWaterN = InBounds(gridX, gridY - 1) && !tiles[idx(gridX, gridY - 1)].isGrass;
-            bool hasWaterS = InBounds(gridX, gridY + 1) && !tiles[idx(gridX, gridY + 1)].isGrass;
-            bool hasWaterE = InBounds(gridX + 1, gridY) && !tiles[idx(gridX + 1, gridY)].isGrass;
-            bool hasWaterW = InBounds(gridX - 1, gridY) && !tiles[idx(gridX - 1, gridY)].isGrass;
+            //8-way water checks (safe, based on list order): treat out-of-bounds neighbors as water
+            bool hasWaterN = !InBounds(gridX, gridY - 1) || !tiles[idx(gridX, gridY - 1)].isGrass;
+            bool hasWaterS = !InBounds(gridX, gridY + 1) || !tiles[idx(gridX, gridY + 1)].isGrass;
+            bool hasWaterE = !InBounds(gridX + 1, gridY) || !tiles[idx(gridX + 1, gridY)].isGrass;
+            bool hasWaterW = !InBounds(gridX - 1, gridY) || !tiles[idx(gridX - 1, gridY)].isGrass;
 
-            bool hasWaterNW = InBounds(gridX - 1, gridY - 1) && !tiles[idx(gridX - 1, gridY - 1)].isGrass;
-            bool hasWaterNE = InBounds(gridX + 1, gridY - 1) && !tiles[idx(gridX + 1, gridY - 1)].isGrass;
-            bool hasWaterSW = InBounds(gridX - 1, gridY + 1) && !tiles[idx(gridX - 1, gridY + 1)].isGrass;
-            bool hasWaterSE = InBounds(gridX + 1, gridY + 1) && !tiles[idx(gridX + 1, gridY + 1)].isGrass;
+            bool hasWaterNW = !InBounds(gridX - 1, gridY - 1) || !tiles[idx(gridX - 1, gridY - 1)].isGrass;
+            bool hasWaterNE = !InBounds(gridX + 1, gridY - 1) || !tiles[idx(gridX + 1, gridY - 1)].isGrass;
+            bool hasWaterSW = !InBounds(gridX - 1, gridY + 1) || !tiles[idx(gridX - 1, gridY + 1)].isGrass;
+            bool hasWaterSE = !InBounds(gridX + 1, gridY + 1) || !tiles[idx(gridX + 1, gridY + 1)].isGrass;
 
             if (node.isGrass)
             {

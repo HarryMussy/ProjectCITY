@@ -75,10 +75,8 @@ public class UIManager
             interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
             interactingObjectManager.CreateButton("HOUSE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
-            interactingObjectManager.CreateButton("POWER PLANT", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
-            interactingObjectManager.CreateButton("HOUSE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
+            interactingObjectManager.CreateButton("WIND FARM", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 30), new Size(70, 25), form, 6)
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "windfarm");
             interactingObjectManager.CreateButton("WATER PUMP", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6)
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 65), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;

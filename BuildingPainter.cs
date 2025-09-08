@@ -48,7 +48,7 @@ namespace CitySkylines0._5alphabeta
             Brush redBrushBuilding = new SolidBrush(Color.FromArgb(100, Color.Red));
             Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
             Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
-            Brush houseBrush = new SolidBrush(Color.Black);
+            Brush houseBrush = new SolidBrush(Color.Gray);
             Brush blueBrush = new SolidBrush(Color.Blue); //for water supply/ need for water
             Brush yellowBrush = new SolidBrush(Color.Yellow); //for electricity demand/ need for electricity
             Brush moneyCostBrush = new SolidBrush(Color.Black);
@@ -99,7 +99,7 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                else if (buildingType == "powerplant")
+                else if (buildingType == "windfarm")
                 {
                     if (grid.cash >= 50000)
                     {
@@ -180,17 +180,17 @@ namespace CitySkylines0._5alphabeta
                     // Draw house image (assumes PNGs have transparency)
                     g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, 60 * zoom, 60 * zoom);
                 }
-                else if (building.type == "powerplant")
+                else if (building.type == "windfarm")
                 {
                     // Draw a simple rectangle for power plants
                     g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, 80 * zoom, 60 * zoom);
-                    g.DrawString("Power Plant", font, moneyCostBrush, building.coords.X, building.coords.Y - 15);
+                    g.DrawString("Wind Farm", font, moneyCostBrush, building.coords.X, building.coords.Y + 20);
                 }
                 else if (building.type == "waterpump")
                 {
                     // Draw a simple rectangle for power plants
                     g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, 40 * zoom, 40 * zoom);
-                    g.DrawString("Water Pump", font, moneyCostBrush, building.coords.X, building.coords.Y - 15);
+                    g.DrawString("Water\nPump", font, moneyCostBrush, building.coords.X, building.coords.Y + 5);
                 }
 
 
@@ -264,7 +264,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (grid.cash >= 50000 && buildingType == "powerplant")
+            if (grid.cash >= 50000 && buildingType == "windfarm")
             {
                 foreach (Node node in grid.nodes)
                 {
@@ -282,21 +282,21 @@ namespace CitySkylines0._5alphabeta
                             placement = n.coords;
                         }
                     }
-                    PowerPlant newPowerPlant = new PowerPlant(new Size(40, 30), placement, "powerplant");
+                    Windfarm newWindFarm = new Windfarm(new Size(40, 30), placement, "windfarm");
                     audioManager.PlayPlaceSound();
-                    grid.buildings.Add(newPowerPlant);
-                    grid.cash -= newPowerPlant.cost;
+                    grid.buildings.Add(newWindFarm);
+                    grid.cash -= newWindFarm.cost;
 
 
                     foreach (Node node in grid.nodes)
                     {
                         if (node.coords.X + 10 <= clickedPoint.X + 40 && node.coords.X + 10 >= clickedPoint.X - 40 && node.coords.Y + 10 <= clickedPoint.Y + 30 && node.coords.Y + 10 >= clickedPoint.Y - 30)
                         {
-                            newPowerPlant.occupyingNodes.Add(node);
-                            node.tiledata = newPowerPlant;
+                            newWindFarm.occupyingNodes.Add(node);
+                            node.tiledata = newWindFarm;
                         }
                     }
-                    smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newPowerPlant });
+                    smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWindFarm });
                 }
             }
 

@@ -16,6 +16,7 @@ namespace CitySkylines0._5alphabeta
         public Button CreateButton(string name, Point loc, Size size, Form form, int fontsize)
         {
             Button newbutton = new Button();
+            newbutton.BackColor = Color.White;
             newbutton.Text = name;
             newbutton.Font = new Font("Comic Sans", fontsize);
             newbutton.Size = size;
@@ -31,6 +32,7 @@ namespace CitySkylines0._5alphabeta
             TrackBar slider = new TrackBar();
 
             // These properties are standard for TrackBar
+            slider.BackColor = Color.White;
             slider.Minimum = 0;
             slider.Maximum = 100;
             slider.Value = 0; // Default to max volume, for example

@@ -69,6 +69,7 @@ namespace CitySkylines0._5alphabeta
         {
             g = CreateGraphics();
             InitializeComponent();
+            this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
             audioManager = new AudioManager();
             rectsize = 200;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
@@ -176,8 +177,12 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (!n.fulFilled) { necessitiesFilled = false; break; }
                 }
-                if (necessitiesFilled) { grid.cash += b.tax; }
+                if (necessitiesFilled) { grid.cash += b.tax; } //taxes the houses as long as they have running water and electricity
             }
+
+            if (necessitiesManager.globalElectricitySupply > necessitiesManager.globalElectricityDemand) { grid.cash += (necessitiesManager.globalElectricitySupply - necessitiesManager.globalElectricityDemand) * 3; } //sells excess electricity for cash
+            if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) * 3 / 1000; } //sells excess water for cash
+
             foreach (Node n in grid.nodes)
             {
                 n.IsNodeBuildable();

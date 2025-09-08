@@ -37,13 +37,13 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
-    public class PowerPlant : Building
+    public class Windfarm : Building
     {
         public override int cost { get; } = 40000;
         public override int tax { get; } = 0;
-        public PowerPlant(Size size, Point coords, string type) : base(size, coords, type, -30, 200)
+        public Windfarm(Size size, Point coords, string type) : base(size, coords, type, -30, 0)
         {
-            this.type = "powerplant";
+            this.type = "windfarm";
         }
     }
 
