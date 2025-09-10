@@ -260,7 +260,7 @@ namespace CitySkylines0._5alphabeta
                             node.tiledata = newHouse;
                         }
                     }
-                    smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newHouse });
+                    /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newHouse });*/
                 }
             }
 
@@ -296,7 +296,7 @@ namespace CitySkylines0._5alphabeta
                             node.tiledata = newWindFarm;
                         }
                     }
-                    smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWindFarm });
+                    /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWindFarm });*/
                 }
             }
 
@@ -332,7 +332,7 @@ namespace CitySkylines0._5alphabeta
                             node.tiledata = newWaterPump;
                         }
                     }
-                    smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWaterPump });
+                   /* smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWaterPump });*/
                 }
             }
         }

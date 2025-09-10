@@ -10,6 +10,7 @@ namespace CitySkylines0._5alphabeta
         public List<Node> buildableNodes;
         public List<Edge> edges;
         public List<IntersectingNode> roadIntersections;
+        public List<Node> nodesIntersectingRoads;
         public List<Building> buildings;
         public List<PictureBox> roadImages;
         public float cash; //called Musbux
@@ -18,6 +19,7 @@ namespace CitySkylines0._5alphabeta
         private int width, height;
         public Grid(int width, int height, Background background)
         {
+            nodesIntersectingRoads = new List<Node>();
             nodes = new List<Node>();
             backgroundNodes = new List<Node>();
             edges = new List<Edge>();
@@ -46,7 +48,7 @@ namespace CitySkylines0._5alphabeta
             }
 
         }
-        public static float RoadCashCost(Point a, Point b)
+        public float RoadCashCost(Point a, Point b)
         {
             float bsquared = (a.X - b.X) * (a.X - b.X);
             float csquared = (a.Y - b.Y) * (a.Y - b.Y);
@@ -147,8 +149,6 @@ namespace CitySkylines0._5alphabeta
         }
         public void FindRoadNodeIntersections()
         {
-            List<Node> nodesIntersectingRoads = new List<Node>();
-
             if (edges != null)
             {
                 foreach (Node node in nodes)

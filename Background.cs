@@ -185,9 +185,9 @@ public class Background
                 }
             }
         }
-        /*
-         * debug info - uncomment to see node details on tiles
-        foreach (Node node in tiles)
+        
+         // debug info - uncomment to see node details on tiles
+        /*foreach (Node node in tiles)
         {
             Font font2 = new Font("Comic Sans", 1);
             SolidBrush houseBrush = new SolidBrush(Color.Black);

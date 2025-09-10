@@ -53,13 +53,18 @@
                 {
                     g.FillEllipse(redBrush, n.coords.X - 5, n.coords.Y - 5, 10, 10);
                 }
+
+                /*foreach (Node n in grid.nodesIntersectingRoads)
+                {
+                    g.FillRectangle(blackBrush, n.coords.X, n.coords.Y, 20, 20);
+                }*/
             }
 
             if (startPoint != null)
             {
                 Pen invalidroad = new Pen(Color.Red, 4);
                 Pen lightGrayPen = new Pen(Color.LightGray, 4);
-                float cost = Grid.RoadCashCost(startPoint.Value, mousePos);
+                float cost = grid.RoadCashCost(startPoint.Value, mousePos);
 
                 if (cost > grid.cash)
                 {
@@ -224,7 +229,7 @@
                 if (IsOnWater(endPoint) == true) { }
                 else
                 {
-                    float cost = Grid.RoadCashCost(startPoint.Value, endPoint);
+                    float cost = grid.RoadCashCost(startPoint.Value, endPoint);
                     if (isOverlapping == false && grid.cash >= cost)
                     {
                         string roadname = nameProvider.GetRandomName();
@@ -232,12 +237,12 @@
                         audioManager.PlayPlaceSound();
                         newroad.intersections.Add(new IntersectingNode(startPoint.Value));
                         newroad.intersections.Add(new IntersectingNode(endPoint));// Creates 2 new points on the dge for every intersection#
-                        grid.cash = grid.cash - Grid.RoadCashCost(startPoint.Value, endPoint);
+                        grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
                         grid.CheckIntersectingRoads();
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
-                        smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());
+                        /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());*/
                         foreach (IntersectingNode n in newroad.intersections)
                         {
                             grid.roadIntersections.Add(n);

@@ -1,8 +1,8 @@
 /* ----------GAME PLAN----------
  * Cash system, building roads of certain lengths uses cash DONE
  * House buildings DONE
- * Electricity
- * Water
+ * Electricity DONE
+ * Water DONE
  * Food
  * Necessities (e.g. hospitals, police, fire etc)
  * Background map to build only in certain places DONE

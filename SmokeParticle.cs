@@ -96,7 +96,7 @@ namespace CitySkylines0._5alphabeta
 
         public void Draw(Graphics g)
         {
-            if (Opacity <= 0 || smokeGif == null)
+            if (Opacity <= 0 || smokeGif == null || Size <= 1f)
                 return;
 
             var colorMatrix = new ColorMatrix
@@ -147,21 +147,26 @@ namespace CitySkylines0._5alphabeta
         {
             string smokeFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gameArt", "Smoke");
             if (!Directory.Exists(smokeFolder))
+            {
+                Console.WriteLine("Smoke folder not found: " + smokeFolder);
                 return;
+            }
 
             foreach (string file in Directory.GetFiles(smokeFolder, "*.gif"))
             {
                 try
                 {
                     Image gif = Image.FromFile(file);
-                    ImageAnimator.Animate(gif, null); // Register for animation
+                    ImageAnimator.Animate(gif, null);
                     smokeGifs.Add(gif);
+                    Console.WriteLine("Loaded smoke gif: " + file);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed to load smoke gif {file}: {ex.Message}");
                 }
             }
+            Console.WriteLine("Total smoke gifs loaded: " + smokeGifs.Count);
         }
 
         public void Update()
@@ -212,11 +217,14 @@ namespace CitySkylines0._5alphabeta
 
         private void SpawnParticlesOnEdge(Edge edge)
         {
+            int maxParticles = 500; // Set a reasonable cap
+            if (particles.Count > maxParticles) return;
+
             int count = random.Next(5, 25);
             int pointsCount = edge.pointsOnTheEdge?.Count ?? 1;
             int spawnCount = (int)(count / (1f / pointsCount + 1f));
 
-            for (int i = 0; i < spawnCount; i++)
+            for (int i = 0; i < spawnCount && particles.Count < maxParticles; i++)
             {
                 float t = spawnCount > 1 ? i / (float)(spawnCount - 1) : 0.5f;
                 float x = edge.a.X + t * (edge.b.X - edge.a.X);
@@ -224,7 +232,6 @@ namespace CitySkylines0._5alphabeta
 
                 // Pick a random smoke GIF for this particle
                 Image smokeGif = smokeGifs.Count > 0 ? smokeGifs[random.Next(smokeGifs.Count)] : null;
-
                 if (smokeGif != null)
                     particles.Add(new SmokeParticle(new PointF(x, y), smokeGif));
             }
