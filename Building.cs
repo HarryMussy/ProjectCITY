@@ -51,7 +51,7 @@ namespace CitySkylines0._5alphabeta
     {
         public override int cost { get; } = 20000;
         public override int tax { get; } = 0;
-        public WaterPump(Size size, Point coords, string type) : base(size, coords, type, 20, -1000)
+        public WaterPump(Size size, Point coords, string type) : base(size, coords, type, 0, -1000)
         {
             this.type = "waterpump";
         }

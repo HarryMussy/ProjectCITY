@@ -120,8 +120,8 @@
         {
             foreach (Point p in waterNodes)
             {
-                if (clickedPoint.X >= p.X - 20 && clickedPoint.X <= p.X + 20 &&
-                    clickedPoint.Y >= p.Y - 20 && clickedPoint.Y <= p.Y + 20)
+                if (clickedPoint.X >= p.X - form1.rectSize && clickedPoint.X <= p.X + form1.rectSize &&
+                    clickedPoint.Y >= p.Y - form1.rectSize && clickedPoint.Y <= p.Y + form1.rectSize)
                 {
                     return true;
                 }
@@ -240,6 +240,7 @@
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
                         grid.CheckIntersectingRoads();
+                        grid.FindRoadNodeIntersections();
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
                         /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());*/

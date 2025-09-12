@@ -13,13 +13,15 @@ namespace CitySkylines0._5alphabeta
         public List<Node> nodesIntersectingRoads;
         public List<Building> buildings;
         public List<PictureBox> roadImages;
+        private readonly int rectSize;
         public float cash; //called Musbux
         private Background background;
         public List<Point> AllPoints => edges.SelectMany(edge => new List<Point> { edge.a, edge.b }).Distinct().ToList();
         private int width, height;
-        public Grid(int width, int height, Background background)
+        public Grid(int width, int height, Background background, int rectSizeIn)
         {
             nodesIntersectingRoads = new List<Node>();
+            rectSize = rectSizeIn;
             nodes = new List<Node>();
             backgroundNodes = new List<Node>();
             edges = new List<Edge>();
@@ -41,7 +43,7 @@ namespace CitySkylines0._5alphabeta
             {
                 for (int y = 0; y < height; y++)
                 {
-                    Point coords = new Point(x * 20, y * 20);
+                    Point coords = new Point(x * rectSize, y * rectSize);
                     Node node = new Node(coords.X, coords.Y, null, false, tempNum++, false);
                     nodes.Add(node);
                 }
@@ -159,11 +161,11 @@ namespace CitySkylines0._5alphabeta
                         foreach (Point n in road.pointsOnTheEdge)
                         {
                             //check if the node intersects with the road edge (within range)
-                            if (node.coords.X + 10 <= n.X + 20 && node.coords.X + 10 >= n.X - 20 && node.coords.Y + 10 <= n.Y + 20 && node.coords.Y + 10 >= n.Y - 20)
+                            if (node.coords.X + 10 <= n.X + rectSize && node.coords.X + 10 >= n.X - rectSize && node.coords.Y + 10 <= n.Y + rectSize && node.coords.Y + 10 >= n.Y - rectSize)
                             {
                                 nodesIntersectingRoads.Add(node);
                             }
-                            else if (node.coords.X + 10 <= n.X + 80 && node.coords.X + 10 >= n.X - 80 && node.coords.Y + 10 <= n.Y + 80 && node.coords.Y + 10 >= n.Y - 80)
+                            else if (node.coords.X + 10 <= n.X + (rectSize * 7) && node.coords.X + 10 >= n.X - (rectSize * 7) && node.coords.Y + 10 <= n.Y + (rectSize * 7) && node.coords.Y + 10 >= n.Y - (rectSize * 7))
                             {
                                 node.isNearRoad = true;
 

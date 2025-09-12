@@ -22,10 +22,12 @@ namespace CitySkylines0._5alphabeta
         public SmokeParticleManager smokeParticleManager;
         public Graphics g;
         public string buildingType = "";
+        private int rectSize;
 
 
-        public BuildingPainter(Grid gridPassIn, Form1 Form1PassIn, Graphics g)
+        public BuildingPainter(Grid gridPassIn, Form1 Form1PassIn, Graphics g, int rectSizeIn)
         {
+            rectSize = rectSizeIn;
             this.g = g;
             grid = gridPassIn;
             Form1 = Form1PassIn;
@@ -56,12 +58,12 @@ namespace CitySkylines0._5alphabeta
             Font font = new Font("Comic Sans", 11);
             Font font2 = new Font("Comic Sans", 9);
 
-            grid.FindRoadNodeIntersections();
+            
             foreach (Node node in grid.buildableNodes)
             {
                 if (viewBuildingSpaces == true)
                 {
-                    g.FillRectangle(redBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
+                    g.FillRectangle(redBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
                 }
             }
 
@@ -76,12 +78,12 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 3, 3);
                             if (isTrue == 0)
                             {
-                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
-                                g.DrawString("-£10000", font, moneyCostBrush, mousePos.X - 30, mousePos.Y - 10);
+                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
+                                g.DrawString("-£10000", font, moneyCostBrush, mousePos.X - 10, mousePos.Y - 10);
                             }
                             else if (isTrue == 1)
                             {
-                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                     }
@@ -92,7 +94,7 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 3, 3);
                             if (isTrue == 0 || isTrue == 1)
                             {
-                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                         g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
@@ -108,12 +110,12 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 4, 3);
                             if (isTrue == 0)
                             {
-                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
-                                g.DrawString("-£50000", font, moneyCostBrush, mousePos.X - 30, mousePos.Y - 10);
+                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
+                                g.DrawString("-£50000", font, moneyCostBrush, mousePos.X - 10, mousePos.Y - 10);
                             }
                             else if (isTrue == 1)
                             {
-                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                     }
@@ -124,7 +126,7 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 4, 3);
                             if (isTrue == 0 || isTrue == 1)
                             {
-                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                         g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
@@ -140,12 +142,12 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 2, 2);
                             if (isTrue == 0)
                             {
-                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
-                                g.DrawString("-£30000", font, moneyCostBrush, mousePos.X - 30, mousePos.Y - 10);
+                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
+                                g.DrawString("-£30000", font, moneyCostBrush, mousePos.X - 10, mousePos.Y - 10);
                             }
                             else if (isTrue == 1)
                             {
-                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                     }
@@ -156,7 +158,7 @@ namespace CitySkylines0._5alphabeta
                             int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 2, 2);
                             if (isTrue == 0 || isTrue == 1)
                             {
-                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, 20, 20);
+                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
                             }
                         }
                         g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
@@ -165,7 +167,7 @@ namespace CitySkylines0._5alphabeta
             }
 
             // Use the form's zoomLevel if available
-            float zoom = Form1 != null ? Form1.rectsize / 200f : 1.0f;
+            float zoom = Form1 != null ? Form1.rectSize / 200f : 1.0f;
 
             foreach (Building building in grid.buildings)
             {
@@ -177,31 +179,29 @@ namespace CitySkylines0._5alphabeta
                         imgIdx = random.Next(houseImages.Count);
                         tileHouseImageIndex[building] = imgIdx;
                     }
-                    // Draw house image (assumes PNGs have transparency)
-                    g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, 60 * zoom, 60 * zoom);
+                    // Use building.size for drawing
+                    g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
                 }
                 else if (building.type == "windfarm")
                 {
-                    // Draw a simple rectangle for power plants
-                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, 80 * zoom, 60 * zoom);
+                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
                     g.DrawString("Wind Farm", font, moneyCostBrush, building.coords.X, building.coords.Y + 20);
                 }
                 else if (building.type == "waterpump")
                 {
-                    // Draw a simple rectangle for power plants
-                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, 40 * zoom, 40 * zoom);
+                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
                     g.DrawString("Water\nPump", font, moneyCostBrush, building.coords.X, building.coords.Y + 5);
                 }
 
 
                 if (building.necessities[0].fulFilled == false)
                 {
-                    g.FillRectangle(yellowBrush, building.coords.X, building.coords.Y, 20 * zoom, 20 * zoom);
+                    g.FillRectangle(yellowBrush, building.coords.X, building.coords.Y, 3, 3);
                 }
 
                 if (building.necessities[1].fulFilled == false)
                 {
-                    g.FillRectangle(blueBrush, building.coords.X + 20 * zoom, building.coords.Y, 20 * zoom, 20 * zoom);
+                    g.FillRectangle(blueBrush, building.coords.X, building.coords.Y, 3, 3);
                 }
             }
         }
@@ -243,7 +243,7 @@ namespace CitySkylines0._5alphabeta
                             placement = n.coords;
                         }
                     }
-                    House newHouse = new House(new Size(30, 30), placement, "house");
+                    House newHouse = new House(new Size (rectSize * 3, rectSize * 3), placement, "house");
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newHouse);
                     grid.cash -= newHouse.cost;
@@ -254,7 +254,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + 30 && node.coords.X + 10 >= clickedPoint.X - 30 && node.coords.Y + 10 <= clickedPoint.Y + 30 && node.coords.Y + 10 >= clickedPoint.Y - 30)
+                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 3) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 3) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 3))
                         {
                             newHouse.occupyingNodes.Add(node);
                             node.tiledata = newHouse;
@@ -282,7 +282,7 @@ namespace CitySkylines0._5alphabeta
                             placement = n.coords;
                         }
                     }
-                    Windfarm newWindFarm = new Windfarm(new Size(40, 30), placement, "windfarm");
+                    Windfarm newWindFarm = new Windfarm(new Size(rectSize * 4, rectSize * 3), placement, "windfarm");
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newWindFarm);
                     grid.cash -= newWindFarm.cost;
@@ -290,7 +290,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + 40 && node.coords.X + 10 >= clickedPoint.X - 40 && node.coords.Y + 10 <= clickedPoint.Y + 30 && node.coords.Y + 10 >= clickedPoint.Y - 30)
+                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 4) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 4) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 3))
                         {
                             newWindFarm.occupyingNodes.Add(node);
                             node.tiledata = newWindFarm;
@@ -318,7 +318,7 @@ namespace CitySkylines0._5alphabeta
                             placement = n.coords;
                         }
                     }
-                    WaterPump newWaterPump = new WaterPump(new Size(20, 20), placement, "waterpump");
+                    WaterPump newWaterPump = new WaterPump(new Size(rectSize * 2, rectSize * 2), placement, "waterpump");
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newWaterPump);
                     grid.cash -= newWaterPump.cost;
@@ -326,7 +326,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + 20 && node.coords.X + 10 >= clickedPoint.X - 20 && node.coords.Y + 10 <= clickedPoint.Y + 20 && node.coords.Y + 10 >= clickedPoint.Y - 20)
+                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 2) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 2) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 2) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 2))
                         {
                             newWaterPump.occupyingNodes.Add(node);
                             node.tiledata = newWaterPump;

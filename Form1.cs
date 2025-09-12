@@ -27,7 +27,7 @@ namespace CitySkylines0._5alphabeta
         public readonly Grid grid;
         private float zoomLevel = 1.0f;
         private Point currentMousePos;
-        public int rectsize;
+        public int rectSize;
         public bool selectingEdgePainting = false;
         public bool selectingBuildingPainting = false;
         public bool notselecting = true;
@@ -71,7 +71,7 @@ namespace CitySkylines0._5alphabeta
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
             audioManager = new AudioManager();
-            rectsize = 200;
+            rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             this.MouseWheel += Form1_MouseWheel;
             this.MouseDown += Form1_MouseDown;
@@ -82,13 +82,13 @@ namespace CitySkylines0._5alphabeta
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             this.ClientSizeChanged += Form1_Resize;
-            backgroundMap = new Background(60, 60, this);
-            grid = new Grid(60, 60, backgroundMap);
+            backgroundMap = new Background(60, 60, this, rectSize);
+            grid = new Grid(60, 60, backgroundMap, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager(grid);
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, backgroundMap, g);
-            buildingPainter = new BuildingPainter(grid, this, g);
+            buildingPainter = new BuildingPainter(grid, this, g, rectSize);
             buttonManager = new InteractingObjectManager();
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             
@@ -186,6 +186,7 @@ namespace CitySkylines0._5alphabeta
             foreach (Node n in grid.nodes)
             {
                 n.IsNodeBuildable();
+                if (n.isBuildable) { grid.cash -= (float)0.01; } //charge for maintaining buildable land
             }
 
             buildingPainter.buildingType = buildingType;
@@ -216,13 +217,15 @@ namespace CitySkylines0._5alphabeta
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
+            
+
             backgroundMap.DrawMap(sender, g, zoomLevel);
 
             if (viewGrid == true)
             {
                 foreach (Node node in grid.nodes)
                 {
-                    g.DrawRectangle(bluePen, node.coords.X, node.coords.Y, rectsize, rectsize);
+                    g.DrawRectangle(bluePen, node.coords.X, node.coords.Y, rectSize, rectSize);
                 }
             }
 

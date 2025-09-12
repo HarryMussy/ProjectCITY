@@ -16,11 +16,13 @@ public class Background
     private Dictionary<string, Image> sharedWaterImages = new();
     private Dictionary<Node, string> nodeWaterImageKey = new();
     private Dictionary<string, Image> grassEdgeImages = new();
+    private readonly int rectSize;
 
-    public Background(int width, int height, Form1 form1PassIn)
+    public Background(int width, int height, Form1 form1PassIn, int rectSizeIn)
     {
         this.width = width;
         this.height = height;
+        rectSize = rectSizeIn;
         Form1 = form1PassIn;
         random = new Random();
         tiles = new List<Node>();
@@ -78,7 +80,7 @@ public class Background
             {
                 float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
                 bool isLand = noiseValue < landThreshold;
-                Point coords = new Point(x * 20, y * 20);
+                Point coords = new Point(x * rectSize, y * rectSize);
                 Node node = new Node(coords.X, coords.Y, null, false, nodeNumber++, isLand);
                 tiles.Add(node);
                 nodeLookup[coords] = node;
@@ -126,7 +128,7 @@ public class Background
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
         g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
 
-        int tileSize = 20;
+        int tileSize = rectSize;
 
         for (int i = 0; i < tiles.Count; i++)
         {
