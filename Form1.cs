@@ -40,8 +40,8 @@ namespace CitySkylines0._5alphabeta
         public int mouseXold = 0;
         public int mouseYold = 0;
         public Point tempa;
-        public float closest_x = float.MaxValue;
-        public float closest_y = float.MaxValue;
+        public float closestX = float.MaxValue;
+        public float closestY = float.MaxValue;
         public Brush redBrush = new SolidBrush(Color.Red);
         public Point bottomLeft;
         Point a;
@@ -64,6 +64,8 @@ namespace CitySkylines0._5alphabeta
         public AudioManager audioManager;
         public SmokeParticleManager smokeParticleManager;
         public Graphics g;
+        private List<Car> cars = new List<Car>();
+        private Random carRandom = new Random();
 
         public Form1()
         {
@@ -78,7 +80,7 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 8;
+            tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             this.ClientSizeChanged += Form1_Resize;
@@ -186,11 +188,27 @@ namespace CitySkylines0._5alphabeta
             foreach (Node n in grid.nodes)
             {
                 n.IsNodeBuildable();
-                if (n.isBuildable) { grid.cash -= (float)0.01; } //charge for maintaining buildable land
+                if (n.tiledata != null) { grid.cash -= (float)0.01; } //charge for maintaining buildable land
             }
 
             buildingPainter.buildingType = buildingType;
             backgroundMap.UpdateWaterAnimations();
+
+            //spawns cars if there are less cars than houses and in a 1% chance
+            if (carRandom.NextDouble() < 1 && cars.Count <= grid.buildings.Count)
+            {
+                SpawnCarNearBuilding();
+            }
+
+            //remove cars that have reached the end of their path   
+            foreach (var car in cars.ToList())
+            {
+                car.Update();
+                if (car.HasReachedEnd())
+                {
+                    cars.Remove(car);
+                }  
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -229,9 +247,15 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+
             buildingPainter.BuildingPaint(sender, g, currentMousePos);
             edgePainter.RoadPaint(sender, g, currentMousePos);
             smokeParticleManager.Draw(g);
+
+            foreach (Car car in cars)
+            {
+                g.FillEllipse(new SolidBrush(Color.LightBlue), car.Position.X - 5, car.Position.Y - 5, 10, 10);
+            }
             g.ResetTransform();
 
             uiManager.ConstructUI(sender, g);
@@ -413,6 +437,42 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
             }
+        }
+
+        private void SpawnCarNearBuilding()
+        {
+            if (grid.buildings.Count == 0) return;
+
+            Random rng = new Random();
+            // Find a building and a nearby road
+            var building = grid.buildings[rng.Next(0, grid.buildings.Count-1)];
+            if (building == null || grid.edges.Count == 0) return;
+
+            // Find the closest edge and closest point on the edge to the house
+            Edge closestEdge = grid.edges.OrderBy(e => Math.Min(Distance(building.coords, e.a), Distance(building.coords, e.b))).First();
+
+            Point closestPoint = closestEdge.a;
+            foreach (Point p in closestEdge.pointsOnTheEdge)
+            {
+                float dist = Distance(building.coords, p);
+                if (dist < Distance(building.coords, closestPoint))
+                {
+                    closestPoint = p;
+                }
+            }
+
+            Edge edgeDest = grid.edges[rng.Next(0, grid.edges.Count - 1)]; //random edge for destination
+            Point destinationPoint = edgeDest.pointsOnTheEdge[rng.Next(0, edgeDest.pointsOnTheEdge.Count-1)]; //random destination on another road
+
+            // Spawn car at start of edge
+            cars.Add(new Car(closestEdge, closestPoint, 0.01f + (float)carRandom.NextDouble() * 0.01f, destinationPoint, edgeDest));
+        }
+
+        private float Distance(Point a, Point b)
+        {
+            float dx = a.X - b.X;
+            float dy = a.Y - b.Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
         }
     }
 }

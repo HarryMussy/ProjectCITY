@@ -254,7 +254,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 3) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 3) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 3))
+                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 3) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 3) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 3))
                         {
                             newHouse.occupyingNodes.Add(node);
                             node.tiledata = newHouse;
@@ -290,7 +290,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 4) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 4) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 3))
+                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 4) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 4) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 3))
                         {
                             newWindFarm.occupyingNodes.Add(node);
                             node.tiledata = newWindFarm;
@@ -326,7 +326,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 10 <= clickedPoint.X + (rectSize * 2) && node.coords.X + 10 >= clickedPoint.X - (rectSize * 2) && node.coords.Y + 10 <= clickedPoint.Y + (rectSize * 2) && node.coords.Y + 10 >= clickedPoint.Y - (rectSize * 2))
+                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 2) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 2) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 2) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 2))
                         {
                             newWaterPump.occupyingNodes.Add(node);
                             node.tiledata = newWaterPump;
@@ -342,8 +342,8 @@ namespace CitySkylines0._5alphabeta
             Point worldMousePos = mousePos;
             var currentPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
 
-            if (node.coords.X + 10 <= currentPoint.X + (10 * checkWidth) && node.coords.X + 10 >= currentPoint.X - (10 * checkWidth) &&
-                node.coords.Y + 10 <= currentPoint.Y + (10 * checkHeight) && node.coords.Y + 10 >= currentPoint.Y - (10 * checkHeight))
+            if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
+                node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
                 if (node.isGrass && node.tiledata == null && node.isNearRoad)
                 {
