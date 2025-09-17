@@ -9,7 +9,7 @@
         public List<IntersectingNode> intersections;
         List<string> invalidnames = new List<string>();
         bool validity = false;
-        public List<Point> pointsOnTheEdge;
+        public List<Point> pointsOnTheEdge; 
 
         public Edge(int edgeweight, Point a, Point b, string name)
         {
@@ -22,10 +22,20 @@
             pointsOnTheEdge = new List<Point>();
         }
 
-        public void AddIntersection(Point p)
+        public void AddIntersection(Point p, Edge e)
         {
-            IntersectingNode newnode = new IntersectingNode(p);
-            intersections.Add(newnode);
+            if (!intersections.Contains(new IntersectingNode(p)))
+            {
+                IntersectingNode n = new IntersectingNode(p);
+                intersections.Add(n);
+            }
+            foreach (IntersectingNode node in intersections)
+            {
+                if (node.coords == p && !node.connectedEdges.Contains(e))
+                {
+                    node.connectedEdges.Add(e);
+                }
+            }
         }
 
         public void FindAllPointOnEdge(Edge road)

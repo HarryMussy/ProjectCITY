@@ -64,7 +64,7 @@ namespace CitySkylines0._5alphabeta
         public AudioManager audioManager;
         public SmokeParticleManager smokeParticleManager;
         public Graphics g;
-        private List<Car> cars = new List<Car>();
+        public CarManager carManager;
         private Random carRandom = new Random();
 
         public Form1()
@@ -92,6 +92,7 @@ namespace CitySkylines0._5alphabeta
             edgePainter = new EdgePainter(grid, this, nameProvider, backgroundMap, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize);
             buttonManager = new InteractingObjectManager();
+            carManager = new CarManager(grid);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             
             allEventHandlers.Add(Form1_RoadButton);
@@ -195,20 +196,12 @@ namespace CitySkylines0._5alphabeta
             backgroundMap.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
-            if (carRandom.NextDouble() < 1 && cars.Count <= grid.buildings.Count)
+            if (carRandom.NextDouble() < 1 && carManager.cars.Count <= grid.buildings.Count)
             {
                 SpawnCarNearBuilding();
             }
 
-            //remove cars that have reached the end of their path   
-            foreach (var car in cars.ToList())
-            {
-                car.Update();
-                if (car.HasReachedEnd())
-                {
-                    cars.Remove(car);
-                }  
-            }
+            carManager.MoveCar();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -252,9 +245,9 @@ namespace CitySkylines0._5alphabeta
             edgePainter.RoadPaint(sender, g, currentMousePos);
             smokeParticleManager.Draw(g);
 
-            foreach (Car car in cars)
+            foreach (Car car in carManager.cars)
             {
-                g.FillEllipse(new SolidBrush(Color.LightBlue), car.Position.X - 5, car.Position.Y - 5, 10, 10);
+                g.FillEllipse(new SolidBrush(Color.LightBlue), car.currentPosition.X - 5, car.currentPosition.Y - 5, 10, 10);
             }
             g.ResetTransform();
 
@@ -465,7 +458,9 @@ namespace CitySkylines0._5alphabeta
             Point destinationPoint = edgeDest.pointsOnTheEdge[rng.Next(0, edgeDest.pointsOnTheEdge.Count-1)]; //random destination on another road
 
             // Spawn car at start of edge
-            cars.Add(new Car(closestEdge, closestPoint, 0.01f + (float)carRandom.NextDouble() * 0.01f, destinationPoint, edgeDest));
+            Car car = new Car(closestEdge, closestPoint, 0.01f + (float)(0.1f + carRandom.NextDouble()) * 0.01f, destinationPoint, edgeDest);
+            carManager.cars.Add(car);
+            carManager.CreateCarRoute(car);
         }
 
         private float Distance(Point a, Point b)

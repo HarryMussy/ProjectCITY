@@ -1,4 +1,6 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿using System.Windows.Media.Media3D;
+
+namespace CitySkylines0._5alphabeta
 {
     public class EdgePainter
     {
@@ -49,15 +51,24 @@
                     g.DrawString(edge.name, roadFont, whiteBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
                 }
 
-                foreach (IntersectingNode n in edge.intersections)
-                {
-                    g.FillEllipse(redBrush, n.coords.X - 5, n.coords.Y - 5, 10, 10);
-                }
-
                 /*foreach (Node n in grid.nodesIntersectingRoads)
                 {
                     g.FillRectangle(blackBrush, n.coords.X, n.coords.Y, 20, 20);
                 }*/
+
+                for (int i = 0; i < grid.edges.Count; i++)
+                {
+                    Edge e = grid.edges[i];
+                    string roadIntersections = $"{e.name} Intersections: ";
+                    foreach (IntersectingNode n in e.intersections)
+                    {
+                        roadIntersections += $"({n.coords.X}, {n.coords.Y}) ";
+                    }
+
+                    
+                    form1.AddStrokeToText(sender, g, roadIntersections, 1, new Font("Comic Sans", 8), blackBrush, new Point(10, 200 + i * 15));
+                    g.DrawString(roadIntersections, new Font("Comic Sans", 8), whiteBrush, new Point(10, 200 + i * 15));
+                }
             }
 
             if (startPoint != null)
@@ -77,6 +88,14 @@
                 Point linecenter = new Point((startPoint.Value.X + mousePos.X) / 2, (startPoint.Value.Y + mousePos.Y) / 2);
                 string displayedcost = cost.ToString("F2");
                 g.DrawString(displayedcost, new Font("Comic Sans", 10), greenBrush, linecenter);
+            }
+
+            foreach (Edge e in grid.edges)
+            {
+                foreach (IntersectingNode n in e.intersections)
+                {
+                    g.FillEllipse(redBrush, n.coords.X - 5, n.coords.Y - 5, 10, 10);
+                }
             }
         }
 
@@ -233,10 +252,8 @@
                     if (isOverlapping == false && grid.cash >= cost)
                     {
                         string roadname = nameProvider.GetRandomName();
-                        Road newroad = new Road(4, startPoint.Value, endPoint, roadname);
+                        Road newroad = new Road(8, startPoint.Value, endPoint, roadname);
                         audioManager.PlayPlaceSound();
-                        newroad.intersections.Add(new IntersectingNode(startPoint.Value));
-                        newroad.intersections.Add(new IntersectingNode(endPoint));// Creates 2 new points on the dge for every intersection#
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
                         grid.CheckIntersectingRoads();

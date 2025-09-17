@@ -74,9 +74,27 @@ namespace CitySkylines0._5alphabeta
                     {
                         Point intersection = FindIntersectionPoint(edge1.a, edge1.b, edge2.a, edge2.b);
 
-                        //add the intersection point as a new node to the edges
-                        edge1.AddIntersection(intersection);
-                        edge2.AddIntersection(intersection);
+                        foreach(IntersectingNode node in roadIntersections)
+                        {
+                            if (intersection.X >= node.coords.X - 10 && intersection.X <= node.coords.X + 10 && intersection.Y >= node.coords.Y - 10 && intersection.Y <= node.coords.Y + 10)
+                            {
+                                intersection = node.coords; //snap to existing intersection point
+                            }
+                        }
+
+                        if (!edge1.intersections.Any(node => node.coords == intersection))
+                        {
+                            //add the intersection point as a new node to the edges
+                            edge1.AddIntersection(intersection, edge2);
+                        }
+                        if (!edge2.intersections.Any(node => node.coords == intersection))
+                        {
+                            edge2.AddIntersection(intersection, edge1);
+                        }
+                        if (!edge1.intersections.Any(node => node.coords == intersection) && !edge2.intersections.Any(node => node.coords == intersection))
+                        {
+                            roadIntersections.Add(new IntersectingNode(intersection));
+                        }
                     }
                 }
             }

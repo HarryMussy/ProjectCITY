@@ -47,6 +47,7 @@ namespace CitySkylines0._5alphabeta
     public class IntersectingNode
     {
         public Point coords;
+        public List<Edge> connectedEdges = new List<Edge>();
         public IntersectingNode(Point coordsIn)
         {
             coords = coordsIn;
