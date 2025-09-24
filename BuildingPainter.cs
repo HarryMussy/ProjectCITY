@@ -203,6 +203,9 @@ namespace CitySkylines0._5alphabeta
                 {
                     g.FillRectangle(blueBrush, building.coords.X, building.coords.Y, 3, 3);
                 }
+
+                //debug code to find where the building is drawn from
+                g.FillEllipse(yellowBrush, building.coords.X, building.coords.Y, 3, 3);
             }
         }
 
@@ -254,7 +257,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 3) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 3) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 3))
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 24, placement.Y + 24), node, 3, 3) == 0)
                         {
                             newHouse.occupyingNodes.Add(node);
                             node.tiledata = newHouse;
@@ -290,7 +293,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 4) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 4) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 3) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 3))
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 32, placement.Y + 24), node, 4, 3) == 0)
                         {
                             newWindFarm.occupyingNodes.Add(node);
                             node.tiledata = newWindFarm;
@@ -326,7 +329,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (node.coords.X + 8 <= clickedPoint.X + (rectSize * 2) && node.coords.X + 8 >= clickedPoint.X - (rectSize * 2) && node.coords.Y + 8 <= clickedPoint.Y + (rectSize * 2) && node.coords.Y + 8 >= clickedPoint.Y - (rectSize * 2))
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 16, placement.Y + 16), node, 2, 2) == 0)
                         {
                             newWaterPump.occupyingNodes.Add(node);
                             node.tiledata = newWaterPump;

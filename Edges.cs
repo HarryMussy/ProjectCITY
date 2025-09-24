@@ -24,19 +24,20 @@
 
         public void AddIntersection(Point p, Edge e)
         {
-            if (!intersections.Contains(new IntersectingNode(p)))
+            var existingNode = intersections.FirstOrDefault(n => n.coords == p);
+
+            if (existingNode == null)
             {
-                IntersectingNode n = new IntersectingNode(p);
-                intersections.Add(n);
+                existingNode = new IntersectingNode(p);
+                intersections.Add(existingNode);
             }
-            foreach (IntersectingNode node in intersections)
+
+            if (!existingNode.connectedEdges.Contains(e))
             {
-                if (node.coords == p && !node.connectedEdges.Contains(e))
-                {
-                    node.connectedEdges.Add(e);
-                }
+                existingNode.connectedEdges.Add(e);
             }
         }
+
 
         public void FindAllPointOnEdge(Edge road)
         {

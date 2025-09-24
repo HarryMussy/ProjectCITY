@@ -458,7 +458,7 @@ namespace CitySkylines0._5alphabeta
             Point destinationPoint = edgeDest.pointsOnTheEdge[rng.Next(0, edgeDest.pointsOnTheEdge.Count-1)]; //random destination on another road
 
             // Spawn car at start of edge
-            Car car = new Car(closestEdge, closestPoint, 0.01f + (float)(0.1f + carRandom.NextDouble()) * 0.01f, destinationPoint, edgeDest);
+            Car car = new Car(closestEdge, closestPoint, 0.01, destinationPoint, edgeDest);
             carManager.cars.Add(car);
             carManager.CreateCarRoute(car);
         }
