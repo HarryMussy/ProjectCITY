@@ -254,6 +254,8 @@ namespace CitySkylines0._5alphabeta
                         string roadname = nameProvider.GetRandomName();
                         Road newroad = new Road(8, startPoint.Value, endPoint, roadname);
                         audioManager.PlayPlaceSound();
+                        newroad.AddIntersection(startPoint.Value, newroad);
+                        newroad.AddIntersection(endPoint, newroad);
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
                         grid.CheckIntersectingRoads();

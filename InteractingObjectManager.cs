@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Microsoft.VisualBasic.Devices;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.CompilerServices;
+
+using System.Xml.Linq;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -13,6 +19,7 @@ namespace CitySkylines0._5alphabeta
         {
             Objects = new List<object>();
         }
+
         public Button CreateButton(string name, Point loc, Size size, Form form, int fontsize)
         {
             Button newbutton = new Button();
@@ -20,6 +27,19 @@ namespace CitySkylines0._5alphabeta
             newbutton.Text = name;
             newbutton.Font = new Font("Comic Sans", fontsize);
             newbutton.Size = size;
+            newbutton.Location = loc;
+            Objects.Add(newbutton);
+            form.Controls.Add(newbutton);
+            this.form = form;
+            return newbutton;
+        }
+        public Button CreateButton(Point loc, Size size, Form form, int fontsize, Image img)
+        {
+            Button newbutton = new Button();
+            newbutton.BackColor = Color.White;
+            newbutton.Font = new Font("Comic Sans", fontsize);
+            newbutton.Size = size;
+            newbutton.Image = img;
             newbutton.Location = loc;
             Objects.Add(newbutton);
             form.Controls.Add(newbutton);

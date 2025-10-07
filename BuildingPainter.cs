@@ -184,8 +184,10 @@ namespace CitySkylines0._5alphabeta
                 }
                 else if (building.type == "windfarm")
                 {
-                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
-                    g.DrawString("Wind Farm", font, moneyCostBrush, building.coords.X, building.coords.Y + 20);
+                    string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+                    string windFarmFilePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "windTurbine.gif");
+                    g.DrawImage(Image.FromFile(windFarmFilePath), building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
+                    ImageAnimator.Animate(Image.FromFile(windFarmFilePath), null); 
                 }
                 else if (building.type == "waterpump")
                 {
@@ -205,7 +207,7 @@ namespace CitySkylines0._5alphabeta
                 }
 
                 //debug code to find where the building is drawn from
-                g.FillEllipse(yellowBrush, building.coords.X, building.coords.Y, 3, 3);
+                /*g.FillEllipse(yellowBrush, building.coords.X, building.coords.Y, 3, 3);*/
             }
         }
 

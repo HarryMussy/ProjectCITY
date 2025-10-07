@@ -63,42 +63,58 @@ namespace CitySkylines0._5alphabeta
 
         public void CheckIntersectingRoads()
         {
+            // Clear old data
+            roadIntersections.Clear();
+
             for (int i = 0; i < edges.Count; i++)
             {
                 for (int j = i + 1; j < edges.Count; j++)
                 {
-                    Edge edge1 = edges[i];
-                    Edge edge2 = edges[j];
+                    Edge e1 = edges[i];
+                    Edge e2 = edges[j];
 
-                    if (DoIntersect(edge1.a, edge1.b, edge2.a, edge2.b))
+                    // --- CASE 1: Roads physically cross (mid-road intersection) ---
+                    if (DoIntersect(e1.a, e1.b, e2.a, e2.b))
                     {
-                        Point intersection = FindIntersectionPoint(edge1.a, edge1.b, edge2.a, edge2.b);
-
-                        foreach(IntersectingNode node in roadIntersections)
-                        {
-                            if (intersection.X >= node.coords.X - 10 && intersection.X <= node.coords.X + 10 && intersection.Y >= node.coords.Y - 10 && intersection.Y <= node.coords.Y + 10)
-                            {
-                                intersection = node.coords; //snap to existing intersection point
-                            }
-                        }
-
-                        if (!edge1.intersections.Any(node => node.coords == intersection))
-                        {
-                            //add the intersection point as a new node to the edges
-                            edge1.AddIntersection(intersection, edge2);
-                        }
-                        if (!edge2.intersections.Any(node => node.coords == intersection))
-                        {
-                            edge2.AddIntersection(intersection, edge1);
-                        }
-                        if (!edge1.intersections.Any(node => node.coords == intersection) && !edge2.intersections.Any(node => node.coords == intersection))
-                        {
-                            roadIntersections.Add(new IntersectingNode(intersection));
-                        }
+                        Point intersection = FindIntersectionPoint(e1.a, e1.b, e2.a, e2.b);
+                        if (intersection != Point.Empty)
+                            AddSharedIntersection(e1, e2, intersection);
                     }
+
+                    // --- CASE 2: Roads meet end-to-end (share endpoints) ---
+                    if (e1.a == e2.a) AddSharedIntersection(e1, e2, e1.a);
+                    if (e1.a == e2.b) AddSharedIntersection(e1, e2, e1.a);
+                    if (e1.b == e2.a) AddSharedIntersection(e1, e2, e1.b);
+                    if (e1.b == e2.b) AddSharedIntersection(e1, e2, e1.b);
                 }
             }
         }
+
+
+        private void AddSharedIntersection(Edge e1, Edge e2, Point intersection)
+        {
+            // Try to find an existing intersection node close to this point
+            IntersectingNode sharedNode = roadIntersections.FirstOrDefault(node => Math.Abs(node.coords.X - intersection.X) < 10 && Math.Abs(node.coords.Y - intersection.Y) < 10);
+
+            if (sharedNode == null)
+            {
+                sharedNode = new IntersectingNode(intersection);
+                roadIntersections.Add(sharedNode);
+            }
+
+            // Make sure both edges reference the same intersection node
+            if (!e1.intersections.Contains(sharedNode))
+                e1.intersections.Add(sharedNode);
+            if (!e2.intersections.Contains(sharedNode))
+                e2.intersections.Add(sharedNode);
+
+            // Register both roads in the node’s edge list
+            if (!sharedNode.connectedEdges.Contains(e1))
+                sharedNode.connectedEdges.Add(e1);
+            if (!sharedNode.connectedEdges.Contains(e2))
+                sharedNode.connectedEdges.Add(e2);
+        }
+
 
 
         public int Orientation(Point p, Point q, Point r)
