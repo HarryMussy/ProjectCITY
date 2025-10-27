@@ -1,6 +1,4 @@
-﻿using System.Windows.Media.Media3D;
-
-namespace CitySkylines0._5alphabeta
+﻿namespace CitySkylines0._5alphabeta
 {
     public class EdgePainter
     {
@@ -39,62 +37,53 @@ namespace CitySkylines0._5alphabeta
         }
         public void RoadPaint(object? sender, Graphics g, Point mousePos)
         {
-            foreach (Edge edge in grid.edges)
+            foreach (Node n in grid.roadNodes)
             {
-                // If edge weight varies:
-                roadPenBlack.Width = edge.edgeweight;
-                g.DrawLine(roadPenBlack, edge.a, edge.b);
-
-                if (!toggleRoadNames)
-                {
-                    form1.AddStrokeToText(sender, g, edge.name, 1, roadFont, blackBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
-                    g.DrawString(edge.name, roadFont, whiteBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
-                }
-
-                /*foreach (Node n in grid.nodesIntersectingRoads)
-                {
-                    g.FillRectangle(blackBrush, n.coords.X, n.coords.Y, 20, 20);
-                }*/
-
-                for (int i = 0; i < grid.edges.Count; i++)
-                {
-                    Edge e = grid.edges[i];
-                    string roadIntersections = $"{e.name} Intersections: ";
-                    foreach (IntersectingNode n in e.intersections)
-                    {
-                        roadIntersections += $"({n.coords.X}, {n.coords.Y}) ";
-                    }
-
-                    
-                    form1.AddStrokeToText(sender, g, roadIntersections, 1, new Font("Comic Sans", 8), blackBrush, new Point(10, 200 + i * 15));
-                    g.DrawString(roadIntersections, new Font("Comic Sans", 8), whiteBrush, new Point(10, 200 + i * 15));
-                }
+                g.FillRectangle(blackBrush, n.coords.X, n.coords.Y, 16, 16);
             }
 
             if (startPoint != null)
             {
-                Pen invalidroad = new Pen(Color.Red, 4);
-                Pen lightGrayPen = new Pen(Color.LightGray, 4);
+                Brush invalidroad = new SolidBrush(Color.Red);
+                Brush lightGrayBrush = new SolidBrush(Color.LightGray);
+                Pen blackPen = new Pen(Color.Black, 5);
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
 
                 if (cost > grid.cash)
                 {
-                    g.DrawLine(invalidroad, startPoint.Value, mousePos);
+                    Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
+                    Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
+                    List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
+                    foreach (Node n in nodes)
+                    {
+                        g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16);
+                    }
+                    tempEdge = null;
                 }
                 else
                 {
-                    g.DrawLine(lightGrayPen, startPoint.Value, mousePos);
+                    Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
+                    Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
+
+                    List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
+                    foreach (Node n in nodes)
+                    {
+                        g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16);
+                    }
+                    tempEdge = null;
                 }
+
                 Point linecenter = new Point((startPoint.Value.X + mousePos.X) / 2, (startPoint.Value.Y + mousePos.Y) / 2);
                 string displayedcost = cost.ToString("F2");
                 g.DrawString(displayedcost, new Font("Comic Sans", 10), greenBrush, linecenter);
             }
 
-            foreach (Edge e in grid.edges)
+            foreach (Edge edge in grid.edges)
             {
-                foreach (IntersectingNode n in e.intersections)
+                if (!toggleRoadNames)
                 {
-                    g.FillEllipse(redBrush, n.coords.X - 5, n.coords.Y - 5, 10, 10);
+                    form1.AddStrokeToText(sender, g, edge.name, 1, roadFont, blackBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
+                    g.DrawString(edge.name, roadFont, whiteBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
                 }
             }
         }
@@ -213,6 +202,11 @@ namespace CitySkylines0._5alphabeta
             Point? snappedPoint;
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
             var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+
+
+            clickedPoint.X = grid.nodes.OrderBy(node => Math.Abs(node.coords.X + 8 - clickedPoint.X)).First().coords.X;
+            clickedPoint.Y = grid.nodes.OrderBy(node => Math.Abs(node.coords.Y + 8 - clickedPoint.Y)).First().coords.Y;
+
             // Check if grid.intersections is null or empty
             if (grid.roadIntersections != null && grid.roadIntersections.Any())
             {
@@ -236,11 +230,13 @@ namespace CitySkylines0._5alphabeta
                 {
                     startPoint = null;
                 }
+
             }
             else
             {
                 bool isOverlapping = false;
                 Point endPoint = snappedPoint == null ? clickedPoint : snappedPoint.Value;
+                endPoint = SnapTo8Directions(startPoint.Value, endPoint);
                 if (startPoint == endPoint)
                 {
                     isOverlapping = true;
@@ -258,7 +254,7 @@ namespace CitySkylines0._5alphabeta
                         newroad.AddIntersection(endPoint, newroad);
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
-                        grid.CheckIntersectingRoads();
+                        //grid.CheckIntersectingRoads();
                         grid.FindRoadNodeIntersections();
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
@@ -269,8 +265,38 @@ namespace CitySkylines0._5alphabeta
                         }
                     }
                 }
-                
+
             }
+        }
+
+        public Point SnapTo8Directions(Point a, Point b)
+        {
+            int[] allowedAngles = { 0, 45, 90, 135, 180, 225, 270, 315 };
+
+            double changeX = b.X - a.X;
+            double changeY = b.Y - a.Y;
+            if (Math.Abs(changeX) < double.Epsilon && Math.Abs(changeY) < double.Epsilon) { return a; }
+
+            double angle = Math.Atan2(changeY, changeX) * (180.0 / Math.PI);
+            if (angle < 0) angle += 360.0;
+
+            static double AngleDiff(double a, double b)
+            {
+                double difference = Math.Abs(a - b) % 360.0;
+                if (difference > 180.0) { difference = 360.0 - difference; }
+                return difference;
+            }
+
+            //pick nearest allowed angle
+            int nearest = allowedAngles.OrderBy(ang => AngleDiff(ang, angle)).First();
+
+            //keep distance and find snapped point
+            double length = Math.Sqrt(changeX * changeX + changeY * changeY);
+            double rad = nearest * Math.PI / 180.0;
+            int newX = (int)Math.Round(a.X + length * Math.Cos(rad)); //no clue why it only works in radians
+            int newY = (int)Math.Round(a.Y + length * Math.Sin(rad));
+
+            return new Point(newX, newY);
         }
     }
 }

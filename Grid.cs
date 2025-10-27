@@ -1,11 +1,9 @@
-﻿using System.Runtime.CompilerServices;
-using System.Xml.Linq;
-
-namespace CitySkylines0._5alphabeta
+﻿namespace CitySkylines0._5alphabeta
 {
     public class Grid
     {
         public List<Node> nodes;
+        public List<Node> roadNodes;
         public List<Node> backgroundNodes;
         public List<Node> buildableNodes;
         public List<Edge> edges;
@@ -24,6 +22,7 @@ namespace CitySkylines0._5alphabeta
             rectSize = rectSizeIn;
             nodes = new List<Node>();
             backgroundNodes = new List<Node>();
+            roadNodes = new List<Node>();
             edges = new List<Edge>();
             buildableNodes = new List<Node>();
             buildings = new List<Building>();
@@ -61,17 +60,28 @@ namespace CitySkylines0._5alphabeta
         }
 
 
-        public void CheckIntersectingRoads()
+        /*public void CheckIntersectingRoads()
         {
-            // Clear old data
+            //clear old data
             roadIntersections.Clear();
+            List<Edge[]> checkedPairs = new List<Edge[]>();
 
             for (int i = 0; i < edges.Count; i++)
             {
-                for (int j = i + 1; j < edges.Count; j++)
+                for (int j = 0; j < edges.Count; j++)
                 {
                     Edge e1 = edges[i];
                     Edge e2 = edges[j];
+
+                    Edge[] newPair = { e1, e2 };
+
+                    foreach (Edge[] pair in checkedPairs)
+                    {
+                        if ((pair[0] == e1 && pair[1] == e2) || (pair[0] == e2 && pair[1] == e1))
+                        {
+                            return;
+                        }
+                    }
 
                     // --- CASE 1: Roads physically cross (mid-road intersection) ---
                     if (DoIntersect(e1.a, e1.b, e2.a, e2.b))
@@ -86,6 +96,8 @@ namespace CitySkylines0._5alphabeta
                     if (e1.a == e2.b) AddSharedIntersection(e1, e2, e1.a);
                     if (e1.b == e2.a) AddSharedIntersection(e1, e2, e1.b);
                     if (e1.b == e2.b) AddSharedIntersection(e1, e2, e1.b);
+
+                    checkedPairs.Add(newPair);
                 }
             }
         }
@@ -172,7 +184,7 @@ namespace CitySkylines0._5alphabeta
                 float y = (a1 * c2 - a2 * c1) / determinant;
                 return new Point((int)x, (int)y); //return the intersection point
             }
-        }
+        }*/
 
         public void InitializeWithBackground(Background bg)
         {
@@ -180,54 +192,79 @@ namespace CitySkylines0._5alphabeta
 
             for (int i = 0; i < nodes.Count; i++)
             {
-                nodes[i] = bg.tiles[i];
+                nodes[i].coords = new Point(bg.tiles[i].coords.X, bg.tiles[i].coords.Y);
+                nodes[i].isGrass = bg.tiles[i].isGrass;
+                nodes[i].tiledata = bg.tiles[i].tiledata;
             }
         }
+
+        public List<Node> FindRoadNodeIntersectionsForSpecificEdge(Edge road)
+        {
+            List<Node> intersectingNodesWithEdge = new List<Node>();
+            foreach (Node node in nodes)
+            {
+                node.isNearRoad = false;
+                foreach (Point n in road.pointsOnTheEdge)
+                {
+                    //check if the node intersects with the road edge (within range)
+                    if (node.coords.X + 8 <= n.X + rectSize && node.coords.X + 8 >= n.X - rectSize && node.coords.Y + 8 <= n.Y + rectSize && node.coords.Y + 8 >= n.Y - rectSize)
+                    {
+                        intersectingNodesWithEdge.Add(node);
+                    }
+                }
+            }
+            return intersectingNodesWithEdge;
+        }
+
         public void FindRoadNodeIntersections()
         {
-            if (edges != null)
+            if (edges == null) return;
+
+            //clear previous state
+            nodesIntersectingRoads.Clear();
+            roadNodes.Clear();
+            buildableNodes.Clear();
+
+            foreach (Node node in nodes)
             {
-                foreach (Node node in nodes)
+                node.isNearRoad = false;
+                node.isRoad = false;
+            }
+
+            foreach (Road road in edges)
+            {
+                foreach (Point n in road.pointsOnTheEdge)
                 {
-                    node.isNearRoad = false;
-                    foreach (Road road in edges)
+                    foreach (Node node in nodes)
                     {
-                        foreach (Point n in road.pointsOnTheEdge)
+                        //road node check
+                        if (node.coords.X + 8 <= n.X + rectSize && node.coords.X + 8 >= n.X - rectSize &&
+                            node.coords.Y + 8 <= n.Y + rectSize && node.coords.Y + 8 >= n.Y - rectSize)
                         {
-                            //check if the node intersects with the road edge (within range)
-                            if (node.coords.X + 10 <= n.X + rectSize && node.coords.X + 10 >= n.X - rectSize && node.coords.Y + 10 <= n.Y + rectSize && node.coords.Y + 10 >= n.Y - rectSize)
-                            {
-                                nodesIntersectingRoads.Add(node);
-                            }
-                            else if (node.coords.X + 10 <= n.X + (rectSize * 7) && node.coords.X + 10 >= n.X - (rectSize * 7) && node.coords.Y + 10 <= n.Y + (rectSize * 7) && node.coords.Y + 10 >= n.Y - (rectSize * 7))
-                            {
-                                node.isNearRoad = true;
+                            node.isRoad = true;
+                            nodesIntersectingRoads.Add(node);
+                            roadNodes.Add(node);
+                        }
+                        //near-road check
+                        else if (node.coords.X + 8 <= n.X + (rectSize * 4) && node.coords.X + 8 >= n.X - (rectSize * 4) &&
+                                 node.coords.Y + 8 <= n.Y + (rectSize * 4) && node.coords.Y + 8 >= n.Y - (rectSize * 4))
+                        {
+                            node.isNearRoad = true;
 
-                                //only add to buildableNodes if the node is not water and is not already occupied by a building
-                                bool alreadyExists = buildableNodes.Any(b => b.coords == node.coords);
-
-                                node.IsNodeBuildable(); //update buildable status based on current conditions
-                                if (node.isBuildable && !alreadyExists) //ensure the node is not water
-                                {
+                            node.IsNodeBuildable();
+                            if (node.isBuildable)
+                            {
+                                if (!buildableNodes.Any(b => b.coords == node.coords))
                                     buildableNodes.Add(node);
-                                }
                             }
                         }
                     }
                 }
             }
 
-            //clean up nodes that were previously marked as near roads but should not be anymore (if they're no longer valid)
-            foreach (Node n in nodesIntersectingRoads)
-            {
-                n.isNearRoad = false;
-                bool alreadyExists = buildableNodes.Any(b => b.coords == n.coords);
-                if (!alreadyExists)
-                {
-                    n.IsNodeBuildable(); //update buildable status based on current conditions
-                    buildableNodes.Remove(n);
-                }
-            }
+            //cleanup: remove any buildables that are now roads
+            buildableNodes.RemoveAll(n => n.isRoad);
         }
+
     }
 }

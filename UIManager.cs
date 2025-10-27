@@ -53,29 +53,29 @@ public class UIManager
         g.FillRectangle(uiBrush, zoomedBottomLeftX, zoomedBottomLeftY, zoomedWidth, zoomedHeight);
 
         string totalcash = "Musbux: " + map.cash.ToString("F2");
-        Font font = new Font("Comic Sans", 11);
-        Brush whiteBrush = new SolidBrush(Color.White);
-        Brush blackBrush = new SolidBrush(Color.Black);
+        Font font = new Font("Segoe UI", 11, FontStyle.Bold);
+        Brush innerBrush = new SolidBrush(Color.White);
+        Brush outerBrush = new SolidBrush(Color.FromArgb(60, 60, 60));
 
         SizeF textSize = g.MeasureString(totalcash, font);
-        int strokeWidth = 1;
+        int strokeWidth = 3;
 
         string doing = form.allOperations[form.currentOperation];
 
         int fps = form.fps;
-        form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, blackBrush, new Point(20, 20));
-        form.AddStrokeToText(sender, g, "Currently doing: " + doing, strokeWidth, font, blackBrush, new Point((int)zoomedBottomLeftX + 300, (int)zoomedBottomLeftY + 70));
-        form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, blackBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
-        form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, blackBrush, new Point(20,0));
-        form.AddStrokeToText(sender, g, "Energy Demand: " + form.necessitiesManager.globalElectricityStatus, strokeWidth, font, blackBrush, new Point(20, 40));
-        form.AddStrokeToText(sender, g, "Water Demand: " + form.necessitiesManager.globalWaterStatus, strokeWidth, font, blackBrush, new Point(20, 60));
+        form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, outerBrush, new Point(20, 20));
+        form.AddStrokeToText(sender, g, "Currently doing: " + doing, strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 300, (int)zoomedBottomLeftY + 70));
+        form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
+        form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, outerBrush, new Point(20,0));
+        form.AddStrokeToText(sender, g, "Energy Demand: " + form.necessitiesManager.globalElectricityStatus, strokeWidth, font, outerBrush, new Point(20, 40));
+        form.AddStrokeToText(sender, g, "Water Demand: " + form.necessitiesManager.globalWaterStatus, strokeWidth, font, outerBrush, new Point(20, 60));
 
-        g.DrawString("Energy Demand: " + form.necessitiesManager.globalElectricityStatus, font, whiteBrush, 20, 40);
-        g.DrawString("Water Demand: " + form.necessitiesManager.globalWaterStatus, font, whiteBrush, 20, 60);
-        g.DrawString(totalcash, font, whiteBrush, 20,20);
-        g.DrawString("Currently doing: " + doing, font, whiteBrush, zoomedBottomLeftX + 300, zoomedBottomLeftY + 70);
-        g.DrawString("-------------VOLUME-------------", font, whiteBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
-        g.DrawString("FPS: " + Convert.ToString(fps), font, whiteBrush, 20, 0);
+        g.DrawString("Energy Demand: " + form.necessitiesManager.globalElectricityStatus, font, innerBrush, 20, 40);
+        g.DrawString("Water Demand: " + form.necessitiesManager.globalWaterStatus, font, innerBrush, 20, 60);
+        g.DrawString(totalcash, font, innerBrush, 20,20);
+        g.DrawString("Currently doing: " + doing, font, innerBrush, zoomedBottomLeftX + 300, zoomedBottomLeftY + 70);
+        g.DrawString("-------------VOLUME-------------", font, innerBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
+        g.DrawString("FPS: " + Convert.ToString(fps), font, innerBrush, 20, 0);
 
 
         if (!buttonsCreated)

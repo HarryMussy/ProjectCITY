@@ -20,6 +20,7 @@
             Random rng = new Random();
             intersections = new List<IntersectingNode>();
             pointsOnTheEdge = new List<Point>();
+            FindAllPointOnEdge(this);
         }
 
         public void AddIntersection(Point p, Edge e)
@@ -41,9 +42,8 @@
 
         public void FindAllPointOnEdge(Edge road)
         {
-            float edgeGradient = (road.b.Y - road.a.Y) / (road.b.X - road.a.X);
             int steps = Math.Max(Math.Abs(road.b.X - road.a.X), Math.Abs(road.b.Y - road.a.Y));
-            for (int step = 0; step <= steps; step += 20)
+            for (int step = 0; step <= steps; step += 16)
             {
                 float t = step / (float)steps; // t is a parameter from 0 to 1
                 float x = road.a.X + t * (road.b.X - road.a.X);
@@ -51,6 +51,11 @@
                 Point n = new Point((int)x, (int)y); // All points along the line become n
                 road.pointsOnTheEdge.Add(n);
             }
+        }
+
+        public void IntersectionAlreadyExists()
+        {
+            intersections.Distinct();
         }
     }
 

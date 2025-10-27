@@ -7,8 +7,8 @@ public class Background
     private Dictionary<Point, Node> nodeLookup;
     private Random random;
     private int width, height;
-    private const float noiseScale = 0.11f;
-    private const float landThreshold = 0.1f;
+    private const float noiseScale = 0.10f;
+    private const float landThreshold = 0.25f;
     private PerlinNoise perlinNoise;
     public Form1 Form1;
     private List<Image> grassImages;

@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using Microsoft.VisualBasic.Devices;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Runtime.CompilerServices;
-
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -23,24 +15,33 @@ namespace CitySkylines0._5alphabeta
         public Button CreateButton(string name, Point loc, Size size, Form form, int fontsize)
         {
             Button newbutton = new Button();
-            newbutton.BackColor = Color.White;
             newbutton.Text = name;
-            newbutton.Font = new Font("Comic Sans", fontsize);
+            newbutton.Font = new System.Drawing.Font("Segoe UI", 6, FontStyle.Bold);
             newbutton.Size = size;
             newbutton.Location = loc;
+            newbutton.BackColor = Color.FromArgb(60, 60, 60);
+            newbutton.ForeColor = Color.White;
+            newbutton.FlatStyle = FlatStyle.Flat;
+            newbutton.Cursor = Cursors.Hand;
+            newbutton.FlatAppearance.BorderSize = 2;
+            newbutton.FlatAppearance.BorderColor = Color.LightBlue;
             Objects.Add(newbutton);
             form.Controls.Add(newbutton);
             this.form = form;
             return newbutton;
         }
-        public Button CreateButton(Point loc, Size size, Form form, int fontsize, Image img)
+        public Button CreateButton(Point loc, Size size, Form form, int fontsize, System.Drawing.Image img)
         {
             Button newbutton = new Button();
-            newbutton.BackColor = Color.White;
-            newbutton.Font = new Font("Comic Sans", fontsize);
             newbutton.Size = size;
-            newbutton.Image = img;
             newbutton.Location = loc;
+            newbutton.Image = img;
+            newbutton.BackColor = Color.FromArgb(60, 60, 60);
+            newbutton.ForeColor = Color.White;
+            newbutton.FlatStyle = FlatStyle.Flat;
+            newbutton.Cursor = Cursors.Hand;
+            newbutton.FlatAppearance.BorderSize = 2;
+            newbutton.FlatAppearance.BorderColor = Color.LightBlue;
             Objects.Add(newbutton);
             form.Controls.Add(newbutton);
             this.form = form;
@@ -67,6 +68,14 @@ namespace CitySkylines0._5alphabeta
             slider.Size = size;
 
             this.form = form;
+
+            slider.BackColor = Color.FromArgb(60, 60, 60);
+            slider.ForeColor = Color.White;
+            //slider.FlatStyle = FlatStyle.Flat;
+            slider.Cursor = Cursors.Hand;
+            //slider.FlatAppearance.BorderSize = 2;
+            //slider.FlatAppearance.BorderColor = Color.LightBlue;
+
             return slider;
         }
 

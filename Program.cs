@@ -11,10 +11,7 @@ namespace CitySkylines0._5alphabeta
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            // Use ApplicationContext to manage both forms
-            var context = new CustomApplicationContext();
-            Application.Run(context); // ? Only ONE message loop
+            Application.Run(new CustomApplicationContext());
         }
     }
 
@@ -25,18 +22,31 @@ namespace CitySkylines0._5alphabeta
 
         public CustomApplicationContext()
         {
-            loadingForm = new LoadingForm();
-            loadingForm.Shown += async (s, e) => await LoadMainFormAsync();
-            loadingForm.FormClosed += (s, e) => ExitThread(); // fallback if user closes early
-            loadingForm.Show();
+            ShowMainMenu();
         }
 
-        private async Task LoadMainFormAsync()
+        private void ShowMainMenu()
         {
-            // Simulate loading delay or do non-UI loading here
-            await Task.Delay(0); // Or your actual loading logic
+            MainMenuForm mainMenu = new MainMenuForm();
+            DialogResult result = mainMenu.ShowDialog();
 
-            // Now create the main form on the UI thread
+            if (result == DialogResult.OK)
+            {
+                _ = ShowLoadingAndLaunchGameAsync();
+            }
+            else
+            {
+                ExitThread();
+            }
+        }
+
+        private async Task ShowLoadingAndLaunchGameAsync()
+        {
+            loadingForm = new LoadingForm();
+            loadingForm.Show();
+
+            await Task.Delay(1000); // simulate load or do actual loading
+
             mainForm = new Form1();
 
             loadingForm.Hide();

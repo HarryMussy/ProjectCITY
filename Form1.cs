@@ -12,13 +12,6 @@
 
 using System.Diagnostics;
 using System.IO;
-using System.Media;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Windows.Forms.VisualStyles;
-using System.Xml.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Taskbar;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
 namespace CitySkylines0._5alphabeta
 {
     public partial class Form1 : Form
@@ -69,6 +62,9 @@ namespace CitySkylines0._5alphabeta
 
         public Form1()
         {
+            //initiate loading form
+            loadingForm = new LoadingForm();
+            loadingForm.Show();
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
@@ -83,6 +79,8 @@ namespace CitySkylines0._5alphabeta
             tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
+            //close loading form
+            loadingForm.Close();
             this.ClientSizeChanged += Form1_Resize;
             backgroundMap = new Background(60, 60, this, rectSize);
             grid = new Grid(60, 60, backgroundMap, rectSize);
@@ -94,7 +92,7 @@ namespace CitySkylines0._5alphabeta
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
-            
+
             allEventHandlers.Add(Form1_RoadButton);
             allEventHandlers.Add(Form1_ToggleNames);
             allEventHandlers.Add((sender, e) => Form1_BuildingBuilder(sender, e, buildingType));
@@ -186,6 +184,11 @@ namespace CitySkylines0._5alphabeta
             if (necessitiesManager.globalElectricitySupply > necessitiesManager.globalElectricityDemand) { grid.cash += (necessitiesManager.globalElectricitySupply - necessitiesManager.globalElectricityDemand) * 3; } //sells excess electricity for cash
             if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) * 3 / 1000; } //sells excess water for cash
 
+            foreach (Edge edge in grid.edges)
+            {
+                edge.IntersectionAlreadyExists();
+            }
+
             foreach (Node n in grid.nodes)
             {
                 n.IsNodeBuildable();
@@ -196,21 +199,29 @@ namespace CitySkylines0._5alphabeta
             backgroundMap.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
-            if (carRandom.NextDouble() < 1 && carManager.cars.Count <= grid.buildings.Count)
+            if (carRandom.NextDouble() < 0.01 && carManager.cars.Count <= grid.buildings.Count)
             {
                 SpawnCarNearBuilding();
             }
 
-            carManager.MoveCar();
+            foreach (Car car in carManager.cars)
+            {
+                carManager.MoveCar(car);
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string iconPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "projectCityMain.ico");
+
             this.CreateGraphics();
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.UpdateStyles();
             WindowState = FormWindowState.Maximized;
             this.Paint += Form1_Paint;
+            this.Icon = new Icon(iconPath);
+            this.Text = "PROJECT CITY";
         }
         private void Form1_ToggleNames(object? sender, EventArgs e)
         {
@@ -228,7 +239,7 @@ namespace CitySkylines0._5alphabeta
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
-            
+
 
             backgroundMap.DrawMap(sender, g, zoomLevel);
 
@@ -327,7 +338,7 @@ namespace CitySkylines0._5alphabeta
                     edge.b.X += dx;
                     edge.b.Y += dy;
 
-                    foreach(IntersectingNode node in edge.intersections)
+                    foreach (IntersectingNode node in edge.intersections)
                     {
                         node.coords.X += dx;
                         node.coords.Y += dy;
@@ -342,22 +353,35 @@ namespace CitySkylines0._5alphabeta
                         edge.pointsOnTheEdge[i] = point;
                     }
                 }
-
-                foreach (Building b in grid.buildings)
-                {
-                    b.coords.X += dx;
-                    b.coords.Y += dy;
-                }
-
-                foreach (Node node in backgroundMap.tiles)
-                {
-                    node.coords.X += dx;
-                    node.coords.Y += dy;
-                }
-
-                mouseXold = currentMousePos.X;
-                mouseYold = currentMousePos.Y;
             }
+
+            foreach (Car c in carManager.cars)
+            {
+                c.currentPosition.X += dx;
+                c.currentPosition.Y += dy;
+            }
+
+            foreach (Building b in grid.buildings)
+            {
+                b.coords.X += dx;
+                b.coords.Y += dy;
+            }
+
+            foreach (Node node in backgroundMap.tiles)
+            {
+                node.coords.X += dx;
+                node.coords.Y += dy;
+            }
+
+            foreach (Node node in grid.nodes)
+            {
+                node.coords.X += dx;
+                node.coords.Y += dy;
+            }
+
+            mouseXold = currentMousePos.X;
+            mouseYold = currentMousePos.Y;
+
         }
 
         private void Form1_MouseUp(object? sender, MouseEventArgs m)
@@ -420,9 +444,9 @@ namespace CitySkylines0._5alphabeta
 
         public void AddStrokeToText(object? sender, Graphics g, string text, int strokeWidth, Font font, Brush brush, Point point)
         {
-            for (float dx = -strokeWidth; dx <= strokeWidth; dx += strokeWidth)
+            for (float dx = -strokeWidth; dx <= strokeWidth; dx++)
             {
-                for (float dy = -strokeWidth; dy <= strokeWidth; dy += strokeWidth)
+                for (float dy = -strokeWidth; dy <= strokeWidth; dy++)
                 {
                     if (dx != 0 || dy != 0)
                     {
@@ -438,29 +462,17 @@ namespace CitySkylines0._5alphabeta
 
             Random rng = new Random();
             // Find a building and a nearby road
-            var building = grid.buildings[rng.Next(0, grid.buildings.Count-1)];
+            var building = grid.buildings[rng.Next(0, grid.buildings.Count - 1)];
             if (building == null || grid.edges.Count == 0) return;
 
             // Find the closest edge and closest point on the edge to the house
-            Edge closestEdge = grid.edges.OrderBy(e => Math.Min(Distance(building.coords, e.a), Distance(building.coords, e.b))).First();
-
-            Point closestPoint = closestEdge.a;
-            foreach (Point p in closestEdge.pointsOnTheEdge)
-            {
-                float dist = Distance(building.coords, p);
-                if (dist < Distance(building.coords, closestPoint))
-                {
-                    closestPoint = p;
-                }
-            }
-
-            Edge edgeDest = grid.edges[rng.Next(0, grid.edges.Count - 1)]; //random edge for destination
-            Point destinationPoint = edgeDest.pointsOnTheEdge[rng.Next(0, edgeDest.pointsOnTheEdge.Count-1)]; //random destination on another road
+            Node closestNode = grid.roadNodes.OrderBy(n => Distance(building.coords, n.coords)).First();
+            Node nDest = grid.roadNodes[rng.Next(0, grid.roadNodes.Count - 1)]; //random edge for destination
 
             // Spawn car at start of edge
-            Car car = new Car(closestEdge, closestPoint, 0.01, destinationPoint, edgeDest);
+            Car car = new Car(closestNode, 0.01, nDest);
+            car.route = carManager.CreateCarRoute(car);
             carManager.cars.Add(car);
-            carManager.CreateCarRoute(car);
         }
 
         private float Distance(Point a, Point b)
