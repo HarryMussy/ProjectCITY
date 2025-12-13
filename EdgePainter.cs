@@ -16,10 +16,9 @@
         public AudioManager audioManager;
         public SmokeParticleManager smokeParticleManager;
         public Graphics g;
-        private readonly Pen roadPenBlack = new Pen(Color.Black, 1);
         private readonly Brush whiteBrush = new SolidBrush(Color.White);
         private readonly Brush greenBrush = new SolidBrush(Color.Green);
-        private readonly Brush redBrush = new SolidBrush(Color.Red);
+        private readonly Brush greyBrush = new SolidBrush(Color.Gray);
         private readonly Brush blackBrush = new SolidBrush(Color.Black);
         private readonly Font roadFont = new Font("Comic Sans", 10);
 
@@ -39,7 +38,7 @@
         {
             foreach (Node n in grid.roadNodes)
             {
-                g.FillRectangle(blackBrush, n.coords.X, n.coords.Y, 16, 16);
+                g.FillRectangle(greyBrush, n.coords.X, n.coords.Y, 16, 16);
             }
 
             if (startPoint != null)

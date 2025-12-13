@@ -1,6 +1,7 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿
+namespace CitySkylines0._5alphabeta
 {
-    partial class MainMenuForm
+    partial class OptionsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -30,16 +31,20 @@
         {
             SuspendLayout();
             // 
-            // MainMenuForm
+            // OptionsForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(278, 244);
-            Name = "MainMenuForm";
-            Text = "MainMenuForm";
-            WindowState = FormWindowState.Maximized;
-            Load += MainMenuForm_Load;
+            ClientSize = new Size(800, 450);
+            Name = "OptionsForm";
+            Text = "OptionsForm";
+            Load += OptionsForm_Load;
             ResumeLayout(false);
+        }
+
+        private void OptionsForm_Load(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

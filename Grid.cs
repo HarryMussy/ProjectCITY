@@ -1,38 +1,39 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿using System.Text.Json.Serialization;
+
+namespace CitySkylines0._5alphabeta
 {
     public class Grid
     {
-        public List<Node> nodes;
-        public List<Node> roadNodes;
-        public List<Node> backgroundNodes;
-        public List<Node> buildableNodes;
-        public List<Edge> edges;
-        public List<IntersectingNode> roadIntersections;
-        public List<Node> nodesIntersectingRoads;
-        public List<Building> buildings;
-        public List<PictureBox> roadImages;
-        private readonly int rectSize;
-        public float cash; //called Musbux
-        private Background background;
-        public List<Point> AllPoints => edges.SelectMany(edge => new List<Point> { edge.a, edge.b }).Distinct().ToList();
-        private int width, height;
-        public Grid(int width, int height, Background background, int rectSizeIn)
+        public List<Node> nodes { get; set; } = new();
+        public List<Node> roadNodes { get; set; } = new();
+        public List<Node> buildableNodes { get; set; } = new();
+        public List<Edge> edges { get; set; } = new();
+        public List<IntersectingNode> roadIntersections { get; set; } = new();
+        public List<Node> nodesIntersectingRoads { get; set; } = new();
+        public List<Building> buildings { get; set; } = new();
+
+        [JsonIgnore]
+        public List<PictureBox> roadImages { get; set; }
+
+        public float cash { get; set; }
+
+        public int width { get; set; }
+        public int height { get; set; }
+
+        [JsonIgnore]
+        public int rectSize;
+        public Background background { get; set; }
+
+        public Grid() { } // required
+
+        public Grid(int width, int height, Background background, int rectSize)
         {
-            nodesIntersectingRoads = new List<Node>();
-            rectSize = rectSizeIn;
-            nodes = new List<Node>();
-            backgroundNodes = new List<Node>();
-            roadNodes = new List<Node>();
-            edges = new List<Edge>();
-            buildableNodes = new List<Node>();
-            buildings = new List<Building>();
-            roadIntersections = new List<IntersectingNode>();
-            this.background = background;
-            //generate a grid with buildable nodes
             this.width = width;
             this.height = height;
-            CreateNodes();
+            this.background = background;
             cash = 100000;
+            this.rectSize = rectSize;
+            CreateNodes();
             InitializeWithBackground(background);
         }
         public void CreateNodes()
@@ -43,7 +44,7 @@
                 for (int y = 0; y < height; y++)
                 {
                     Point coords = new Point(x * rectSize, y * rectSize);
-                    Node node = new Node(coords.X, coords.Y, null, false, tempNum++, false);
+                    Node node = new Node(new Point(coords.X, coords.Y), null, false, tempNum++, false, false);
                     nodes.Add(node);
                 }
             }
@@ -194,7 +195,7 @@
             {
                 nodes[i].coords = new Point(bg.tiles[i].coords.X, bg.tiles[i].coords.Y);
                 nodes[i].isGrass = bg.tiles[i].isGrass;
-                nodes[i].tiledata = bg.tiles[i].tiledata;
+                nodes[i].tileData = bg.tiles[i].tileData;
             }
         }
 

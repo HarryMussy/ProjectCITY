@@ -1,6 +1,7 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿
+namespace CitySkylines0._5alphabeta
 {
-    partial class MainMenuForm
+    partial class LoadSaveForm
     {
         /// <summary>
         /// Required designer variable.
@@ -30,16 +31,25 @@
         {
             SuspendLayout();
             // 
-            // MainMenuForm
+            // LoadSaveForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(278, 244);
-            Name = "MainMenuForm";
-            Text = "MainMenuForm";
-            WindowState = FormWindowState.Maximized;
-            Load += MainMenuForm_Load;
+            ClientSize = new Size(800, 450);
+            Name = "LoadSaveForm";
+            Text = "LoadSaveForm";
+            Load += LoadSaveForm_Load;
             ResumeLayout(false);
+            using SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "City Save (*.citysave)|*.citysave";
+            dialog.DefaultExt = "citysave";
+            dialog.AddExtension = true;
+            dialog.Title = "Save Game";
+        }
+
+        private void LoadSaveForm_Load(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

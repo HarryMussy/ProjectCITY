@@ -89,37 +89,69 @@ namespace CitySkylines0._5alphabeta
 
         private void BtnPlay_Click(object? sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK; // signals "Play" to Program.cs
-            this.Close();
+            using (Form playMenu = new Form())
+            {
+                playMenu.Text = "PLAY";
+                playMenu.ClientSize = new Size(400, 300);
+                playMenu.StartPosition = FormStartPosition.CenterParent;
+                playMenu.BackColor = Color.FromArgb(40, 40, 40);
+                playMenu.ForeColor = Color.White;
+                playMenu.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+
+                Button btnNew = new Button { Text = "NEW GAME", Size = new Size(200, 50), Location = new Point(100, 60) };
+                Button btnLoad = new Button { Text = "LOAD GAME", Size = new Size(200, 50), Location = new Point(100, 130) };
+
+                btnNew.Click += (s, e2) =>
+                {
+                    playMenu.DialogResult = DialogResult.OK;
+                    playMenu.Close();
+                    this.Close();
+                    Form1 form = new Form1();
+                    form.Show();
+                };
+
+                btnLoad.Click += (s, e2) =>
+                {
+                    var save = SaveManager.LoadGameFromFile();
+                    if (save != null)
+                    {
+                        playMenu.DialogResult = DialogResult.OK;
+                        playMenu.Close();
+                        this.Close();
+                        Form1 form = new Form1(save);
+                        form.Show();
+                    }
+                    else
+                    {
+                        // load was cancelled or failed - keep the play menu open (optional)
+                        Console.WriteLine("Load cancelled or failed.");
+                    }
+                };
+
+                playMenu.Controls.Add(btnNew);
+                playMenu.Controls.Add(btnLoad);
+
+                playMenu.ShowDialog();
+            }
         }
+
+
 
         private void BtnOptions_Click(object? sender, EventArgs e)
         {
-            Form optionsForm = new Form
-            {
-                Text = "OPTIONS (Coming Soon)",
-                ClientSize = new Size(600, 400),
-                StartPosition = FormStartPosition.CenterParent,
-                BackColor = Color.DimGray
-            };
-
-            Label comingSoon = new Label
-            {
-                Text = "Options Menu Coming Soon!",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
-                AutoSize = true,
-                Location = new Point(100, 150)
-            };
-
-            optionsForm.Controls.Add(comingSoon);
-            optionsForm.ShowDialog();
+            OptionsForm optionsForm = new OptionsForm(false);
+            optionsForm.Show();
         }
 
         private void BtnQuit_Click(object? sender, EventArgs e)
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void MainMenuForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

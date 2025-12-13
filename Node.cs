@@ -8,57 +8,52 @@ namespace CitySkylines0._5alphabeta
 {
     public class Node
     {
-        public Point coords;
-        public int rnd;
-        public Building tiledata; //if it has a building on it
-        public bool isNearRoad;
-        public int nodeNumber;
-        public bool isBuildable; //if it is buildable or not
-        public bool isRoad; //if it is a road node
-        public bool isGrass;
-        //for pathfinding
-        public int gCost { get; set; }
-        public int hCost { get; set; }
-        public int fCost { get { return gCost + hCost; } }
+        public Point coords { get; set; }
+        public Building tileData { get; set; }
+        public bool isNearRoad { get; set; }
+        public int nodeNumber { get; set; }
+        public bool isRoad { get; set; }
+        public bool isGrass { get; set; }
+        public bool isBuildable { get; set; }
+
+        public float gCost { get; set; }
+        public float hCost { get; set; }
+        public float fCost => gCost + hCost;
+
         public Node parent { get; set; }
 
-        public Node(Point coordsin, Building tiledatain, bool isNearRoadIn, int nodeNumber)
+        public Node() { } // required
+        public Node(Point coords, Building tileData, bool near, int number, bool isRoad, bool isGrass)
         {
-            coords = coordsin;
-            tiledata = tiledatain;
-            isNearRoad = isNearRoadIn;
-            this.nodeNumber = nodeNumber;
-            IsNodeBuildable();
-        }
-        //2 constructors cuz why not
-        public Node(int xcor, int ycor, Building tiledatain, bool isNearRoadIn, int nodeNumber, bool isGrass)
-        {
-            coords = new Point(xcor, ycor);
-            tiledata = tiledatain;
-            this.nodeNumber = nodeNumber;
-            isNearRoad = isNearRoadIn;
+            this.coords = coords;
+            this.tileData = tileData;
+            isNearRoad = near;
+            nodeNumber = number;
+            this.isRoad = isRoad;
             this.isGrass = isGrass;
             IsNodeBuildable();
         }
 
         public void IsNodeBuildable()
         {
-            if (tiledata == null && isGrass && isNearRoad && !isRoad) 
+            if (tileData == null && isGrass && isNearRoad && !isRoad) 
             {
                 isBuildable = true;
             }
         }
     }
 
-    public class IntersectingNode : IEquatable<IntersectingNode>
+    public class IntersectingNode
     {
-        public Point coords;
-        public List<Edge> connectedEdges = new List<Edge>();
+        public Point coords { get; set; }
+        public List<Edge> connectedEdges { get; set; } = new();
 
-        public IntersectingNode(Point coordsIn)
+        public IntersectingNode() { }
+        public IntersectingNode(Point coords)
         {
-            coords = coordsIn;
+            this.coords = coords;
         }
+
 
         public bool Equals(IntersectingNode? other)
         {

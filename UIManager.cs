@@ -1,13 +1,5 @@
 ﻿using CitySkylines0._5alphabeta;
-using NAudio.Gui;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using Microsoft.VisualBasic.Devices;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 public class UIManager
 {
@@ -19,6 +11,7 @@ public class UIManager
     private float zoomedBottomLeftY;
     private Grid map;
     private InteractingObjectManager interactingObjectManager;
+    private Calendar calendar;
     private Form1 form;
     private EventHandler roadButtonClickHandler;
     private EventHandler toggleNamesClickHandler;
@@ -29,7 +22,7 @@ public class UIManager
     private bool buttonsCreated = false; // Flag to track if buttons are already created
 
 
-    public UIManager(float zoomLevel, Func<(float, float)> getDimensions, Grid map, InteractingObjectManager buttonManager, Form1 form, List<EventHandler> allEventHandlers)
+    public UIManager(float zoomLevel, Func<(float, float)> getDimensions, Grid map, InteractingObjectManager buttonManager, Form1 form, List<EventHandler> allEventHandlers, Calendar calendarIn)
     {
         this.zoomLevel = zoomLevel;
         this.getDimensions = getDimensions;
@@ -44,6 +37,7 @@ public class UIManager
         volSlider = allEventHandlers[5];
         zoomedBottomLeftX = 0;
         zoomedBottomLeftY = 0;
+        calendar = calendarIn;
     }
 
     public void ConstructUI(object? sender, Graphics g)
@@ -65,16 +59,21 @@ public class UIManager
         int fps = form.fps;
         form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, outerBrush, new Point(20, 20));
         form.AddStrokeToText(sender, g, "Currently doing: " + doing, strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 300, (int)zoomedBottomLeftY + 70));
-        form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
-        form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, outerBrush, new Point(20,0));
+        //form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
+        form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, outerBrush, new Point(20, 0));
         form.AddStrokeToText(sender, g, "Energy Demand: " + form.necessitiesManager.globalElectricityStatus, strokeWidth, font, outerBrush, new Point(20, 40));
         form.AddStrokeToText(sender, g, "Water Demand: " + form.necessitiesManager.globalWaterStatus, strokeWidth, font, outerBrush, new Point(20, 60));
 
+        form.AddStrokeToText(sender, g, calendar.time, strokeWidth, font, outerBrush, new Point(20, 80));
+        form.AddStrokeToText(sender, g, calendar.date, strokeWidth, font, outerBrush, new Point(20, 100));
+        g.DrawString(calendar.time, font, innerBrush, 20, 80);
+        g.DrawString(calendar.date, font, innerBrush, 20, 100);
+
         g.DrawString("Energy Demand: " + form.necessitiesManager.globalElectricityStatus, font, innerBrush, 20, 40);
         g.DrawString("Water Demand: " + form.necessitiesManager.globalWaterStatus, font, innerBrush, 20, 60);
-        g.DrawString(totalcash, font, innerBrush, 20,20);
+        g.DrawString(totalcash, font, innerBrush, 20, 20);
         g.DrawString("Currently doing: " + doing, font, innerBrush, zoomedBottomLeftX + 300, zoomedBottomLeftY + 70);
-        g.DrawString("-------------VOLUME-------------", font, innerBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
+        //g.DrawString("-------------VOLUME-------------", font, innerBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
         g.DrawString("FPS: " + Convert.ToString(fps), font, innerBrush, 20, 0);
 
 
@@ -84,7 +83,8 @@ public class UIManager
             interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses","house4.png");
+            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A", "house4.png");
+            Image i = Image.FromFile(pathToHouseImage);
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
 
@@ -93,12 +93,17 @@ public class UIManager
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 68, (int)zoomedBottomLeftY + 15), new Size(64, 48), form, 6, Image.FromFile(pathToTurbineImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "windfarm");
 
+            interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedBottomLeftX + 500, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += (s, e) =>
+            {
+                new OptionsForm(true, form.audioManager, form).ShowDialog();
+            };
+
 
             interactingObjectManager.CreateButton("WATER PUMP", new Point((int)zoomedBottomLeftX + 140, (int)zoomedBottomLeftY + 15), new Size(70, 25), form, 6)
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 220, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
-            interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;
+            //interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;
             buttonsCreated = true;
         }
     }
@@ -114,5 +119,5 @@ public class UIManager
         buttonsCreated = false; // Reset button creation flag
     }
 
-    
+
 }

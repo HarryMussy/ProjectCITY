@@ -1,5 +1,6 @@
 ﻿using CitySkylines0._5alphabeta;
 using System.IO;
+using System.Text.Json.Serialization;
 
 public class Background
 {
@@ -8,8 +9,9 @@ public class Background
     private Random random;
     private int width, height;
     private const float noiseScale = 0.10f;
-    private const float landThreshold = 0.25f;
+    private const float landThreshold = 0.05f;
     private PerlinNoise perlinNoise;
+    [JsonIgnore]
     public Form1 Form1;
     private List<Image> grassImages;
     private Dictionary<Node, int> tileGrassImageIndex = new();
@@ -79,9 +81,9 @@ public class Background
             for (int y = 0; y < height; y++)
             {
                 float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
-                bool isLand = noiseValue < landThreshold;
+                bool isLand = noiseValue > landThreshold;
                 Point coords = new Point(x * rectSize, y * rectSize);
-                Node node = new Node(coords.X, coords.Y, null, false, nodeNumber++, isLand);
+                Node node = new Node(new Point(coords.X, coords.Y), null, false, nodeNumber++, false, isLand);
                 tiles.Add(node);
                 nodeLookup[coords] = node;
             }

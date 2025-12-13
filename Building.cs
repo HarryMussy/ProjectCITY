@@ -1,20 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace CitySkylines0._5alphabeta
 {
     public abstract class Building
     {
-        public List<Necessity> necessities;
-        public Size size;
-        public Point coords;
-        public string type; //e.g. factory, house
-        public List<Node> occupyingNodes;
-        public virtual int cost { get; } = 0;
-        public virtual int tax { get; } = 0;
+        public Point coords { get; set; }
+        public Size size { get; set; }
+        public string type { get; set; }
+        public List<Node> occupyingNodes { get; set; } = new();
+        public List<Necessity> necessities { get; set; } = new();
+
+        public virtual int cost { get; set; }
+        public virtual int tax { get; set; }
+
+        public Building() { } // required for JSON
 
         public Building(Size size, Point coords, string type, float energyDemand, float waterDemand)
         {
@@ -23,37 +22,52 @@ namespace CitySkylines0._5alphabeta
             this.type = type;
             occupyingNodes = new List<Node>();
             this.cost = 0;
-            necessities = [ new Electricity(energyDemand), new Water(waterDemand) ];
+            necessities = [new Electricity(energyDemand), new Water(waterDemand)];
         }
     }
 
     public class House : Building
     {
-        public override int cost { get; } = 10000;
-        public override int tax { get; } = 5;
-        public House(Size size, Point coords, string type) : base(size, coords, type, 2, 150)
+        float energyDemand { get; set; }
+        float waterDemand { get; set; }
+        public House() { } //required
+        public House(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand)
         {
-            this.type = "house";
+            type = "house";
+            cost = 10000;
+            tax = 5;
+            this.energyDemand = energyDemand;
+            this.waterDemand = waterDemand;
         }
     }
 
     public class Windfarm : Building
     {
-        public override int cost { get; } = 40000;
-        public override int tax { get; } = 0;
-        public Windfarm(Size size, Point coords, string type) : base(size, coords, type, -30, 0)
+        float energyDemand { get; set; }
+        float waterDemand { get; set; }
+        public Windfarm() { } //required
+        public Windfarm(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand)
         {
-            this.type = "windfarm";
+            type = "windfarm";
+            cost = 50000;
+            tax = 20;
+            this.energyDemand = energyDemand;
+            this.waterDemand = waterDemand;
         }
     }
 
     public class WaterPump : Building
     {
-        public override int cost { get; } = 20000;
-        public override int tax { get; } = 0;
-        public WaterPump(Size size, Point coords, string type) : base(size, coords, type, 0, -1000)
+        float energyDemand { get; set; }
+        float waterDemand { get; set; }
+        public WaterPump() { } //required
+        public WaterPump(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand)
         {
-            this.type = "waterpump";
+            type = "waterpump";
+            cost = 20000;
+            tax = 20;
+            this.energyDemand = energyDemand;
+            this.waterDemand = waterDemand;
         }
     }
 }
