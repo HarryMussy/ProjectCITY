@@ -143,6 +143,22 @@ namespace CitySkylines0._5alphabeta
             Controls.Add(btnClose);
         }
 
+        private void PopulateValuesFromAudio()
+        {
+            if (audioManager != null)
+            {
+                masterVolume.Value = Math.Clamp((int)(audioManager.masterVolume * 100), 0, 100);
+                musicVolume.Value = Math.Clamp((int)(audioManager.musicVolume * 100), 0, 100);
+                effectsVolume.Value = Math.Clamp((int)(audioManager.efxVolume * 100), 0, 100);
+            }
+            else
+            {
+                masterVolume.Value = 50;
+                musicVolume.Value = 50;
+                effectsVolume.Value = 50;
+            }
+        }
+
         private TrackBar CreateSlider(string label, int y)
         {
             var lbl = new Label
@@ -168,10 +184,12 @@ namespace CitySkylines0._5alphabeta
                 float v = slider.Value / 100f;
                 if (audioManager != null)
                 {
-                    // master controls all track volumes here
-                    audioManager.volume = v;
-                    foreach (var t in audioManager.trackVolumeProviders)
-                        t.Volume = v;
+                    if (label.Contains("Master"))
+                        audioManager.SetMasterVolume(v);
+                    else if (label.Contains("Music"))
+                        audioManager.SetMusicVolume(v);
+                    else if (label.Contains("Effects"))
+                        audioManager.SetEffectsVolume(v);
                 }
             };
 
@@ -217,7 +235,7 @@ namespace CitySkylines0._5alphabeta
                     // call Save manager with game form's state
                     try
                     {
-                        SaveManager.SaveGameToFile(dlg.SelectedPath, gameFormReference.grid, gameFormReference.calendar);
+                        SaveManager.SaveGameToFile(dlg.SelectedPath, gameFormReference.grid, gameFormReference.calendar, gameFormReference.background);
                         //MessageBox.Show("Game saved to: " + dlg.SelectedPath, "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
@@ -244,23 +262,6 @@ namespace CitySkylines0._5alphabeta
                         //MessageBox.Show("Load failed: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-            }
-        }
-
-        private void PopulateValuesFromAudio()
-        {
-            if (audioManager != null)
-            {
-                int val = (int)(audioManager.volume * 100);
-                masterVolume.Value = Math.Clamp(val, 0, 100);
-                musicVolume.Value = masterVolume.Value;
-                effectsVolume.Value = masterVolume.Value;
-            }
-            else
-            {
-                masterVolume.Value = 50;
-                musicVolume.Value = 50;
-                effectsVolume.Value = 50;
             }
         }
     }

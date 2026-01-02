@@ -22,6 +22,8 @@ namespace CitySkylines0._5alphabeta
 
         [JsonIgnore]
         public int rectSize;
+
+        [JsonIgnore]
         public Background background { get; set; }
 
         public Grid() { } // required
@@ -247,8 +249,8 @@ namespace CitySkylines0._5alphabeta
                             roadNodes.Add(node);
                         }
                         //near-road check
-                        else if (node.coords.X + 8 <= n.X + (rectSize * 4) && node.coords.X + 8 >= n.X - (rectSize * 4) &&
-                                 node.coords.Y + 8 <= n.Y + (rectSize * 4) && node.coords.Y + 8 >= n.Y - (rectSize * 4))
+                        else if (node.coords.X + 8 <= n.X + (rectSize * 8) && node.coords.X + 8 >= n.X - (rectSize * 8) &&
+                                 node.coords.Y + 8 <= n.Y + (rectSize * 8) && node.coords.Y + 8 >= n.Y - (rectSize * 8))
                         {
                             node.isNearRoad = true;
 

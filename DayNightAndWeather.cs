@@ -1,14 +1,22 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿using System;
+using System.Drawing;
+using System.Text.Json.Serialization;
+
+namespace CitySkylines0._5alphabeta
 {
     public class Calendar
     {
-        public int day;
-        public int month;
-        public int year;
-        public string date { get { return day + "/" + month + "/" + year; } }
+        public int day { get; set; }
+        public int month { get; set; }
+        public int year { get; set; }
 
-        public int hour;
-        public int minute;
+        [JsonIgnore]
+        public string date => day + "/" + month + "/" + year;
+
+        public int hour { get; set; }
+        public int minute { get; set; }
+
+        [JsonIgnore]
         public string time
         {
             get
@@ -18,11 +26,16 @@
             }
         }
 
-        private double elapsedTotal; //in milliseconds
+        // Must be serialized or time will jump after load
+        public double elapsedTotal { get; set; }
 
         // configuration for visual alpha ranges
         private const int MaxAlpha = 150;
 
+        // REQUIRED for JSON
+        public Calendar() { }
+
+        // Your existing constructor
         public Calendar(int dayIn, int monthIn, int yearIn, int hourIn, int minuteIn)
         {
             day = dayIn;
@@ -33,34 +46,41 @@
             elapsedTotal = 0;
         }
 
-        public int GetHour() { return hour; }
+        public int GetHour() => hour;
+
         public void AdvanceTime(double elapsed)
         {
-            double timeToAdvance = 1000; //default 1
-            int advanceMinutes = 1; //default 1
+            double timeToAdvance = 1000; // 1 second real time
+            int advanceMinutes = 1;
+
             elapsedTotal += elapsed;
 
-            if (elapsedTotal >= timeToAdvance) //1 second has passed
-            {                               //1 minute in game = 1 second irl
-                minute += advanceMinutes; //advance 1 minute
+            if (elapsedTotal >= timeToAdvance)
+            {
+                minute += advanceMinutes;
+
                 if (minute >= 60)
                 {
                     hour += 1;
                     minute = 0;
                 }
+
                 elapsedTotal = 0;
             }
+
             if (hour >= 24)
             {
                 day += 1;
                 hour = 0;
                 minute = 0;
             }
+
             if (day > DaysInMonth(month))
             {
                 month += 1;
                 day = 1;
             }
+
             if (month > 12)
             {
                 year += 1;
@@ -70,14 +90,11 @@
 
         public void TimePainter(object? sender, Graphics g)
         {
-            //compute minute progress in current hour as 0..1 (use double to avoid integer division)
             double progress = minute / 60.0;
 
-            //values we'll draw (clamped 0..Max)
             int duskOpacity = 0;
             int nightOpacity = 0;
 
-            //trigonoemtric progression between day and night
             double factorIncrease = Math.Sin(Math.PI / 2 * progress);
             double factorDecrease = Math.Cos(Math.PI / 2 * progress);
 
@@ -86,39 +103,31 @@
                 duskOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
                 nightOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
             }
-
-            //at hour 6 ensure dusk is gone (daytime)
             else if (hour == 6)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
                 nightOpacity = 0;
             }
-
             else if (hour == 20)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
             }
-
             else if (hour == 21)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
                 nightOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
             }
-
             else if (hour > 21 || hour < 5)
             {
                 nightOpacity = MaxAlpha;
                 duskOpacity = 0;
-
             }
-            //otherwise daytime: both zero
             else
             {
                 duskOpacity = 0;
                 nightOpacity = 0;
             }
 
-            //clamp alphas to valid range and draw overlays only when alpha > 0
             duskOpacity = Clamp(duskOpacity, 0, 255);
             nightOpacity = Clamp(nightOpacity, 0, 255);
 
@@ -143,10 +152,5 @@
         }
 
         private static int Clamp(int v, int lo, int hi) => v < lo ? lo : (v > hi ? hi : v);
-    }
-
-    internal class Weather
-    {
-
     }
 }

@@ -50,7 +50,7 @@ namespace CitySkylines0._5alphabeta
         private readonly EdgePainter edgePainter;
         private readonly UIManager uiManager;
         private readonly BuildingPainter buildingPainter;
-        private Background backgroundMap;
+        public Background background;
         public int dx;
         public int dy;
         public long _frameCount = 0;
@@ -67,7 +67,57 @@ namespace CitySkylines0._5alphabeta
         public CarManager carManager;
         public Calendar calendar;
         private Random carRandom = new Random();
+        public int gridDimensions = 64;
+        public Point camera = new Point(0, 0);
 
+        public Form1(int difficulty)
+        {
+            //initiate loading form
+            loadingForm = new LoadingForm();
+            loadingForm.Show();
+            g = CreateGraphics();
+            InitializeComponent();
+            this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
+            audioManager = new AudioManager();
+            rectSize = 16;
+            screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
+            this.MouseWheel += Form1_MouseWheel;
+            this.MouseDown += Form1_MouseDown;
+            this.MouseMove += Form1_MouseMove;
+            this.MouseUp += Form1_MouseUp;
+            System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
+            tickSpeed.Interval = 4;
+            tickSpeed.Tick += TimerTick;
+            tickSpeed.Start();
+            //close loading form
+            loadingForm.Close();
+            this.ClientSizeChanged += Form1_Resize;
+
+            //classes... ASSEMBLE!
+            DateTime now = DateTime.Now;
+            calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
+            background = new Background(gridDimensions, gridDimensions, this, rectSize, difficulty);
+            grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
+            necessitiesManager = new NecessitiesManager(grid);
+            smokeParticleManager = new SmokeParticleManager(grid);
+            nameProvider = new NameProvider("roadnames.json");
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
+            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
+            buttonManager = new InteractingObjectManager();
+            carManager = new CarManager(grid, calendar);
+            List<EventHandler> allEventHandlers = new List<EventHandler>();
+
+            allEventHandlers.Add(Form1_RoadButton);
+            allEventHandlers.Add(Form1_ToggleNames);
+            allEventHandlers.Add((sender, e) => Form1_BuildingBuilder(sender, e, buildingType));
+            allEventHandlers.Add(Form1_ViewBuildingSpaces);
+            allEventHandlers.Add(Form1_toggleGrid);
+            allEventHandlers.Add(Form1_ChangeVolume);
+            uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
+            Form1_PlayRandomTrack();
+        }
+
+        //difficulty falls to 1 if there is no difficulty input
         public Form1()
         {
             //initiate loading form
@@ -94,12 +144,12 @@ namespace CitySkylines0._5alphabeta
             //classes... ASSEMBLE!
             DateTime now = DateTime.Now;
             calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
-            backgroundMap = new Background(60, 60, this, rectSize);
-            grid = new Grid(60, 60, backgroundMap, rectSize);
+            background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
+            grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager(grid);
             nameProvider = new NameProvider("roadnames.json");
-            edgePainter = new EdgePainter(grid, this, nameProvider, backgroundMap, g);
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
@@ -130,22 +180,28 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 16;
+            tickSpeed.Interval = 8;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             loadingForm.Close();
             this.ClientSizeChanged += Form1_Resize;
 
             // If the save contains a Grid/Calendar, use them; otherwise fall back to defaults.
-
-            backgroundMap = new Background(60, 60, this, rectSize);
+            if (save != null && save.background != null)
+            {
+                background = save.background;
+            }
+            else
+            {
+                background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
+            }
             if (save != null && save.grid != null)
             {
                 grid = save.grid;
             }
             else
             {
-                grid = new Grid(60, 60, backgroundMap, rectSize);
+                grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             }
 
             if (save != null && save.calendar != null)
@@ -157,12 +213,11 @@ namespace CitySkylines0._5alphabeta
                 DateTime now = DateTime.Now;
                 calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
             }
-
             // re-create managers that depend on grid/background/calendar
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager(grid);
             nameProvider = new NameProvider("roadnames.json");
-            edgePainter = new EdgePainter(grid, this, nameProvider, backgroundMap, g);
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
@@ -189,7 +244,6 @@ namespace CitySkylines0._5alphabeta
                     {
                         volProvider.Volume = volume;
                     }
-                    audioManager.volume = volume;
                 }
             }
             catch (Exception ex)
@@ -235,7 +289,7 @@ namespace CitySkylines0._5alphabeta
         {
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             bottomLeft = new Point(0, this.ClientSize.Height);
-            smokeParticleManager.Update();
+            //smokeParticleManager.Update();
             fps = GetFps();
             this.Invalidate();
 
@@ -259,24 +313,19 @@ namespace CitySkylines0._5alphabeta
                     if (!n.fulFilled) { necessitiesFilled = false; break; }
                 }
                 if (necessitiesFilled) { grid.cash += b.tax; } //taxes the houses as long as they have running water and electricity
+                else { grid.cash -= b.tax / 100; }
             }
 
-            if (necessitiesManager.globalElectricitySupply > necessitiesManager.globalElectricityDemand) { grid.cash += (necessitiesManager.globalElectricitySupply - necessitiesManager.globalElectricityDemand) * 3; } //sells excess electricity for cash
-            if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) * 3 / 1000; } //sells excess water for cash
+            if (necessitiesManager.globalElectricitySupply > necessitiesManager.globalElectricityDemand) { grid.cash += (necessitiesManager.globalElectricitySupply - necessitiesManager.globalElectricityDemand) / 1000; } //sells excess electricity for cash
+            if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; } //sells excess water for cash
 
             foreach (Edge edge in grid.edges)
             {
                 edge.IntersectionAlreadyExists();
             }
 
-            foreach (Node n in grid.nodes)
-            {
-                n.IsNodeBuildable();
-                if (n.tileData != null) { grid.cash -= (float)0.01; } //charge for maintaining buildable land
-            }
-
             buildingPainter.buildingType = buildingType;
-            backgroundMap.UpdateWaterAnimations();
+            background.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
             if (carRandom.NextDouble() < 0.1 && carManager.cars.Count <= grid.buildings.Count)
@@ -304,7 +353,6 @@ namespace CitySkylines0._5alphabeta
             {
                 carManager.cars.Remove(car);
             }
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -332,13 +380,11 @@ namespace CitySkylines0._5alphabeta
             Pen bluePen = new Pen(Color.Blue, 1);
             Brush whiteBrush = new SolidBrush(Color.White);
 
-            g.TranslateTransform(screencentre.X, screencentre.Y);
+            g.TranslateTransform(screencentre.X - camera.X, screencentre.Y - camera.Y);
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
-
-
-            backgroundMap.DrawMap(sender, g, zoomLevel);
+            background.DrawMap(sender, g, zoomLevel);
             edgePainter.RoadPaint(sender, g, currentMousePos);
 
             // draw night BEFORE cars
@@ -346,7 +392,7 @@ namespace CitySkylines0._5alphabeta
             calendar.TimePainter(sender, g);  // darkness overlay
 
             // restore world transform
-            g.TranslateTransform(screencentre.X, screencentre.Y);
+            g.TranslateTransform(screencentre.X - camera.X, screencentre.Y - camera.Y);
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
@@ -367,10 +413,16 @@ namespace CitySkylines0._5alphabeta
 
         public Point Mouse_Pos(object? sender, MouseEventArgs m)
         {
-            return new Point(
-                (int)((m.Location.X - screencentre.X) / zoomLevel + screencentre.X),
-                (int)((m.Location.Y - screencentre.Y) / zoomLevel + screencentre.Y)
-            );
+            float x = m.X - (screencentre.X - camera.X);
+            float y = m.Y - (screencentre.Y - camera.Y);
+
+            x /= zoomLevel;
+            y /= zoomLevel;
+
+            x += screencentre.X;
+            y += screencentre.Y;
+
+            return new Point((int)x, (int)y);
         }
 
         private void Form1_MouseDown(object? sender, MouseEventArgs m)
@@ -432,46 +484,9 @@ namespace CitySkylines0._5alphabeta
                 dx = Convert.ToInt32((currentMousePos.X - mouseXold) / zoomLevel);
                 dy = Convert.ToInt32((currentMousePos.Y - mouseYold) / zoomLevel);
 
-                foreach (Edge edge in grid.edges)
-                {
-                    edge.a = new Point(edge.a.X + dx, edge.a.Y + dy);
-                    edge.b = new Point(edge.b.X + dx, edge.b.Y + dy);
+                camera.X -= dx;
+                camera.Y -= dy;
 
-                    foreach (IntersectingNode node in edge.intersections)
-                    {
-                        node.coords = new Point(node.coords.X + dx, node.coords.Y + dy);
-                    }
-
-                    List<Point> pointsTemp = edge.pointsOnTheEdge.ToList();
-                    for (int i = 0; i < pointsTemp.Count; i++)
-                    {
-                        Point point = pointsTemp[i];
-                        point.X += dx;
-                        point.Y += dy;
-                        edge.pointsOnTheEdge[i] = point;
-                    }
-                }
-
-                foreach (Car c in carManager.cars)
-                {
-                    c.currentPosition.X += dx;
-                    c.currentPosition.Y += dy;
-                }
-
-                foreach (Building b in grid.buildings)
-                {
-                    b.coords = new Point(b.coords.X + dx, b.coords.Y + dy);
-                }
-
-                foreach (Node node in backgroundMap.tiles)
-                {
-                    node.coords = new Point(node.coords.X + dx, node.coords.Y + dy);
-                }
-
-                foreach (Node node in grid.nodes)
-                {
-                    node.coords = new Point(node.coords.X + dx, node.coords.Y + dy);
-                }
                 mouseXold = currentMousePos.X;
                 mouseYold = currentMousePos.Y;
             }
@@ -683,7 +698,7 @@ namespace CitySkylines0._5alphabeta
             Invalidate(); // redraw
         }*/
 
-        public void SaveGameToPath(string path) { SaveManager.SaveGameToFile(path, this.grid, this.calendar); }
+        /*public void SaveGameToPath(string path) { SaveManager.SaveGameToFile(path, this.grid, this.calendar, this.background); }
         public void LoadGameFromPath()
         {
             SaveManager.SaveData data = SaveManager.LoadGameFromFile();
@@ -692,7 +707,7 @@ namespace CitySkylines0._5alphabeta
                 this.grid = data.grid;
                 this.calendar = data.calendar;
             }
-        }
+        }*/
 
 
         public void ReturnToMainMenu()

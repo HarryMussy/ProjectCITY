@@ -22,6 +22,8 @@ namespace CitySkylines0._5alphabeta
 
         public Node parent { get; set; }
 
+        public string imageKey { get; set; }
+
         public Node() { } // required
         public Node(Point coords, Building tileData, bool near, int number, bool isRoad, bool isGrass)
         {

@@ -103,11 +103,21 @@ namespace CitySkylines0._5alphabeta
 
                 btnNew.Click += (s, e2) =>
                 {
-                    playMenu.DialogResult = DialogResult.OK;
                     playMenu.Close();
-                    this.Close();
-                    Form1 form = new Form1();
-                    form.Show();
+
+                    // Show difficulty selector
+                    using (DifficultySelectForm diffForm = new DifficultySelectForm())
+                    {
+                        if (diffForm.ShowDialog() == DialogResult.OK)
+                        {
+                            // Close main menu
+                            this.Close();
+
+                            // Start the game with selected difficulty
+                            Form1 form = new Form1(diffForm.SelectedDifficulty);
+                            form.Show();
+                        }
+                    }
                 };
 
                 btnLoad.Click += (s, e2) =>
@@ -154,4 +164,73 @@ namespace CitySkylines0._5alphabeta
 
         }
     }
+
+    public class DifficultySelectForm : Form
+    {
+        public int SelectedDifficulty { get; private set; } = 1;
+
+        public DifficultySelectForm()
+        {
+            this.Text = "Select Difficulty";
+            this.ClientSize = new Size(800, 300);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(40, 40, 40);
+
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string diffPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "difficulties");
+
+            Label title = new Label
+            {
+                Text = "SELECT DIFFICULTY",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(250, 15)
+            };
+            
+            Controls.Add(title);
+
+            AddLabel("EASY", 120);
+            AddLabel("NORMAL", 370);
+            AddLabel("HARD", 630);
+
+            AddButton(1, Path.Combine(diffPath, "diff1.png"), 50);
+            AddButton(2, Path.Combine(diffPath, "diff2.png"), 300);
+            AddButton(3, Path.Combine(diffPath, "diff3.png"), 550);
+        }
+
+        private void AddButton(int difficulty, string imagePath, int x)
+        {
+            Button btn = new Button();
+            btn.Size = new Size(200, 200);
+            btn.Location = new Point(x, 50);
+            btn.BackgroundImage = Image.FromFile(imagePath);
+            btn.BackgroundImageLayout = ImageLayout.Stretch;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+
+            btn.Click += (s, e) =>
+            {
+                SelectedDifficulty = difficulty;
+                DialogResult = DialogResult.OK;
+                Close();
+            };
+
+            Controls.Add(btn);
+        }
+        private void AddLabel(string text, int centerX)
+        {
+            Label label = new Label
+            {
+                Text = text,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                AutoSize = true
+            };
+
+            label.Location = new Point(centerX - (label.PreferredWidth / 2), 70);
+            Controls.Add(label);
+        }
+    }
+
 }

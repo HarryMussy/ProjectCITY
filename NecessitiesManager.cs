@@ -109,6 +109,8 @@ namespace CitySkylines0._5alphabeta
         public float demand { get; private set; }
         public float decayRate { get; private set; } //the time it takes (in seconds) for the building to be abandoned
         public bool fulFilled;
+        public Necessity() { }
+
         public Necessity(string nameIN, float initialValueIN, float decayRateIN, float demandIN)
         {
             name = nameIN;
@@ -120,11 +122,14 @@ namespace CitySkylines0._5alphabeta
 
     public class Electricity : Necessity
     {
+        public Electricity() { }
         public Electricity(float demandIN) : base("Energy", 0, 120, demandIN) { }
     }
 
     public class Water : Necessity
     {
+        public Water() { }
         public Water(float demandIN) : base("Water", 0, 60, demandIN) { }
     }
+
 }

@@ -10,6 +10,8 @@ namespace CitySkylines0._5alphabeta
         private float zoomLevel = 1.0f;
         public bool viewBuildingSpaces = true;
         private List<Image> houseImages;
+        private Image windFarmImage;
+        private Image waterPumpImage;
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
         public AudioManager audioManager;
@@ -18,6 +20,20 @@ namespace CitySkylines0._5alphabeta
         public string buildingType = "";
         private int rectSize;
         public Calendar calendar;
+        Size houseSize;
+        Size windFarmSize;
+        Size waterPumpSize;
+
+        private readonly Brush redBrushBuilding = new SolidBrush(Color.FromArgb(100, Color.Red));
+        private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
+        private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
+        private readonly Brush houseBrush = new SolidBrush(Color.Gray);
+        private readonly Brush blueBrush = new SolidBrush(Color.Blue); //for water supply/ need for water
+        private readonly Brush yellowBrush = new SolidBrush(Color.Yellow); //for electricity demand/ need for electricity
+        private readonly Brush moneyCostBrush = new SolidBrush(Color.Black);
+        private readonly Brush moneyCostBrushSpace = new SolidBrush(Color.DarkRed);
+        private readonly Font font = new Font("Comic Sans", 11);
+        private readonly Font font2 = new Font("Comic Sans", 9);
 
 
         public BuildingPainter(Grid gridPassIn, Form1 Form1PassIn, Graphics g, int rectSizeIn, Calendar calendar)
@@ -26,10 +42,14 @@ namespace CitySkylines0._5alphabeta
             this.g = g;
             grid = gridPassIn;
             Form1 = Form1PassIn;
-            LoadHouseImages();
+            LoadBuildingImages();
             audioManager = Form1.audioManager;
             smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
+
+            houseSize = new Size(3, 3);
+            windFarmSize = new Size(8, 6);
+            waterPumpSize = new Size(2, 2);
         }
 
         public void GenerateDetails()
@@ -42,19 +62,7 @@ namespace CitySkylines0._5alphabeta
         }
 
         public void BuildingPaint(object? sender, Graphics g, Point mousePos)
-        {
-            Brush redBrushBuilding = new SolidBrush(Color.FromArgb(100, Color.Red));
-            Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
-            Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
-            Brush houseBrush = new SolidBrush(Color.Gray);
-            Brush blueBrush = new SolidBrush(Color.Blue); //for water supply/ need for water
-            Brush yellowBrush = new SolidBrush(Color.Yellow); //for electricity demand/ need for electricity
-            Brush moneyCostBrush = new SolidBrush(Color.Black);
-            Brush moneyCostBrushSpace = new SolidBrush(Color.DarkRed);
-            Font font = new Font("Comic Sans", 11);
-            Font font2 = new Font("Comic Sans", 9);
-
-
+        { 
             foreach (Node node in grid.buildableNodes)
             {
                 if (viewBuildingSpaces == true)
@@ -71,7 +79,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 1, 1);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, houseSize.Width, houseSize.Height);
                             if (isTrue == 0)
                             {
                                 g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -87,7 +95,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 3, 3);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, houseSize.Width, houseSize.Height);
                             if (isTrue == 0 || isTrue == 1)
                             {
                                 g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -103,7 +111,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 4, 3);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, windFarmSize.Width, windFarmSize.Height);
                             if (isTrue == 0)
                             {
                                 g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -119,7 +127,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 4, 3);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, windFarmSize.Width, windFarmSize.Height);
                             if (isTrue == 0 || isTrue == 1)
                             {
                                 g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -135,7 +143,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 2, 2, true);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, waterPumpSize.Width, waterPumpSize.Height, true);
                             if (isTrue == 0)
                             {
                                 g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -151,7 +159,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, 2, 2, true);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, waterPumpSize.Width, waterPumpSize.Height, true);
                             if (isTrue == 0 || isTrue == 1)
                             {
                                 g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -188,30 +196,27 @@ namespace CitySkylines0._5alphabeta
                         tileHouseImageIndex[building] = imgIdx;
                     }
                     // Use building.size for drawing
-                    g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
+                    g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                 }
                 else if (building.type == "windfarm")
                 {
-                    string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-                    string windFarmFilePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "windTurbine.gif");
-                    g.DrawImage(Image.FromFile(windFarmFilePath), building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
-                    ImageAnimator.Animate(Image.FromFile(windFarmFilePath), null);
+                    g.DrawImage(windFarmImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                 }
                 else if (building.type == "waterpump")
                 {
-                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
+                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     g.DrawString("Water\nPump", font, moneyCostBrush, building.coords.X, building.coords.Y + 5);
                 }
 
 
                 if (building.necessities[0].fulFilled == false)
                 {
-                    g.FillRectangle(yellowBrush, building.coords.X, building.coords.Y, 3, 3);
+                    g.FillRectangle(yellowBrush, building.coords.X, building.coords.Y, houseSize.Width, houseSize.Height);
                 }
 
                 if (building.necessities[1].fulFilled == false)
                 {
-                    g.FillRectangle(blueBrush, building.coords.X, building.coords.Y, 3, 3);
+                    g.FillRectangle(blueBrush, building.coords.X + 3, building.coords.Y, houseSize.Width, houseSize.Height);
                 }
 
                 //debug code to find where the building is drawn from
@@ -219,45 +224,72 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        private void LoadHouseImages()
+        private void LoadBuildingImages()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "B");
+            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A");
             houseImages = new List<Image>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
             {
-                // Just load the image, PNG transparency will be preserved
-                Image i = Image.FromFile(path);
-                houseImages.Add(i);
+                using var original = Image.FromFile(path);
+                Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(original, 0, 0, original.Width, original.Height);
+                }
+
+                houseImages.Add(bmp);
+            }
+
+            string windPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "windTurbine.gif");
+            windFarmImage = Image.FromFile(windPath);
+            ImageAnimator.Animate(windFarmImage, null);
+
+            string waterPumpPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
+            if (File.Exists(waterPumpPath))
+            {
+                using var original = Image.FromFile(waterPumpPath);
+                Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(original, 0, 0, original.Width, original.Height);
+                }
+                waterPumpImage = bmp;
             }
         }
+
 
         public void LeftMouseDown(object? sender, MouseEventArgs m)
         {
             List<int> checkedSpaces = new List<int>();
             List<Node> checkedNodes = new List<Node>();
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
-            var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+            //var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+            var clickedPoint = worldMousePos;
             if (grid.cash >= 10000 && buildingType == "house")
             {
                 foreach (Node node in grid.nodes)
                 {
-                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, 1, 1);
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, houseSize.Width, houseSize.Height);
                     if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
                 }
                 if (checkedSpaces.Contains(1)) { }
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
+                    House newHouse = new House(houseSize, placement, "house", 10, 5);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
                         {
                             placement = n.coords;
                         }
+                        n.tileData = newHouse;
                     }
-                    House newHouse = new House(new Size(rectSize * 1, rectSize * 1), placement, "house", 10, 5);
+                    newHouse.coords = placement;
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newHouse);
                     grid.cash -= newHouse.cost;
@@ -268,7 +300,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 8, placement.Y + 8), node, 1, 1) == 0)
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 24, placement.Y + 24), node, houseSize.Width, houseSize.Height) == 0)
                         {
                             newHouse.occupyingNodes.Add(node);
                             node.tileData = newHouse;
@@ -282,21 +314,23 @@ namespace CitySkylines0._5alphabeta
             {
                 foreach (Node node in grid.nodes)
                 {
-                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, 4, 3);
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, windFarmSize.Width, windFarmSize.Height);
                     if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
                 }
                 if (checkedSpaces.Contains(1)) { }
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
+                    Windfarm newWindFarm = new Windfarm(windFarmSize, placement, "windfarm", -500, 0);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
                         {
                             placement = n.coords;
                         }
+                        n.tileData = newWindFarm;
                     }
-                    Windfarm newWindFarm = new Windfarm(new Size(rectSize * 4, rectSize * 3), placement, "windfarm", -50, 0);
+                    newWindFarm.coords = placement;
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newWindFarm);
                     grid.cash -= newWindFarm.cost;
@@ -304,7 +338,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 32, placement.Y + 24), node, 4, 3) == 0)
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 64, placement.Y + 48), node, windFarmSize.Width, windFarmSize.Height) == 0)
                         {
                             newWindFarm.occupyingNodes.Add(node);
                             node.tileData = newWindFarm;
@@ -318,21 +352,23 @@ namespace CitySkylines0._5alphabeta
             {
                 foreach (Node node in grid.nodes)
                 {
-                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, 2, 2, true);
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, waterPumpSize.Width, waterPumpSize.Height, true);
                     if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
                 }
                 if (checkedSpaces.Contains(1)) { }
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
+                    WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, -250);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
                         {
                             placement = n.coords;
                         }
+                        n.tileData = newWaterPump;
                     }
-                    WaterPump newWaterPump = new WaterPump(new Size(rectSize * 2, rectSize * 2), placement, "waterpump", 15, -50);
+                    newWaterPump.coords = placement;
                     audioManager.PlayPlaceSound();
                     grid.buildings.Add(newWaterPump);
                     grid.cash -= newWaterPump.cost;
@@ -340,7 +376,7 @@ namespace CitySkylines0._5alphabeta
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 16, placement.Y + 16), node, 2, 2) == 0)
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 16, placement.Y + 16), node, waterPumpSize.Width, waterPumpSize.Height) == 0)
                         {
                             newWaterPump.occupyingNodes.Add(node);
                             node.tileData = newWaterPump;
@@ -355,12 +391,13 @@ namespace CitySkylines0._5alphabeta
         {
             Point worldMousePos = mousePos;
             var currentPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+            //Point currentPoint = mousePos;
 
             //finds the nodes that the building will be placed on
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
-                if (node.isGrass && node.tileData == null && node.isNearRoad) //checks if you are able to build on those tiles
+                if (node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad) //checks if you are able to build on those tiles
                 {
                     return 0; //can place building here
                 }
@@ -370,19 +407,21 @@ namespace CitySkylines0._5alphabeta
         }
 
 
-        //for water pumps - modified to require at least one cardinal neighbor to be water
+        //for water pumps modified to require at least one neighbor to be water
         public int FindNearbyBuildableNodes(object? sender, Point mousePos, Node node, int checkWidth, int checkHeight, bool isWaterPump)
         {
-            Point worldMousePos = mousePos;
+            /*Point worldMousePos = mousePos;
             var currentPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X),
-                                         (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+                                         (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));*/
+            Point currentPoint = mousePos;
 
             //finds the nodes that are inside the build check zone
+
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
                 //basic buildability checks
-                if (!(node.isGrass && node.tileData == null && node.isNearRoad)) { return 1; }
+                if (!(node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad)) { return 1; }
 
                 if (!isWaterPump) { return 0; }
 

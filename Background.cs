@@ -1,34 +1,56 @@
 ﻿using CitySkylines0._5alphabeta;
 using System.IO;
 using System.Text.Json.Serialization;
+using System.Runtime.Serialization;
 
 public class Background
 {
-    public List<Node> tiles;
-    private Dictionary<Point, Node> nodeLookup;
-    private Random random;
-    private int width, height;
-    private const float noiseScale = 0.10f;
-    private const float landThreshold = 0.05f;
-    private PerlinNoise perlinNoise;
-    [JsonIgnore]
-    public Form1 Form1;
-    private List<Image> grassImages;
-    private Dictionary<Node, int> tileGrassImageIndex = new();
-    private Dictionary<string, Image> sharedWaterImages = new();
-    private Dictionary<Node, string> nodeWaterImageKey = new();
-    private Dictionary<string, Image> grassEdgeImages = new();
-    private readonly int rectSize;
+    [JsonIgnore] private Dictionary<Point, Node> nodeLookup;
+    [JsonIgnore] private Random random;
+    [JsonIgnore] private PerlinNoise perlinNoise;
+    [JsonIgnore] public Form1 Form1;
+    [JsonIgnore] private List<Image> grassImages;
+    [JsonIgnore] private Dictionary<string, Image> sharedWaterImages;
+    [JsonIgnore] private Dictionary<string, Image> grassEdgeImages;
+    [JsonIgnore] private float noiseScale = 0.05F;
+    [JsonIgnore] private float landThreshold = 0.25F;
+    [JsonIgnore] Dictionary<string, Image> imageLookup;
 
-    public Background(int width, int height, Form1 form1PassIn, int rectSizeIn)
+    public int difficulty { get; set; }
+    public int width { get; set; }
+    public int height { get; set; }
+    public int rectSize { get; set; }
+    public List<Node> tiles { get; set; }
+
+    public Background() { LoadImages(); }
+
+    public Background(int width, int height, Form1 form1PassIn, int rectSizeIn, int difficulty)
     {
         this.width = width;
         this.height = height;
-        rectSize = rectSizeIn;
+        this.rectSize = rectSizeIn;
         Form1 = form1PassIn;
+
         random = new Random();
         tiles = new List<Node>();
         perlinNoise = new PerlinNoise();
+
+        if (difficulty == 1) 
+        {
+            noiseScale = 0.05F;
+            landThreshold = 0.25F;
+        }
+        if (difficulty == 2)
+        {
+            noiseScale = 0.05F;
+            landThreshold = 0.15F;
+        }
+        if (difficulty == 3)
+        {
+            noiseScale = 0.05F;
+            landThreshold = 0.05F;
+        }
+
         LoadImages();
         GenerateMap();
         GenerateDetails();
@@ -36,6 +58,11 @@ public class Background
 
     private void LoadImages()
     {
+        grassImages = new List<Image>();
+        sharedWaterImages = new Dictionary<string, Image>();
+        grassEdgeImages = new Dictionary<string, Image>();
+        imageLookup = new Dictionary<string, Image>();
+
         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
 
         string grassFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", "GrassVar");
@@ -69,6 +96,16 @@ public class Background
             string fileName = Path.GetFileNameWithoutExtension(path);
             grassEdgeImages[fileName] = Image.FromFile(path);
         }
+
+        for (int i = 0; i < grassImages.Count; i++)
+        {
+            imageLookup["grass" + i] = grassImages[i];
+        }
+
+        foreach (var kv in sharedWaterImages)
+        {
+            imageLookup[kv.Key] = kv.Value;
+        }
     }
 
     public void GenerateMap()
@@ -81,7 +118,7 @@ public class Background
             for (int y = 0; y < height; y++)
             {
                 float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
-                bool isLand = noiseValue > landThreshold;
+                bool isLand = noiseValue < landThreshold;
                 Point coords = new Point(x * rectSize, y * rectSize);
                 Node node = new Node(new Point(coords.X, coords.Y), null, false, nodeNumber++, false, isLand);
                 tiles.Add(node);
@@ -96,21 +133,21 @@ public class Background
 
         foreach (Node node in tiles)
         {
-            tileGrassImageIndex[node] = random.Next(grassImages.Count);
+            node.imageKey = "grass" + random.Next(grassImages.Count);
 
             if (!node.isGrass)
             {
-                // Assign one of the water GIFs to this node
+                //assign one of the water GIFs to this node
                 int randomIndex = random.Next(1, 10);
-                if (randomIndex == 1 && gifKeys.Count > 0) // 10% chance to assign a water1
+                if (randomIndex == 1 && gifKeys.Count > 0) //10% chance to assign a water1
                 {
                     string chosenKey = gifKeys[0];
-                    nodeWaterImageKey[node] = chosenKey;
+                    node.imageKey = chosenKey;
                 }
                 else
                 {
                     string chosenKey = gifKeys[1];
-                    nodeWaterImageKey[node] = chosenKey;
+                    node.imageKey = chosenKey;
                 }
 
             }
@@ -155,7 +192,7 @@ public class Background
 
             if (node.isGrass)
             {
-                g.DrawImage(grassImages[tileGrassImageIndex[node]], node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
+                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
 
                 //determine edges based on surrounding tiles
                 int x = node.coords.X;
@@ -180,13 +217,9 @@ public class Background
                 if (hasWaterSE && !hasWaterS && !hasWaterE) DrawEdge("GrassEdge_Inner_NW", x, y, tileSize, g);
 
             }
-            else if (nodeWaterImageKey.TryGetValue(node, out string gifKey))
+            else
             {
-                // Draw water tile
-                if (sharedWaterImages.TryGetValue(gifKey, out Image gifImage))
-                {
-                    g.DrawImage(gifImage, node.coords.X, node.coords.Y, tileSize, tileSize);
-                }
+                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize, tileSize);
             }
         }
         

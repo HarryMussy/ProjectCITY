@@ -18,6 +18,7 @@
             this.a = a;
             this.b = b;
             this.name = name;
+            FindAllPointOnEdge(this);
         }
 
 

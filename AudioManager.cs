@@ -8,20 +8,20 @@ public class AudioManager : IDisposable
     private IWavePlayer outputDevice;
     private MixingSampleProvider mixer;
     public List<VolumeSampleProvider> trackVolumeProviders = new List<VolumeSampleProvider>();
-    public float volume;
+    public float masterVolume;
+    public float efxVolume;
+    public float musicVolume;
 
     public AudioManager()
     {
-        // Use WaveOutEvent for playback device
         outputDevice = new WaveOutEvent();
-
-        // Mixer to combine multiple audio sources
         mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
         mixer.ReadFully = true;
-
         outputDevice.Init(mixer);
         outputDevice.Play();
-        volume = 0.0f;
+        masterVolume = 0.0f;
+        efxVolume = 0.0f;
+        musicVolume = 0.0f;
     }
 
     public void PlayTrack(string filePath, bool loop = true)
@@ -30,28 +30,22 @@ public class AudioManager : IDisposable
             throw new FileNotFoundException("Track file not found", filePath);
 
         var audioFile = new AudioFileReader(filePath);
-
         var convertedAudio = new MediaFoundationResampler(audioFile, new WaveFormat(44100, 2))
         {
             ResamplerQuality = 60
         };
 
         ISampleProvider trackToPlay = convertedAudio.ToSampleProvider();
-
         if (loop)
         {
             trackToPlay = new LoopingSampleProvider(trackToPlay);
         }
 
-        // Wrap track with volume control
         var volumeProvider = new VolumeSampleProvider(trackToPlay);
-        volumeProvider.Volume = volume;
-
+        volumeProvider.Volume = masterVolume * musicVolume;
         trackVolumeProviders.Add(volumeProvider);
         mixer.AddMixerInput(volumeProvider);
     }
-
-
 
     public void PlayPlaceSound()
     {
@@ -61,16 +55,37 @@ public class AudioManager : IDisposable
             throw new FileNotFoundException("Effect file not found", filePath);
 
         var effectFile = new AudioFileReader(filePath);
-
-        // Resample to 44.1kHz stereo using MediaFoundationResampler
         var resampled = new MediaFoundationResampler(effectFile, new WaveFormat(44100, 2))
         {
-            ResamplerQuality = 60 // Optional: from 1 (low) to 60 (high)
+            ResamplerQuality = 60
         };
 
-        ISampleProvider effectSampleProvider = resampled.ToSampleProvider();
+        var effectSampleProvider = resampled.ToSampleProvider();
+        var effectVolumeProvider = new VolumeSampleProvider(effectSampleProvider)
+        {
+            Volume = masterVolume * efxVolume
+        };
+        mixer.AddMixerInput(effectVolumeProvider);
+    }
 
-        mixer.AddMixerInput(effectSampleProvider);
+    public void SetMasterVolume(float v)
+    {
+        masterVolume = v;
+        foreach (var t in trackVolumeProviders)
+            t.Volume = masterVolume * musicVolume;
+    }
+
+    public void SetMusicVolume(float v)
+    {
+        musicVolume = v;
+        foreach (var t in trackVolumeProviders)
+            t.Volume = masterVolume * musicVolume;
+    }
+
+    public void SetEffectsVolume(float v)
+    {
+        efxVolume = v;
+        // Effects volume is applied per effect in PlayPlaceSound
     }
 
     public void Dispose()

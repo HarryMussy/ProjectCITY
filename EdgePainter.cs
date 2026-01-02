@@ -43,38 +43,42 @@
 
             if (startPoint != null)
             {
-                Brush invalidroad = new SolidBrush(Color.Red);
-                Brush lightGrayBrush = new SolidBrush(Color.LightGray);
-                Pen blackPen = new Pen(Color.Black, 5);
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
+                Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
 
+                // draw preview line (red if too expensive, light gray if affordable)
+                using (var previewPen = new Pen(cost > grid.cash ? Color.Red : Color.LightGray, 4))
+                {
+                    g.DrawLine(previewPen, startPoint.Value, setPoint);
+                }
+
+                // draw endpoint markers so preview is obvious
+                using (var endBrush = new SolidBrush(cost > grid.cash ? Color.FromArgb(180, Color.Red) : Color.FromArgb(180, Color.LightGray)))
+                {
+                    g.FillEllipse(endBrush, startPoint.Value.X - 6, startPoint.Value.Y - 6, 12, 12);
+                    g.FillEllipse(endBrush, setPoint.X - 6, setPoint.Y - 6, 12, 12);
+                }
+
+                // highlight intersecting nodes as before
+                Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
+                List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
                 if (cost > grid.cash)
                 {
-                    Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
-                    Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
-                    List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
-                    foreach (Node n in nodes)
-                    {
-                        g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16);
-                    }
-                    tempEdge = null;
+                    using var invalidroad = new SolidBrush(Color.Red);
+                    foreach (Node n in nodes) g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16);
                 }
                 else
                 {
-                    Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
-                    Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
-
-                    List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
-                    foreach (Node n in nodes)
-                    {
-                        g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16);
-                    }
-                    tempEdge = null;
+                    using var lightGrayBrush = new SolidBrush(Color.LightGray);
+                    foreach (Node n in nodes) g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16);
                 }
 
+                // cost label
                 Point linecenter = new Point((startPoint.Value.X + mousePos.X) / 2, (startPoint.Value.Y + mousePos.Y) / 2);
                 string displayedcost = cost.ToString("F2");
                 g.DrawString(displayedcost, new Font("Comic Sans", 10), greenBrush, linecenter);
+
+                tempEdge = null;
             }
 
             foreach (Edge edge in grid.edges)
@@ -200,13 +204,19 @@
         {
             Point? snappedPoint;
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
-            var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+            //var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
+            var clickedPoint = worldMousePos;
 
+            int tile = form1.rectSize;
+            clickedPoint = new Point(
+                (clickedPoint.X / tile) * tile,
+                (clickedPoint.Y / tile) * tile
+            );
 
-            clickedPoint.X = grid.nodes.OrderBy(node => Math.Abs(node.coords.X + 8 - clickedPoint.X)).First().coords.X;
-            clickedPoint.Y = grid.nodes.OrderBy(node => Math.Abs(node.coords.Y + 8 - clickedPoint.Y)).First().coords.Y;
-
-            // Check if grid.intersections is null or empty
+            /*clickedPoint.X = grid.nodes.OrderBy(node => Math.Abs(node.coords.X + 8 - clickedPoint.X)).First().coords.X;
+            clickedPoint.Y = grid.nodes.OrderBy(node => Math.Abs(node.coords.Y + 8 - clickedPoint.Y)).First().coords.Y;*/
+            snappedPoint = clickedPoint;
+            /*// Check if grid.intersections is null or empty
             if (grid.roadIntersections != null && grid.roadIntersections.Any())
             {
                 List<Point> intersectionPoints = grid.roadIntersections.Select(n => n.coords).ToList();
@@ -218,7 +228,7 @@
             {
                 // Handle the case where grid.intersections is null or empty
                 snappedPoint = clickedPoint;  // Or do something else if no intersections exist
-            }
+            }*/
 
 
             //if graphics is null, not already drawing a road
@@ -229,7 +239,6 @@
                 {
                     startPoint = null;
                 }
-
             }
             else
             {

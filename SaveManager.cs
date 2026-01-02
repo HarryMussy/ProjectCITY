@@ -12,14 +12,16 @@ namespace CitySkylines0._5alphabeta
         {
             public Grid grid { get; set; }
             public Calendar calendar { get; set; }
+            public Background background { get; set; }
         }
 
-        public static void Save(string filePath, Grid grid, Calendar calendar)
+        public static void Save(string filePath, Grid grid, Calendar calendar, Background background)
         {
             var data = new SaveData
             {
                 grid = grid,
-                calendar = calendar
+                calendar = calendar,
+                background = background
             };
 
             var json = JsonSerializer.Serialize(data, JsonSettings.Options);
@@ -63,7 +65,7 @@ namespace CitySkylines0._5alphabeta
         }
 
         // Prompts SaveFileDialog for a .citysave file and saves
-        public static void SaveGameToFile(Grid grid, Calendar calendar)
+        public static void SaveGameToFile(Grid grid, Calendar calendar, Background background)
         {
             using SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "City Save (*.citysave)|*.citysave";
@@ -76,7 +78,7 @@ namespace CitySkylines0._5alphabeta
                 string filePath = dialog.FileName;
                 try
                 {
-                    Save(filePath, grid, calendar);
+                    Save(filePath, grid, calendar, background);
                     MessageBox.Show("Saved: " + filePath);
                 }
                 catch (Exception ex)
@@ -87,12 +89,12 @@ namespace CitySkylines0._5alphabeta
         }
 
         // Save to a provided path; ensures .citysave extension if missing
-        public static void SaveGameToFile(string path, Grid grid, Calendar calendar)
+        public static void SaveGameToFile(string path, Grid grid, Calendar calendar, Background background)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 // fallback to interactive save
-                SaveGameToFile(grid, calendar);
+                SaveGameToFile(grid, calendar, background);
                 return;
             }
 
@@ -104,7 +106,7 @@ namespace CitySkylines0._5alphabeta
                     filePath = Path.ChangeExtension(filePath, ".citysave");
                 }
 
-                Save(filePath, grid, calendar);
+                Save(filePath, grid, calendar, background);
                 MessageBox.Show("Saved: " + filePath);
             }
             catch (Exception ex)
