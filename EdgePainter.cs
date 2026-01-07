@@ -1,4 +1,7 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿using System;
+using System.IO;
+
+namespace CitySkylines0._5alphabeta
 {
     public class EdgePainter
     {
@@ -9,6 +12,7 @@
         public float closest_y = float.MaxValue;
         public Point screencentre;
         public bool toggleRoadNames = false;
+        public bool viewBuildingSpaces = true;
         private float zoomLevel = 1.0f;
         public NameProvider nameProvider;
         public Background backgroundMap;
@@ -20,7 +24,12 @@
         private readonly Brush greenBrush = new SolidBrush(Color.Green);
         private readonly Brush greyBrush = new SolidBrush(Color.Gray);
         private readonly Brush blackBrush = new SolidBrush(Color.Black);
+        private readonly Brush redBrush= new SolidBrush(Color.FromArgb(100, Color.Red));
         private readonly Font roadFont = new Font("Comic Sans", 10);
+        private List<Image> roadImages = new();
+        private Random rng = new Random();
+        private Dictionary<string, Image> imageCache = new();
+        private List<string> roadImagePaths = new();
 
         public EdgePainter(Grid gridPassIn, Form1 Form1PassIn, NameProvider nameProviderPassIn, Background backgroundMap, Graphics g)
         {
@@ -33,12 +42,37 @@
             waterNodes = FindWaterNodePoints(this.backgroundMap);
             audioManager = form1.audioManager;
             smokeParticleManager = form1.smokeParticleManager;
+            LoadRoadTiles();
         }
+        private void LoadRoadTiles()
+        {
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
+            foreach (string path in Directory.GetFiles(roadFolder, "*.png"))
+            {
+                Image img = Image.FromFile(path);
+                roadImages.Add(img);
+                imageCache[path] = img;
+                roadImagePaths.Add(path);
+            }
+        }
+
         public void RoadPaint(object? sender, Graphics g, Point mousePos)
         {
-            foreach (Node n in grid.roadNodes)
+            foreach (Node node in grid.buildableNodes)
             {
-                g.FillRectangle(greyBrush, n.coords.X, n.coords.Y, 16, 16);
+                if (viewBuildingSpaces == true)
+                {
+                    g.FillRectangle(redBrush, node.coords.X, node.coords.Y, 16, 16);
+                }
+            }
+
+            foreach (Node node in grid.roadNodes)
+            {
+                if (node.imageKey != null && imageCache.TryGetValue(node.imageKey, out Image img))
+                {
+                    g.DrawImage(img, node.coords.X, node.coords.Y, 16, 16);
+                }
             }
 
             if (startPoint != null)
@@ -46,22 +80,9 @@
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
                 Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
 
-                // draw preview line (red if too expensive, light gray if affordable)
-                using (var previewPen = new Pen(cost > grid.cash ? Color.Red : Color.LightGray, 4))
-                {
-                    g.DrawLine(previewPen, startPoint.Value, setPoint);
-                }
-
-                // draw endpoint markers so preview is obvious
-                using (var endBrush = new SolidBrush(cost > grid.cash ? Color.FromArgb(180, Color.Red) : Color.FromArgb(180, Color.LightGray)))
-                {
-                    g.FillEllipse(endBrush, startPoint.Value.X - 6, startPoint.Value.Y - 6, 12, 12);
-                    g.FillEllipse(endBrush, setPoint.X - 6, setPoint.Y - 6, 12, 12);
-                }
-
                 // highlight intersecting nodes as before
                 Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
-                List<Node> nodes = grid.FindRoadNodeIntersectionsForSpecificEdge(tempEdge);
+                List<Node> nodes = grid.FindAdjacentTilesToARoad(tempEdge);
                 if (cost > grid.cash)
                 {
                     using var invalidroad = new SolidBrush(Color.Red);
@@ -263,7 +284,23 @@
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad);  // This is now safe
                         //grid.CheckIntersectingRoads();
-                        grid.FindRoadNodeIntersections();
+                        grid.FindRoadTilesAndAdjacentRoadTiles();
+                        List<Node> newNodes = grid.FindRoadTilesForSpecificEdge(newroad);
+
+                        foreach (Node n in newNodes)
+                        {
+                            if (n.imageKey == null)
+                            {
+                                int num = rng.Next(100);
+                                if (num >= 0) n.imageKey = roadImagePaths[0];
+                                if (num > 80) n.imageKey = roadImagePaths[1];
+                                if (num > 85) n.imageKey = roadImagePaths[2];
+                                if (num > 90) n.imageKey = roadImagePaths[3];
+                                if (num > 95) n.imageKey = roadImagePaths[4];
+                            }
+  
+                        }
+
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
                         /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());*/

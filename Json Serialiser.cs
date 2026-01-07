@@ -39,7 +39,7 @@ namespace CitySkylines0._5alphabeta
             return type switch
             {
                 "house" => JsonSerializer.Deserialize<House>(root.GetRawText(), options),
-                "windfarm" => JsonSerializer.Deserialize<Windfarm>(root.GetRawText(), options),
+                "energyplant" => JsonSerializer.Deserialize<PowerPlant>(root.GetRawText(), options),
                 "waterpump" => JsonSerializer.Deserialize<WaterPump>(root.GetRawText(), options),
 
                 _ => throw new JsonException($"Unknown building type: {type}")
@@ -54,7 +54,7 @@ namespace CitySkylines0._5alphabeta
                     JsonSerializer.Serialize(writer, h, options);
                     break;
 
-                case Windfarm w:
+                case PowerPlant w:
                     JsonSerializer.Serialize(writer, w, options);
                     break;
 

@@ -201,7 +201,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        public List<Node> FindRoadNodeIntersectionsForSpecificEdge(Edge road)
+        public List<Node> FindAdjacentTilesToARoad(Edge road)
         {
             List<Node> intersectingNodesWithEdge = new List<Node>();
             foreach (Node node in nodes)
@@ -218,8 +218,57 @@ namespace CitySkylines0._5alphabeta
             }
             return intersectingNodesWithEdge;
         }
+        public List<Node> FindRoadTilesForSpecificEdge(Road road)
+        {
+            List<Node> newRoadNodes = new List<Node>();
 
-        public void FindRoadNodeIntersections()
+            foreach (Point n in road.pointsOnTheEdge)
+            {
+                foreach (Node node in nodes)
+                {
+                    // ROAD NODE
+                    if (node.coords.X + 8 <= n.X + rectSize &&
+                        node.coords.X + 8 >= n.X - rectSize &&
+                        node.coords.Y + 8 <= n.Y + rectSize &&
+                        node.coords.Y + 8 >= n.Y - rectSize)
+                    {
+                        if (!node.isRoad)
+                        {
+                            node.isRoad = true;
+                            newRoadNodes.Add(node);
+
+                            if (!nodesIntersectingRoads.Contains(node))
+                                nodesIntersectingRoads.Add(node);
+
+                            if (!roadNodes.Contains(node))
+                                roadNodes.Add(node);
+                        }
+                    }
+                    /*// NEAR ROAD NODE
+                    else if (node.coords.X + 8 <= n.X + (rectSize * 4) &&
+                             node.coords.X + 8 >= n.X - (rectSize * 4) &&
+                             node.coords.Y + 8 <= n.Y + (rectSize * 4) &&
+                             node.coords.Y + 8 >= n.Y - (rectSize * 4))
+                    {
+                        if (!node.isNearRoad)
+                        {
+                            node.isNearRoad = true;
+                            node.IsNodeBuildable();
+
+                            if (node.isBuildable && !buildableNodes.Contains(node))
+                                buildableNodes.Add(node);
+                        }
+                    }*/
+                }
+            }
+
+            // remove any buildables that are now roads
+            buildableNodes.RemoveAll(n => n.isRoad);
+
+            return newRoadNodes;
+        }
+
+        public void FindRoadTilesAndAdjacentRoadTiles()
         {
             if (edges == null) return;
 
@@ -249,8 +298,8 @@ namespace CitySkylines0._5alphabeta
                             roadNodes.Add(node);
                         }
                         //near-road check
-                        else if (node.coords.X + 8 <= n.X + (rectSize * 8) && node.coords.X + 8 >= n.X - (rectSize * 8) &&
-                                 node.coords.Y + 8 <= n.Y + (rectSize * 8) && node.coords.Y + 8 >= n.Y - (rectSize * 8))
+                        else if (node.coords.X + 8 <= n.X + (rectSize * 4) && node.coords.X + 8 >= n.X - (rectSize * 4) &&
+                                 node.coords.Y + 8 <= n.Y + (rectSize * 4) && node.coords.Y + 8 >= n.Y - (rectSize * 4))
                         {
                             node.isNearRoad = true;
 

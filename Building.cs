@@ -41,14 +41,14 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
-    public class Windfarm : Building
+    public class PowerPlant : Building
     {
         float energyDemand { get; set; }
         float waterDemand { get; set; }
-        public Windfarm() { } //required
-        public Windfarm(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand)
+        public PowerPlant() { } //required
+        public PowerPlant(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand)
         {
-            type = "windfarm";
+            type = "powerplant";
             cost = 50000;
             tax = 20;
             this.energyDemand = energyDemand;

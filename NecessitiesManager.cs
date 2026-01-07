@@ -41,9 +41,9 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (necessity.name is "Energy")
                     {
-                        if (b.type == "windfarm") //if it's a windfarm
+                        if (b.type == "powerplant") //if it's a windfarm
                         {
-                            globalElectricitySupply += (int)-necessity.demand;
+                            globalElectricitySupply += (int)necessity.demand;
                             necessity.fulFilled = true;
                         }
                         else
@@ -51,11 +51,12 @@ namespace CitySkylines0._5alphabeta
                             globalElectricityDemand += (int)necessity.demand;
                         }
                     }
+
                     else if (necessity.name is "Water")
                     {
                         if (b.type == "waterpump") //if it's a water pump
                         {
-                            globalWaterSupply += (int)(-necessity.demand);
+                            globalWaterSupply += (int)necessity.demand;
                         }
                         else
                         {
@@ -72,7 +73,7 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (necessity.name is "Energy")
                     {
-                        if (globalElectricitySupply < globalElectricityDemand && b.type != "windfarm")
+                        if (globalElectricitySupply < globalElectricityDemand && b.type != "powerplant")
                         {
                             necessity.fulFilled = false;
                         }

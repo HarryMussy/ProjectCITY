@@ -26,6 +26,8 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        [JsonIgnore] Form1 form1PassIn;
+
         // Must be serialized or time will jump after load
         public double elapsedTotal { get; set; }
 
@@ -36,7 +38,7 @@ namespace CitySkylines0._5alphabeta
         public Calendar() { }
 
         // Your existing constructor
-        public Calendar(int dayIn, int monthIn, int yearIn, int hourIn, int minuteIn)
+        public Calendar(int dayIn, int monthIn, int yearIn, int hourIn, int minuteIn, Form1 form1)
         {
             day = dayIn;
             month = monthIn;
@@ -44,6 +46,7 @@ namespace CitySkylines0._5alphabeta
             hour = hourIn;
             minute = minuteIn;
             elapsedTotal = 0;
+            form1PassIn = form1;
         }
 
         public int GetHour() => hour;
@@ -134,13 +137,13 @@ namespace CitySkylines0._5alphabeta
             if (duskOpacity > 0)
             {
                 using Brush dusk = new SolidBrush(Color.FromArgb((int)(duskOpacity * 0.25), 180, 80, 30));
-                g.FillRectangle(dusk, 0, 0, 1920, 1080);
+                g.FillRectangle(dusk, 0, 0, form1PassIn.ClientSize.Width, form1PassIn.ClientSize.Height);
             }
 
             if (nightOpacity > 0)
             {
                 using Brush night = new SolidBrush(Color.FromArgb(nightOpacity, 0, 0, 50));
-                g.FillRectangle(night, 0, 0, 1920, 1080);
+                g.FillRectangle(night, 0, 0, form1PassIn.ClientSize.Width, form1PassIn.ClientSize.Height);
             }
         }
 

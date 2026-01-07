@@ -8,9 +8,9 @@ namespace CitySkylines0._5alphabeta
         public Form1 Form1;
         public Point screencentre;
         private float zoomLevel = 1.0f;
-        public bool viewBuildingSpaces = true;
+        
         private List<Image> houseImages;
-        private Image windFarmImage;
+        private Image powerPlantImage;
         private Image waterPumpImage;
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
@@ -21,10 +21,10 @@ namespace CitySkylines0._5alphabeta
         private int rectSize;
         public Calendar calendar;
         Size houseSize;
-        Size windFarmSize;
+        Size powerPlantSize;
         Size waterPumpSize;
 
-        private readonly Brush redBrushBuilding = new SolidBrush(Color.FromArgb(100, Color.Red));
+        
         private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
         private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
         private readonly Brush houseBrush = new SolidBrush(Color.Gray);
@@ -48,29 +48,12 @@ namespace CitySkylines0._5alphabeta
             this.calendar = calendar;
 
             houseSize = new Size(3, 3);
-            windFarmSize = new Size(8, 6);
+            powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
-        }
-
-        public void GenerateDetails()
-        {
-            foreach (Building house in grid.buildings)
-            {
-                //gives each house a random house image
-                tileHouseImageIndex[house] = random.Next(houseImages.Count);
-            }
         }
 
         public void BuildingPaint(object? sender, Graphics g, Point mousePos)
         { 
-            foreach (Node node in grid.buildableNodes)
-            {
-                if (viewBuildingSpaces == true)
-                {
-                    g.FillRectangle(redBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
-                }
-            }
-
             if (Form1.selectingBuildingPainting == true)
             {
                 if (buildingType == "house")
@@ -105,13 +88,13 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                else if (buildingType == "windfarm")
+                else if (buildingType == "powerplant")
                 {
                     if (grid.cash >= 50000)
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, windFarmSize.Width, windFarmSize.Height);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, powerPlantSize.Width, powerPlantSize.Height);
                             if (isTrue == 0)
                             {
                                 g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -127,7 +110,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, windFarmSize.Width, windFarmSize.Height);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, powerPlantSize.Width, powerPlantSize.Height);
                             if (isTrue == 0 || isTrue == 1)
                             {
                                 g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -182,9 +165,9 @@ namespace CitySkylines0._5alphabeta
                     using Brush glow3 = new SolidBrush(Color.FromArgb(10, 255, 255, 200));   // outer glow
 
                     // Draw glow layers
-                    g.FillEllipse(glow3, building.coords.X - 10, building.coords.Y - 10, building.size.Width + 20, building.size.Height + 20);
-                    g.FillEllipse(glow2, building.coords.X - 5, building.coords.Y - 5, building.size.Width + 10, building.size.Height + 10);
-                    g.FillEllipse(glow1, building.coords.X, building.coords.Y, building.size.Width, building.size.Height);
+                    g.FillEllipse(glow3, building.coords.X - 10, building.coords.Y - 10, (building.size.Width * rectSize) + 20, (building.size.Height * rectSize) + 20);
+                    g.FillEllipse(glow2, building.coords.X - 5, building.coords.Y - 5, (building.size.Width * rectSize) + 10, (building.size.Height * rectSize) + 10);
+                    g.FillEllipse(glow1, building.coords.X, building.coords.Y, (building.size.Width * rectSize), (building.size.Height * rectSize));
                 }
 
                 if (building.type == "house")
@@ -198,14 +181,13 @@ namespace CitySkylines0._5alphabeta
                     // Use building.size for drawing
                     g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                 }
-                else if (building.type == "windfarm")
+                else if (building.type == "powerplant")
                 {
-                    g.DrawImage(windFarmImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawImage(powerPlantImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                 }
                 else if (building.type == "waterpump")
                 {
-                    g.FillRectangle(houseBrush, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
-                    g.DrawString("Water\nPump", font, moneyCostBrush, building.coords.X, building.coords.Y + 5);
+                    g.DrawImage(waterPumpImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                 }
 
 
@@ -243,22 +225,11 @@ namespace CitySkylines0._5alphabeta
                 houseImages.Add(bmp);
             }
 
-            string windPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "windTurbine.gif");
-            windFarmImage = Image.FromFile(windPath);
-            ImageAnimator.Animate(windFarmImage, null);
+            string powerPlantPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
+            powerPlantImage = Image.FromFile(powerPlantPath);
 
             string waterPumpPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-            if (File.Exists(waterPumpPath))
-            {
-                using var original = Image.FromFile(waterPumpPath);
-                Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(bmp))
-                {
-                    g.Clear(Color.Transparent);
-                    g.DrawImage(original, 0, 0, original.Width, original.Height);
-                }
-                waterPumpImage = bmp;
-            }
+            waterPumpImage = Image.FromFile(waterPumpPath);
         }
 
 
@@ -310,38 +281,38 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (grid.cash >= 50000 && buildingType == "windfarm")
+            if (grid.cash >= 50000 && buildingType == "powerplant")
             {
                 foreach (Node node in grid.nodes)
                 {
-                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, windFarmSize.Width, windFarmSize.Height);
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, powerPlantSize.Width, powerPlantSize.Height);
                     if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
                 }
                 if (checkedSpaces.Contains(1)) { }
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    Windfarm newWindFarm = new Windfarm(windFarmSize, placement, "windfarm", -500, 0);
+                    PowerPlant newPowerPlant = new PowerPlant(powerPlantSize, placement, "powerplant", 500, 50);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
                         {
                             placement = n.coords;
                         }
-                        n.tileData = newWindFarm;
+                        n.tileData = newPowerPlant;
                     }
-                    newWindFarm.coords = placement;
+                    newPowerPlant.coords = placement;
                     audioManager.PlayPlaceSound();
-                    grid.buildings.Add(newWindFarm);
-                    grid.cash -= newWindFarm.cost;
+                    grid.buildings.Add(newPowerPlant);
+                    grid.cash -= newPowerPlant.cost;
 
 
                     foreach (Node node in grid.nodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 64, placement.Y + 48), node, windFarmSize.Width, windFarmSize.Height) == 0)
+                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 64, placement.Y + 48), node, powerPlantSize.Width, powerPlantSize.Height) == 0)
                         {
-                            newWindFarm.occupyingNodes.Add(node);
-                            node.tileData = newWindFarm;
+                            newPowerPlant.occupyingNodes.Add(node);
+                            node.tileData = newPowerPlant;
                         }
                     }
                     /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWindFarm });*/
@@ -359,7 +330,7 @@ namespace CitySkylines0._5alphabeta
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, -250);
+                    WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, 250);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)

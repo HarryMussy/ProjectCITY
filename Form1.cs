@@ -3,10 +3,9 @@
  * House buildings DONE
  * Electricity DONE
  * Water DONE
- * Food
  * Necessities (e.g. hospitals, police, fire etc)
  * Background map to build only in certain places DONE
- * Cars on the roads
+ * Cars on the roads DONE
  * Other industries e.g. farming logging
  */
 
@@ -26,7 +25,7 @@ namespace CitySkylines0._5alphabeta
         public string buildingType = "";
         public Grid grid;
         private float zoomLevel = 1.0f;
-        private Point currentMousePos;
+        private Point mousePos;
         public int rectSize;
         public bool selectingEdgePainting = false;
         public bool selectingBuildingPainting = false;
@@ -39,7 +38,6 @@ namespace CitySkylines0._5alphabeta
         public int currentOperation = 0;
         public int mouseXold = 0;
         public int mouseYold = 0;
-        public Point tempa;
         public float closestX = float.MaxValue;
         public float closestY = float.MaxValue;
         public Brush redBrush = new SolidBrush(Color.Red);
@@ -57,7 +55,6 @@ namespace CitySkylines0._5alphabeta
         public DateTime _lastCheckTime;
         public int fps;
         public bool viewGrid = false;
-        private DateTime lastUpdate = DateTime.Now;
         private int lastFps = 0;
         private DateTime lastFpsUpdate = DateTime.Now;
         public LoadingForm loadingForm;
@@ -95,7 +92,7 @@ namespace CitySkylines0._5alphabeta
 
             //classes... ASSEMBLE!
             DateTime now = DateTime.Now;
-            calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
+            calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             background = new Background(gridDimensions, gridDimensions, this, rectSize, difficulty);
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
@@ -143,7 +140,7 @@ namespace CitySkylines0._5alphabeta
 
             //classes... ASSEMBLE!
             DateTime now = DateTime.Now;
-            calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
+            calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
@@ -211,7 +208,7 @@ namespace CitySkylines0._5alphabeta
             else
             {
                 DateTime now = DateTime.Now;
-                calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute);
+                calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             }
             // re-create managers that depend on grid/background/calendar
             necessitiesManager = new NecessitiesManager(grid);
@@ -385,7 +382,7 @@ namespace CitySkylines0._5alphabeta
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
             background.DrawMap(sender, g, zoomLevel);
-            edgePainter.RoadPaint(sender, g, currentMousePos);
+            edgePainter.RoadPaint(sender, g, mousePos);
 
             // draw night BEFORE cars
             g.ResetTransform();
@@ -398,7 +395,7 @@ namespace CitySkylines0._5alphabeta
 
             // now draw cars on top of darkness
             carManager.CarPaint(sender, g);
-            buildingPainter.BuildingPaint(sender, g, currentMousePos);
+            buildingPainter.BuildingPaint(sender, g, mousePos);
 
             g.ResetTransform();
             uiManager.ConstructUI(sender, g);
@@ -471,24 +468,17 @@ namespace CitySkylines0._5alphabeta
 
         private void Form1_MouseMove(object sender, MouseEventArgs m)
         {
-            /*if (!Control.MouseButtons.HasFlag(MouseButtons.Left))
-            {
-                movingtiles = false;
-                mousedown = false;
-                return;
-            }*/
-
-            currentMousePos = Mouse_Pos(this, m);
+            mousePos = Mouse_Pos(sender, m);
             if (movingtiles && mousedown)
             {
-                dx = Convert.ToInt32((currentMousePos.X - mouseXold) / zoomLevel);
-                dy = Convert.ToInt32((currentMousePos.Y - mouseYold) / zoomLevel);
+                dx = m.X - mouseXold;
+                dy = m.Y - mouseYold;
 
                 camera.X -= dx;
                 camera.Y -= dy;
 
-                mouseXold = currentMousePos.X;
-                mouseYold = currentMousePos.Y;
+                mouseXold = m.X;
+                mouseYold = m.Y;
             }
         }
 
@@ -547,7 +537,7 @@ namespace CitySkylines0._5alphabeta
 
         private void Form1_ViewBuildingSpaces(object? sender, EventArgs e)
         {
-            buildingPainter.viewBuildingSpaces = !buildingPainter.viewBuildingSpaces;
+            edgePainter.viewBuildingSpaces = !edgePainter.viewBuildingSpaces;
         }
 
         public void AddStrokeToText(object? sender, Graphics g, string text, int strokeWidth, Font font, Brush brush, Point point)

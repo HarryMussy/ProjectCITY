@@ -89,17 +89,21 @@ public class UIManager
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
 
 
-            string pathToTurbineImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "windTurbine.gif");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 68, (int)zoomedBottomLeftY + 15), new Size(64, 48), form, 6, Image.FromFile(pathToTurbineImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "windfarm");
+            string pathToTurbineImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 68, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToTurbineImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
 
             interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedBottomLeftX + 500, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += (s, e) =>
             {
                 new OptionsForm(true, form.audioManager, form).ShowDialog();
             };
 
+            string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 200, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
 
-            interactingObjectManager.CreateButton("WATER PUMP", new Point((int)zoomedBottomLeftX + 140, (int)zoomedBottomLeftY + 15), new Size(70, 25), form, 6)
+            string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 140, (int)zoomedBottomLeftY + 15), new Size(70, 25), form, 6, Image.FromFile(pathToPumpImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 220, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
