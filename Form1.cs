@@ -48,6 +48,7 @@ namespace CitySkylines0._5alphabeta
         private readonly EdgePainter edgePainter;
         private readonly UIManager uiManager;
         private readonly BuildingPainter buildingPainter;
+        public PopulationManager populationManager;
         public Background background;
         public int dx;
         public int dy;
@@ -96,12 +97,13 @@ namespace CitySkylines0._5alphabeta
             background = new Background(gridDimensions, gridDimensions, this, rectSize, difficulty);
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
-            smokeParticleManager = new SmokeParticleManager(grid);
+            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            populationManager = new PopulationManager(grid);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
 
             allEventHandlers.Add(Form1_RoadButton);
@@ -144,12 +146,13 @@ namespace CitySkylines0._5alphabeta
             background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
-            smokeParticleManager = new SmokeParticleManager(grid);
+            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            populationManager = new PopulationManager(grid);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
 
             allEventHandlers.Add(Form1_RoadButton);
@@ -212,12 +215,13 @@ namespace CitySkylines0._5alphabeta
             }
             // re-create managers that depend on grid/background/calendar
             necessitiesManager = new NecessitiesManager(grid);
-            smokeParticleManager = new SmokeParticleManager(grid);
+            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            populationManager = new PopulationManager(grid);
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);
@@ -286,7 +290,7 @@ namespace CitySkylines0._5alphabeta
         {
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             bottomLeft = new Point(0, this.ClientSize.Height);
-            //smokeParticleManager.Update();
+            smokeParticleManager.Update();
             fps = GetFps();
             this.Invalidate();
 
@@ -296,14 +300,14 @@ namespace CitySkylines0._5alphabeta
             calendar.AdvanceTime(elapsedMs);
 
             // Reset both demand and supply at the start of each tick
-            necessitiesManager.globalElectricityDemand = 0;
+            necessitiesManager.globalPowerDemand = 0;
             necessitiesManager.globalWaterDemand = 0;
-            necessitiesManager.globalElectricitySupply = 0;
+            necessitiesManager.globalPowerSupply = 0;
             necessitiesManager.globalWaterSupply = 0;
 
+            necessitiesManager.UpdateGlobalNecessities();
             foreach (Building b in grid.buildings)
             {
-                necessitiesManager.UpdateGlobalNecessities();
                 bool necessitiesFilled = true;
                 foreach (Necessity n in b.necessities)
                 {
@@ -313,7 +317,7 @@ namespace CitySkylines0._5alphabeta
                 else { grid.cash -= b.tax / 100; }
             }
 
-            if (necessitiesManager.globalElectricitySupply > necessitiesManager.globalElectricityDemand) { grid.cash += (necessitiesManager.globalElectricitySupply - necessitiesManager.globalElectricityDemand) / 1000; } //sells excess electricity for cash
+            if (necessitiesManager.globalPowerSupply > necessitiesManager.globalPowerDemand) { grid.cash += (necessitiesManager.globalPowerSupply - necessitiesManager.globalPowerDemand) / 1000; } //sells excess electricity for cash
             if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; } //sells excess water for cash
 
             foreach (Edge edge in grid.edges)
@@ -350,6 +354,8 @@ namespace CitySkylines0._5alphabeta
             {
                 carManager.cars.Remove(car);
             }
+
+            populationManager.UpdatePopulation();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -382,6 +388,15 @@ namespace CitySkylines0._5alphabeta
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
             background.DrawMap(sender, g, zoomLevel);
+
+            if (viewGrid)
+            {
+                foreach (Node n in grid.nodes)
+                {
+                    g.DrawRectangle(bluePen, n.coords.X, n.coords.Y, 16, 16);
+                }
+            }
+
             edgePainter.RoadPaint(sender, g, mousePos);
 
             // draw night BEFORE cars
@@ -396,7 +411,8 @@ namespace CitySkylines0._5alphabeta
             // now draw cars on top of darkness
             carManager.CarPaint(sender, g);
             buildingPainter.BuildingPaint(sender, g, mousePos);
-
+            smokeParticleManager.Draw(g);
+            
             g.ResetTransform();
             uiManager.ConstructUI(sender, g);
 

@@ -33,7 +33,7 @@ namespace CitySkylines0._5alphabeta
             this.width = width;
             this.height = height;
             this.background = background;
-            cash = 100000;
+            cash = 500000;
             this.rectSize = rectSize;
             CreateNodes();
             InitializeWithBackground(background);
@@ -227,44 +227,14 @@ namespace CitySkylines0._5alphabeta
                 foreach (Node node in nodes)
                 {
                     // ROAD NODE
-                    if (node.coords.X + 8 <= n.X + rectSize &&
-                        node.coords.X + 8 >= n.X - rectSize &&
-                        node.coords.Y + 8 <= n.Y + rectSize &&
-                        node.coords.Y + 8 >= n.Y - rectSize)
+                    if (node.coords.X + 8 <= n.X + rectSize && node.coords.X + 8 >= n.X - rectSize &&
+                            node.coords.Y + 8 <= n.Y + rectSize && node.coords.Y + 8 >= n.Y - rectSize)
                     {
-                        if (!node.isRoad)
-                        {
-                            node.isRoad = true;
-                            newRoadNodes.Add(node);
-
-                            if (!nodesIntersectingRoads.Contains(node))
-                                nodesIntersectingRoads.Add(node);
-
-                            if (!roadNodes.Contains(node))
-                                roadNodes.Add(node);
-                        }
+                        node.isRoad = true;
+                        newRoadNodes.Add(node);
                     }
-                    /*// NEAR ROAD NODE
-                    else if (node.coords.X + 8 <= n.X + (rectSize * 4) &&
-                             node.coords.X + 8 >= n.X - (rectSize * 4) &&
-                             node.coords.Y + 8 <= n.Y + (rectSize * 4) &&
-                             node.coords.Y + 8 >= n.Y - (rectSize * 4))
-                    {
-                        if (!node.isNearRoad)
-                        {
-                            node.isNearRoad = true;
-                            node.IsNodeBuildable();
-
-                            if (node.isBuildable && !buildableNodes.Contains(node))
-                                buildableNodes.Add(node);
-                        }
-                    }*/
                 }
             }
-
-            // remove any buildables that are now roads
-            buildableNodes.RemoveAll(n => n.isRoad);
-
             return newRoadNodes;
         }
 

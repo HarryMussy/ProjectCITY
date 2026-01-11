@@ -53,12 +53,12 @@ namespace CitySkylines0._5alphabeta
 
         public void AdvanceTime(double elapsed)
         {
-            double timeToAdvance = 1000; // 1 second real time
+            double timeToAdvanceMinute = 120.0 / 1440.0;
             int advanceMinutes = 1;
 
             elapsedTotal += elapsed;
 
-            if (elapsedTotal >= timeToAdvance)
+            if (elapsedTotal >= timeToAdvanceMinute)
             {
                 minute += advanceMinutes;
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -22,13 +21,11 @@ namespace CitySkylines0._5alphabeta
         public Graphics g;
         private readonly Brush whiteBrush = new SolidBrush(Color.White);
         private readonly Brush greenBrush = new SolidBrush(Color.Green);
-        private readonly Brush greyBrush = new SolidBrush(Color.Gray);
         private readonly Brush blackBrush = new SolidBrush(Color.Black);
-        private readonly Brush redBrush= new SolidBrush(Color.FromArgb(100, Color.Red));
+        private readonly Brush redBrush = new SolidBrush(Color.FromArgb(100, Color.Red));
         private readonly Font roadFont = new Font("Comic Sans", 10);
-        private List<Image> roadImages = new();
+        private Dictionary<string, Image> roadImages = new();
         private Random rng = new Random();
-        private Dictionary<string, Image> imageCache = new();
         private List<string> roadImagePaths = new();
 
         public EdgePainter(Grid gridPassIn, Form1 Form1PassIn, NameProvider nameProviderPassIn, Background backgroundMap, Graphics g)
@@ -51,8 +48,12 @@ namespace CitySkylines0._5alphabeta
             foreach (string path in Directory.GetFiles(roadFolder, "*.png"))
             {
                 Image img = Image.FromFile(path);
-                roadImages.Add(img);
-                imageCache[path] = img;
+                string filename = Path.GetFileName(path);
+                roadImages[path] = img;
+                if (!roadImages.ContainsKey(filename))
+                {
+                    roadImages[filename] = img;
+                }
                 roadImagePaths.Add(path);
             }
         }
@@ -67,9 +68,20 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            Image img = null;
             foreach (Node node in grid.roadNodes)
             {
-                if (node.imageKey != null && imageCache.TryGetValue(node.imageKey, out Image img))
+                if (!string.IsNullOrEmpty(node.imageKey))
+                {
+                    // try exact key, then filename fallback
+                    if (!roadImages.TryGetValue(node.imageKey, out img))
+                    {
+                        string filename = Path.GetFileName(node.imageKey);
+                        roadImages.TryGetValue(filename, out img);
+                    }
+                }
+
+                if (img != null)
                 {
                     g.DrawImage(img, node.coords.X, node.coords.Y, 16, 16);
                 }
@@ -287,23 +299,22 @@ namespace CitySkylines0._5alphabeta
                         grid.FindRoadTilesAndAdjacentRoadTiles();
                         List<Node> newNodes = grid.FindRoadTilesForSpecificEdge(newroad);
 
+                        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+                        string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
                         foreach (Node n in newNodes)
                         {
-                            if (n.imageKey == null)
-                            {
-                                int num = rng.Next(100);
-                                if (num >= 0) n.imageKey = roadImagePaths[0];
-                                if (num > 80) n.imageKey = roadImagePaths[1];
-                                if (num > 85) n.imageKey = roadImagePaths[2];
-                                if (num > 90) n.imageKey = roadImagePaths[3];
-                                if (num > 95) n.imageKey = roadImagePaths[4];
-                            }
-  
+                            int num = rng.Next(100);
+                            n.imageKey = "road_000.png";
+                            if (num > 95) n.imageKey = "road_001.png";
+                            if (num > 96) n.imageKey = "road_002.png";
+                            if (num > 97) n.imageKey = "road_003.png";
+                            if (num > 98) n.imageKey = "road_004.png";
+                            if (num > 99) n.imageKey = "road_005.png";
                         }
 
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
-                        /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge> { newroad }, new List<Building>());*/
+                        smokeParticleManager.SpawnParticlesOnEdge(newroad);
                         foreach (IntersectingNode n in newroad.intersections)
                         {
                             grid.roadIntersections.Add(n);

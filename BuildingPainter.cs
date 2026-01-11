@@ -47,7 +47,7 @@ namespace CitySkylines0._5alphabeta
             smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
 
-            houseSize = new Size(3, 3);
+            houseSize = new Size(3, 2);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
         }
@@ -184,32 +184,27 @@ namespace CitySkylines0._5alphabeta
                 else if (building.type == "powerplant")
                 {
                     g.DrawImage(powerPlantImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants}\n\n {building.efficiency}", font, blueBrush, building.coords);
                 }
                 else if (building.type == "waterpump")
                 {
                     g.DrawImage(waterPumpImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);
                 }
 
 
-                if (building.necessities[0].fulFilled == false)
+                for (int i = 0; i < building.necessities.Count; i++)
                 {
-                    g.FillRectangle(yellowBrush, building.coords.X, building.coords.Y, houseSize.Width, houseSize.Height);
+                    Necessity ne = building.necessities[i];
+                    ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + (i*8), building.coords.Y));
                 }
-
-                if (building.necessities[1].fulFilled == false)
-                {
-                    g.FillRectangle(blueBrush, building.coords.X + 3, building.coords.Y, houseSize.Width, houseSize.Height);
-                }
-
-                //debug code to find where the building is drawn from
-                /*g.FillEllipse(yellowBrush, building.coords.X, building.coords.Y, 3, 3);*/
             }
         }
 
         private void LoadBuildingImages()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A");
+            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "C");
             houseImages = new List<Image>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
@@ -251,7 +246,7 @@ namespace CitySkylines0._5alphabeta
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    House newHouse = new House(houseSize, placement, "house", 10, 5);
+                    House newHouse = new House(houseSize, placement, "house", 5, 5);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
@@ -277,7 +272,7 @@ namespace CitySkylines0._5alphabeta
                             node.tileData = newHouse;
                         }
                     }
-                    /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newHouse });*/
+                    smokeParticleManager.SpawnParticlesOnBuilding(newHouse);
                 }
             }
 
@@ -315,7 +310,7 @@ namespace CitySkylines0._5alphabeta
                             node.tileData = newPowerPlant;
                         }
                     }
-                    /*smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWindFarm });*/
+                    smokeParticleManager.SpawnParticlesOnBuilding(newPowerPlant);
                 }
             }
 
@@ -353,7 +348,7 @@ namespace CitySkylines0._5alphabeta
                             node.tileData = newWaterPump;
                         }
                     }
-                    /* smokeParticleManager.SpawnSmokeOnNewEdgesAndBuildings(new List<Edge>(), new List<Building> { newWaterPump });*/
+                    smokeParticleManager.SpawnParticlesOnBuilding(newWaterPump);
                 }
             }
         }
