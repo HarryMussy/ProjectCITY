@@ -19,6 +19,7 @@ public class UIManager
     private EventHandler viewBuildingSpaceClickHandler;
     private EventHandler toggleGridViewClickHandler;
     private EventHandler volSlider;
+    private EventHandler bulldozingButtonClickHandler;
     private bool buttonsCreated = false; // Flag to track if buttons are already created
 
 
@@ -35,6 +36,7 @@ public class UIManager
         viewBuildingSpaceClickHandler = allEventHandlers[3];
         toggleGridViewClickHandler = allEventHandlers[4];
         volSlider = allEventHandlers[5];
+        bulldozingButtonClickHandler = allEventHandlers[6];
         zoomedBottomLeftX = 0;
         zoomedBottomLeftY = 0;
         calendar = calendarIn;
@@ -102,11 +104,12 @@ public class UIManager
 
             string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 200, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
+                .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
             string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 140, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
+
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 220, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
             //interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;

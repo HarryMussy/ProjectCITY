@@ -24,17 +24,18 @@ namespace CitySkylines0._5alphabeta
         public DateTime lastTickTime;
         public string buildingType = "";
         public Grid grid;
-        private float zoomLevel = 1.0f;
+        public float zoomLevel = 1.0f;
         private Point mousePos;
         public int rectSize;
         public bool selectingEdgePainting = false;
         public bool selectingBuildingPainting = false;
+        public bool selectingBulldozing = false;
         public bool notselecting = true;
         public bool creatingedge = true;
         public Point screencentre;
         public bool movingtiles = false;
         public bool mousedown = false;
-        public string[] allOperations = { "None", "Building Roads", "Building" };
+        public string[] allOperations = { "None", "Building Roads", "Building", "Bulldozing" };
         public int currentOperation = 0;
         public int mouseXold = 0;
         public int mouseYold = 0;
@@ -50,6 +51,7 @@ namespace CitySkylines0._5alphabeta
         private readonly BuildingPainter buildingPainter;
         public PopulationManager populationManager;
         public Background background;
+        public Bulldozer bulldozer;
         public int dx;
         public int dy;
         public long _frameCount = 0;
@@ -104,6 +106,7 @@ namespace CitySkylines0._5alphabeta
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
             populationManager = new PopulationManager(grid);
+            bulldozer = new Bulldozer(grid, this);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
 
             allEventHandlers.Add(Form1_RoadButton);
@@ -112,6 +115,7 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_ViewBuildingSpaces);
             allEventHandlers.Add(Form1_toggleGrid);
             allEventHandlers.Add(Form1_ChangeVolume);
+            allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
         }
@@ -153,6 +157,8 @@ namespace CitySkylines0._5alphabeta
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
             populationManager = new PopulationManager(grid);
+            bulldozer = new Bulldozer(grid, this);
+
             List<EventHandler> allEventHandlers = new List<EventHandler>();
 
             allEventHandlers.Add(Form1_RoadButton);
@@ -222,6 +228,7 @@ namespace CitySkylines0._5alphabeta
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
             populationManager = new PopulationManager(grid);
+            bulldozer = new Bulldozer(grid, this);
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);
@@ -411,6 +418,7 @@ namespace CitySkylines0._5alphabeta
             // now draw cars on top of darkness
             carManager.CarPaint(sender, g);
             buildingPainter.BuildingPaint(sender, g, mousePos);
+            bulldozer.BulldozerPainter(sender, g);
             smokeParticleManager.Draw(g);
             
             g.ResetTransform();
@@ -440,7 +448,7 @@ namespace CitySkylines0._5alphabeta
 
         private void Form1_MouseDown(object? sender, MouseEventArgs m)
         {
-            if (selectingEdgePainting == true)
+            if (selectingEdgePainting)
             {
                 if (m.Button == MouseButtons.Left)
                 {
@@ -452,12 +460,16 @@ namespace CitySkylines0._5alphabeta
                     edgePainter.startPoint = null;
                 }
             }
-            else if (selectingBuildingPainting == true)
+            else if (selectingBuildingPainting)
             {
                 if (m.Button == MouseButtons.Left)
                 {
                     buildingPainter.LeftMouseDown(sender, m);
                 }
+            }
+            else if (selectingBulldozing && m.Button == MouseButtons.Left)
+            {
+                bulldozer.Bulldozing(mousePos, true);
             }
             else
             {
@@ -496,6 +508,7 @@ namespace CitySkylines0._5alphabeta
                 mouseXold = m.X;
                 mouseYold = m.Y;
             }
+            if (selectingBulldozing) { bulldozer.Bulldozing(mousePos, false); }
         }
 
         private void Form1_MouseUp(object? sender, MouseEventArgs m)
@@ -512,6 +525,26 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        private void Form1_BulldozingButton(object? sender, EventArgs e)
+        {
+            if (selectingBulldozing == false)
+            {
+                selectingEdgePainting = false;
+                selectingBuildingPainting = false;
+                notselecting = false;
+                selectingBulldozing = true;
+                currentOperation = 3;
+            }
+            else
+            {
+                selectingBulldozing = false;
+                notselecting = false;
+                selectingEdgePainting = false;
+                selectingBuildingPainting = false;
+                currentOperation = 0;
+            }
+        }
+
         private void Form1_RoadButton(object? sender, EventArgs e)
         {
             if (selectingEdgePainting == false)
@@ -519,10 +552,12 @@ namespace CitySkylines0._5alphabeta
                 selectingEdgePainting = true;
                 selectingBuildingPainting = false;
                 notselecting = false;
+                selectingBulldozing = false;
                 currentOperation = 1;
             }
             else
             {
+                selectingBulldozing = false;
                 notselecting = true;
                 selectingEdgePainting = false;
                 selectingBuildingPainting = false;
@@ -537,12 +572,14 @@ namespace CitySkylines0._5alphabeta
                 notselecting = false;
                 selectingBuildingPainting = true;
                 selectingEdgePainting = false;
+                selectingBulldozing = false;
                 allOperations[2] = "Building " + typeIn.ToUpper();
                 currentOperation = 2;
                 buildingType = typeIn;
             }
             else
             {
+                selectingBulldozing = false;
                 notselecting = true;
                 selectingBuildingPainting = false;
                 selectingEdgePainting = false;

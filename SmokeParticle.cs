@@ -185,7 +185,7 @@ namespace CitySkylines0._5alphabeta
 
         public void SpawnParticlesOnEdge(Edge edge)
         {
-            int maxParticles = 500; // Set a reasonable cap
+            /*int maxParticles = 500; // Set a reasonable cap
             if (particles.Count > maxParticles) return;
 
             int count = random.Next(5, 25);
@@ -204,15 +204,15 @@ namespace CitySkylines0._5alphabeta
                 {
                     particles.Add(new SmokeParticle(new PointF(x, y), smokeGif));
                 }    
-            }
+            }*/
         }
 
         public void SpawnParticlesOnBuilding(Building building)
         {
-            var pos = new PointF(building.coords.X + building.size.Width / 2f, building.coords.Y + building.size.Height + 10);
+            /*var pos = new PointF(building.coords.X + building.size.Width / 2f, building.coords.Y + building.size.Height + 10);
 
             Image smokeGif = smokeGifs[new Random().Next(smokeGifs.Count)];
-            particles.Add(new SmokeParticle(pos, smokeGif));
+            particles.Add(new SmokeParticle(pos, smokeGif));*/
         }
     }
 

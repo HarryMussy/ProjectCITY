@@ -8,7 +8,7 @@ namespace CitySkylines0._5alphabeta
         public Form1 Form1;
         public Point screencentre;
         private float zoomLevel = 1.0f;
-        
+
         private List<Image> houseImages;
         private Image powerPlantImage;
         private Image waterPumpImage;
@@ -24,7 +24,7 @@ namespace CitySkylines0._5alphabeta
         Size powerPlantSize;
         Size waterPumpSize;
 
-        
+
         private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
         private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
         private readonly Brush houseBrush = new SolidBrush(Color.Gray);
@@ -53,7 +53,7 @@ namespace CitySkylines0._5alphabeta
         }
 
         public void BuildingPaint(object? sender, Graphics g, Point mousePos)
-        { 
+        {
             if (Form1.selectingBuildingPainting == true)
             {
                 if (buildingType == "house")
@@ -196,7 +196,7 @@ namespace CitySkylines0._5alphabeta
                 for (int i = 0; i < building.necessities.Count; i++)
                 {
                     Necessity ne = building.necessities[i];
-                    ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + (i*8), building.coords.Y));
+                    ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + (i * 8), building.coords.Y));
                 }
             }
         }
