@@ -8,6 +8,7 @@
         public Point b { get; set; }
 
         public List<IntersectingNode> intersections { get; set; } = new();
+        public List<Node> occupyingNodes { get; set; } = new();
         public List<Point> pointsOnTheEdge { get; set; } = new();
 
         public Edge() { }

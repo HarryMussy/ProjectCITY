@@ -567,7 +567,7 @@ namespace CitySkylines0._5alphabeta
 
         public void Form1_BuildingBuilder(object? sender, EventArgs e, string typeIn)
         {
-            if (selectingBuildingPainting == false)
+            if (selectingBuildingPainting == false || allOperations[2] != "Building " + typeIn.ToUpper())
             {
                 notselecting = false;
                 selectingBuildingPainting = true;

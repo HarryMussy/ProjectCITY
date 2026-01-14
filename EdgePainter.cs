@@ -297,11 +297,11 @@ namespace CitySkylines0._5alphabeta
                         grid.edges.Add(newroad);  // This is now safe
                         //grid.CheckIntersectingRoads();
                         grid.FindRoadTilesAndAdjacentRoadTiles();
-                        List<Node> newNodes = grid.FindRoadTilesForSpecificEdge(newroad);
+                        newroad.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad);
 
                         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
                         string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
-                        foreach (Node n in newNodes)
+                        foreach (Node n in newroad.occupyingNodes)
                         {
                             int num = rng.Next(100);
                             n.imageKey = "road_000.png";

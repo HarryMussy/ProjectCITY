@@ -47,7 +47,7 @@ namespace CitySkylines0._5alphabeta
             smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
 
-            houseSize = new Size(3, 2);
+            houseSize = new Size(3, 3);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
         }
@@ -204,7 +204,7 @@ namespace CitySkylines0._5alphabeta
         private void LoadBuildingImages()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "C");
+            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A");
             houseImages = new List<Image>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
