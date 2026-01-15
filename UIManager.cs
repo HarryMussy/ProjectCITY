@@ -87,7 +87,7 @@ public class UIManager
             interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A", "house4.png");
+            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "house1.png");
             Image i = Image.FromFile(pathToHouseImage);
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");

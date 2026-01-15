@@ -204,7 +204,7 @@ namespace CitySkylines0._5alphabeta
         private void LoadBuildingImages()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "A");
+            string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses");
             houseImages = new List<Image>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
@@ -264,13 +264,10 @@ namespace CitySkylines0._5alphabeta
                     int imgIdx = random.Next(houseImages.Count);
                     tileHouseImageIndex[newHouse] = imgIdx;
 
-                    foreach (Node node in grid.nodes)
+                    foreach (Node node in checkedNodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 24, placement.Y + 24), node, houseSize.Width, houseSize.Height) == 0)
-                        {
-                            newHouse.occupyingNodes.Add(node);
-                            node.tileData = newHouse;
-                        }
+                        newHouse.occupyingNodes.Add(node);
+                        node.tileData = newHouse;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newHouse);
                 }
@@ -302,13 +299,10 @@ namespace CitySkylines0._5alphabeta
                     grid.cash -= newPowerPlant.cost;
 
 
-                    foreach (Node node in grid.nodes)
+                    foreach (Node node in checkedNodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 64, placement.Y + 48), node, powerPlantSize.Width, powerPlantSize.Height) == 0)
-                        {
-                            newPowerPlant.occupyingNodes.Add(node);
-                            node.tileData = newPowerPlant;
-                        }
+                        newPowerPlant.occupyingNodes.Add(node);
+                        node.tileData = newPowerPlant;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newPowerPlant);
                 }
@@ -340,13 +334,10 @@ namespace CitySkylines0._5alphabeta
                     grid.cash -= newWaterPump.cost;
 
 
-                    foreach (Node node in grid.nodes)
+                    foreach (Node node in checkedNodes)
                     {
-                        if (FindNearbyBuildableNodes(sender, new Point(placement.X + 16, placement.Y + 16), node, waterPumpSize.Width, waterPumpSize.Height) == 0)
-                        {
-                            newWaterPump.occupyingNodes.Add(node);
-                            node.tileData = newWaterPump;
-                        }
+                        newWaterPump.occupyingNodes.Add(node);
+                        node.tileData = newWaterPump;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newWaterPump);
                 }
@@ -355,15 +346,12 @@ namespace CitySkylines0._5alphabeta
 
         public int FindNearbyBuildableNodes(object? sender, Point mousePos, Node node, int checkWidth, int checkHeight)
         {
-            Point worldMousePos = mousePos;
-            var currentPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
-            //Point currentPoint = mousePos;
+            Point currentPoint = mousePos;
 
-            //finds the nodes that the building will be placed on
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
-                if (node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad) //checks if you are able to build on those tiles
+                if (node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad)
                 {
                     return 0; //can place building here
                 }
@@ -376,30 +364,23 @@ namespace CitySkylines0._5alphabeta
         //for water pumps modified to require at least one neighbor to be water
         public int FindNearbyBuildableNodes(object? sender, Point mousePos, Node node, int checkWidth, int checkHeight, bool isWaterPump)
         {
-            /*Point worldMousePos = mousePos;
-            var currentPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X),
-                                         (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));*/
             Point currentPoint = mousePos;
-
-            //finds the nodes that are inside the build check zone
 
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
-                //basic buildability checks
                 if (!(node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad)) { return 1; }
 
                 if (!isWaterPump) { return 0; }
 
-                int tileW = rectSize;   //tile size in pixels
-                                        //try all 4 possible top-left origins of a 2x2 block 
+                int tileW = rectSize;
+
                 for (int dx = 0; dx <= 1; dx++)
                 {
                     for (int dy = 0; dy <= 1; dy++)
                     {
                         Point topLeft = new Point(node.coords.X - dx * tileW, node.coords.Y - dy * tileW);
 
-                        //gather the four nodes that form the 2x2 block
                         Point[] blockPoints = new Point[]
                         {
                             new Point(topLeft.X, topLeft.Y),
@@ -422,26 +403,18 @@ namespace CitySkylines0._5alphabeta
                             blockNodes.Add(neighbourNode);
                         }
 
-                        if (!allBuildable) { continue; } // try next possible origin
+                        if (!allBuildable) { continue; }
 
-                        //check cardinal neighbours
                         Point[] adjacentChecks = new Point[]
                         {
-                            // left side (west)
                             new Point(topLeft.X - tileW, topLeft.Y),
                             new Point(topLeft.X - tileW, topLeft.Y + tileW),
-    
-                            // right side (east)
                             new Point(topLeft.X + 2 * tileW, topLeft.Y),
                             new Point(topLeft.X + 2 * tileW, topLeft.Y + tileW),
-
-                            // top side (north)
                             new Point(topLeft.X, topLeft.Y - tileW),
                             new Point(topLeft.X + tileW, topLeft.Y - tileW),
-
-                           // bottom side (south)
-                           new Point(topLeft.X, topLeft.Y + 2 * tileW),
-                           new Point(topLeft.X + tileW, topLeft.Y + 2 * tileW)
+                            new Point(topLeft.X, topLeft.Y + 2 * tileW),
+                            new Point(topLeft.X + tileW, topLeft.Y + 2 * tileW)
                         };
 
                         bool hasWaterAdjacent = false;

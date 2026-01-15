@@ -67,7 +67,7 @@ namespace CitySkylines0._5alphabeta
         public CarManager carManager;
         public Calendar calendar;
         private Random carRandom = new Random();
-        public int gridDimensions = 64;
+        public int gridDimensions = 100;
         public Point camera = new Point(0, 0);
 
         public Form1(int difficulty)
@@ -469,7 +469,7 @@ namespace CitySkylines0._5alphabeta
             }
             else if (selectingBulldozing && m.Button == MouseButtons.Left)
             {
-                bulldozer.Bulldozing(mousePos, true);
+                bulldozer.Bulldozing(sender, mousePos, true, m);
             }
             else
             {
@@ -508,7 +508,7 @@ namespace CitySkylines0._5alphabeta
                 mouseXold = m.X;
                 mouseYold = m.Y;
             }
-            if (selectingBulldozing) { bulldozer.Bulldozing(mousePos, false); }
+            if (selectingBulldozing) { bulldozer.Bulldozing(sender, mousePos, false, m); }
         }
 
         private void Form1_MouseUp(object? sender, MouseEventArgs m)
