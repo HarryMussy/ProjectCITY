@@ -184,12 +184,12 @@ namespace CitySkylines0._5alphabeta
                 else if (building.type == "powerplant")
                 {
                     g.DrawImage(powerPlantImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
-                    g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants}\n\n {building.efficiency}", font, blueBrush, building.coords);
+                    /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants}\n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
                 else if (building.type == "waterpump")
                 {
                     g.DrawImage(waterPumpImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
-                    g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);
+                    /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
 
 

@@ -24,22 +24,65 @@ namespace CitySkylines0._5alphabeta
 
         public void RemoveBuilding(Building b)
         {
-            foreach (Node x in b.occupyingNodes.SelectMany(n => gridRef.nodes.Where(m => n.coords == m.coords)))
+            if (b == null) return;
+
+            // Clear tile data from occupying nodes
+            foreach (Node n in b.occupyingNodes)
             {
-                x.tileData = null;
+                // use the node's field name used across your codebase
+                n.tileData = null;
+                /*foreach (Node node where gridRef.nodes.All(m => m.coords = n.coords))*/
+                // recompute buildable flag from current node state
+                n.isBuildable = false;
+                n.IsNodeBuildable();
             }
-            gridRef.FindRoadTilesAndAdjacentRoadTiles();
+
+            // Remove building from grid then recompute dependent collections
             gridRef.buildings.Remove(b);
+            gridRef.FindRoadTilesAndAdjacentRoadTiles();
         }
 
         public void RemoveEdge(Edge e)
         {
-            foreach (Node n in e.occupyingNodes)
+            if (e == null) return;
+
+            // 1) Remove the edge from the grid first so subsequent recompute won't see it
+            if (gridRef.edges.Contains(e))
+                gridRef.edges.Remove(e);
+
+            // 2) Clear road state on nodes that belonged to this edge
+            if (e.occupyingNodes != null)
             {
-                if (gridRef.roadNodes.Contains(n)) { gridRef.roadNodes.Remove(n); }
+                foreach (Node n in e.occupyingNodes)
+                {
+                    // clear any rendering hints
+                    n.imageKey = null;
+                    // mark not a road (grid recompute will set correct values)
+                    n.isRoad = false;
+                    n.isNearRoad = false;
+                    n.IsNodeBuildable();
+                }
             }
+
+            // 3) Remove intersections that referenced this edge (if any)
+            if (e.intersections != null)
+            {
+                foreach (var inter in e.intersections.ToList())
+                {
+                    // remove the edge reference from the intersection node
+                    if (inter.connectedEdges != null)
+                        inter.connectedEdges.Remove(e);
+
+                    // if intersection has no connected edges anymore, remove it from grid collections
+                    if (inter.connectedEdges == null || inter.connectedEdges.Count == 0)
+                    {
+                        gridRef.roadIntersections.Remove(inter);
+                    }
+                }
+            }
+
+            // 4) Recompute road tiles / adjacent info after we've actually removed the edge
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
-            gridRef.edges.Remove(e);
         }
 
         public void BulldozerPainter(object? sender, Graphics g)
@@ -47,12 +90,10 @@ namespace CitySkylines0._5alphabeta
             // Draw edge highlight using normalized rectangle (top-left + positive size)
             if (edge != null)
             {
-                int x = Math.Min(edge.a.X - 8, edge.b.X - 8);
-                int y = Math.Min(edge.a.Y - 8, edge.b.Y - 8);
-                int w = Math.Max(1, Math.Abs(edge.b.X - edge.a.X) + 8);
-                int h = Math.Max(1, Math.Abs(edge.b.Y - edge.a.Y) + 8);
-
-                g.FillRectangle(redBrush, x, y, w, h);
+                foreach (Node n in edge.occupyingNodes)
+                {
+                    g.FillRectangle(redBrush, n.coords.X, n.coords.Y, n.Width, n.height);
+                }
             }
 
             // Draw building highlight using pixel size (size.Width/Height are in tiles)
