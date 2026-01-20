@@ -10,7 +10,6 @@ namespace CitySkylines0._5alphabeta
         public string type { get; set; }
         public List<Node> occupyingNodes { get; set; } = new();
         public List<Necessity> necessities { get; set; } = new();
-        
         public int MaxOccupants { get; set; }
         public Person[] Occupants { get; set; }
 
@@ -53,6 +52,7 @@ namespace CitySkylines0._5alphabeta
         float energyDemand { get; set; }
         float waterDemand { get; set; }
         public House() { } //required
+
         public House(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand, 5)
         {
             type = "house";
@@ -89,6 +89,24 @@ namespace CitySkylines0._5alphabeta
             type = "waterpump";
             cost = 20000;
             tax = 20;
+            this.powerDemand = powerDemand;
+            this.waterDemand = waterDemand;
+            necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+        }
+    }
+
+    public class Hospital : Building
+    {
+        Car ambulance { get; set; }
+        float powerDemand { get; set; }
+        float waterDemand { get; set; }
+
+        public Hospital() { }
+        public Hospital(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants) : base(size, coords, type, powerDemand, waterDemand, MaxOccupants)
+        {
+            type = "hospital";
+            cost = 50000;
+            tax = -10;
             this.powerDemand = powerDemand;
             this.waterDemand = waterDemand;
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];

@@ -28,7 +28,7 @@ namespace CitySkylines0._5alphabeta
 
             foreach (Node n in b.occupyingNodes)
             {
-                n.tileData = null;
+                n.hasTileData = false;
                 n.isBuildable = true;
                 n.IsNodeBuildable();
             }

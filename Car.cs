@@ -25,6 +25,19 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
+    public class EmergencyServiceVehicle : Car
+    {
+        public string type;
+        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn) : base(startNodeIn, speed, destinationNodeIn)
+        {
+            startNode = startNodeIn;
+            destinationNode = destinationNodeIn;
+            Progress = 0f;
+            Speed = speed;
+            currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
+        }
+    }
+
 
     public class CarManager
     {
@@ -65,7 +78,7 @@ namespace CitySkylines0._5alphabeta
                     g.FillEllipse(glow2, -4, sourceY - 8, 8, 15);  // mid
                     g.FillEllipse(glow1, -2, sourceY - 2, 4, 9);   // bright center
                 }
-                g.DrawImage(car.image, -4, -4, 8, 8);
+                g.DrawImage(car.image, -4, -4, 12, 12);
 
                 g.Restore(state);
             }

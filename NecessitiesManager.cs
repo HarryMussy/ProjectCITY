@@ -41,7 +41,7 @@ namespace CitySkylines0._5alphabeta
         public void LoadNecessityImages()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string necessityFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Necessities");
+            string necessityFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons");
 
             foreach (string path in Directory.GetFiles(necessityFolder, "*.png"))
             {
@@ -164,15 +164,32 @@ namespace CitySkylines0._5alphabeta
         {
             if (!this.fulFilled)
             {
-                if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4
-                    && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
+                if (this.type == "Health")
                 {
-                    g.DrawString("Needs: " + this.type, new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), pos.X, pos.Y - 11);
-                    g.DrawImage(image, pos.X, pos.Y, 16, 16);
+                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4
+                        && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
+                    {
+                        g.DrawString("House is ill", new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), pos.X, pos.Y - 19);
+                        g.DrawImage(image, pos.X, pos.Y, 16, 16);
+                    }
+                    else if (image != null)
+                    {
+                        g.DrawImage(image, pos.X, pos.Y, 8, 8);
+                    }
                 }
-                else if (image != null)
+                else
                 {
-                    g.DrawImage(image, pos.X, pos.Y, 8, 8);
+                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4
+                        && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
+                    {
+
+                        g.DrawString("Needs: " + this.type, new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), pos.X, pos.Y - 11);
+                        g.DrawImage(image, pos.X, pos.Y, 16, 16);
+                    }
+                    else if (image != null)
+                    {
+                        g.DrawImage(image, pos.X, pos.Y, 8, 8);
+                    }
                 }
             }
         }
@@ -194,5 +211,11 @@ namespace CitySkylines0._5alphabeta
     {
         public Workers() { }
         public Workers(float demandIN) : base("Workers", 0, 0, demandIN) { }
+    }
+
+    public class Unhealthy : Necessity
+    {
+        public Unhealthy() { }
+        public Unhealthy(float demandIN) : base("Ill", 0, 0, demandIN) { }
     }
 }

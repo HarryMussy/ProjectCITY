@@ -237,7 +237,6 @@ namespace CitySkylines0._5alphabeta
         {
             Point? snappedPoint;
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
-            //var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
             var clickedPoint = worldMousePos;
 
             int tile = form1.rectSize;
@@ -246,22 +245,7 @@ namespace CitySkylines0._5alphabeta
                 (clickedPoint.Y / tile) * tile
             );
 
-            /*clickedPoint.X = grid.nodes.OrderBy(node => Math.Abs(node.coords.X + 8 - clickedPoint.X)).First().coords.X;
-            clickedPoint.Y = grid.nodes.OrderBy(node => Math.Abs(node.coords.Y + 8 - clickedPoint.Y)).First().coords.Y;*/
             snappedPoint = clickedPoint;
-            /*// Check if grid.intersections is null or empty
-            if (grid.roadIntersections != null && grid.roadIntersections.Any())
-            {
-                List<Point> intersectionPoints = grid.roadIntersections.Select(n => n.coords).ToList();
-
-                // Combine the points to check both road ends and intersections
-                snappedPoint = this.GetClosestPoint(clickedPoint, intersectionPoints);
-            }
-            else
-            {
-                // Handle the case where grid.intersections is null or empty
-                snappedPoint = clickedPoint;  // Or do something else if no intersections exist
-            }*/
 
 
             //if graphics is null, not already drawing a road

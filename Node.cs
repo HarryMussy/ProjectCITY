@@ -9,7 +9,7 @@ namespace CitySkylines0._5alphabeta
     public class Node
     {
         public Point coords { get; set; }
-        public Building tileData { get; set; }
+        public bool hasTileData { get; set; }
         public bool isNearRoad { get; set; }
         public int nodeNumber { get; set; }
         public bool isRoad { get; set; }
@@ -25,10 +25,10 @@ namespace CitySkylines0._5alphabeta
         public string imageKey { get; set; }
 
         public Node() { } // required
-        public Node(Point coords, Building tileData, bool near, int number, bool isRoad, bool isGrass)
+        public Node(Point coords, bool isTileData, bool near, int number, bool isRoad, bool isGrass)
         {
             this.coords = coords;
-            this.tileData = tileData;
+            this.hasTileData = isTileData;
             isNearRoad = near;
             nodeNumber = number;
             this.isRoad = isRoad;
@@ -38,7 +38,7 @@ namespace CitySkylines0._5alphabeta
 
         public void IsNodeBuildable()
         {
-            if (tileData == null && isGrass && isNearRoad && !isRoad) 
+            if (!hasTileData && isGrass && isNearRoad && !isRoad) 
             {
                 isBuildable = true;
             }

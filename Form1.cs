@@ -118,6 +118,8 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
+
+            lastTickTime = DateTime.Now;
         }
 
         //difficulty falls to 1 if there is no difficulty input
@@ -169,6 +171,7 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_ChangeVolume);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
+            lastTickTime = DateTime.Now;
         }
 
         public Form1(SaveManager.SaveData save)
@@ -239,6 +242,7 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_ChangeVolume);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
+            lastTickTime = DateTime.Now;
         }
 
         private void Form1_ChangeVolume(object? sender, EventArgs e)
@@ -302,9 +306,9 @@ namespace CitySkylines0._5alphabeta
             this.Invalidate();
 
             var now = DateTime.Now;
-            double elapsedMs = (now - lastTickTime).TotalMilliseconds;
+            double elapseds = (now - lastTickTime).TotalMilliseconds;
             lastTickTime = now;
-            calendar.AdvanceTime(elapsedMs);
+            calendar.AdvanceTime(elapseds);
 
             // Reset both demand and supply at the start of each tick
             necessitiesManager.globalPowerDemand = 0;

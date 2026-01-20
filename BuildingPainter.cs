@@ -7,7 +7,6 @@ namespace CitySkylines0._5alphabeta
         private readonly Grid grid;
         public Form1 Form1;
         public Point screencentre;
-        private float zoomLevel = 1.0f;
 
         private List<Image> houseImages;
         private Image powerPlantImage;
@@ -27,9 +26,6 @@ namespace CitySkylines0._5alphabeta
 
         private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
         private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
-        private readonly Brush houseBrush = new SolidBrush(Color.Gray);
-        private readonly Brush blueBrush = new SolidBrush(Color.Blue); //for water supply/ need for water
-        private readonly Brush yellowBrush = new SolidBrush(Color.Yellow); //for electricity demand/ need for electricity
         private readonly Brush moneyCostBrush = new SolidBrush(Color.Black);
         private readonly Brush moneyCostBrushSpace = new SolidBrush(Color.DarkRed);
         private readonly Font font = new Font("Comic Sans", 11);
@@ -47,7 +43,7 @@ namespace CitySkylines0._5alphabeta
             smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
 
-            houseSize = new Size(3, 3);
+            houseSize = new Size(2, 2);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
         }
@@ -180,6 +176,19 @@ namespace CitySkylines0._5alphabeta
                     }
                     // Use building.size for drawing
                     g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);
+
+                    if (building.Occupants.Where(p => p != null).Count() > 0)
+                    {
+                        if (building.Occupants.Any(p => p.IsHealthy == false))
+                        {
+                            Unhealthy ne = new Unhealthy(10);
+                            ne.type = "Health";
+                            ne.fulFilled = false;
+                            ne.image = Form1.necessitiesManager.NecessityImages["Health.png"];
+                            ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X, building.coords.Y + 8));
+                        }
+                    }
                 }
                 else if (building.type == "powerplant")
                 {
@@ -235,6 +244,12 @@ namespace CitySkylines0._5alphabeta
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
             //var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
             var clickedPoint = worldMousePos;
+
+            if (clickedPoint.X < grid.nodes.First().coords.X || clickedPoint.Y < grid.nodes.First().coords.Y || clickedPoint.X > grid.nodes.Last().coords.X || clickedPoint.Y > grid.nodes.Last().coords.Y)
+            {
+                return;
+            }
+
             if (grid.cash >= 10000 && buildingType == "house")
             {
                 foreach (Node node in grid.nodes)
@@ -253,7 +268,7 @@ namespace CitySkylines0._5alphabeta
                         {
                             placement = n.coords;
                         }
-                        n.tileData = newHouse;
+                        n.hasTileData = true;
                     }
                     newHouse.coords = placement;
                     audioManager.PlayPlaceSound();
@@ -267,7 +282,7 @@ namespace CitySkylines0._5alphabeta
                     foreach (Node node in checkedNodes)
                     {
                         newHouse.occupyingNodes.Add(node);
-                        node.tileData = newHouse;
+                        node.hasTileData = true;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newHouse);
                 }
@@ -291,7 +306,7 @@ namespace CitySkylines0._5alphabeta
                         {
                             placement = n.coords;
                         }
-                        n.tileData = newPowerPlant;
+                        n.hasTileData = true;
                     }
                     newPowerPlant.coords = placement;
                     audioManager.PlayPlaceSound();
@@ -302,7 +317,7 @@ namespace CitySkylines0._5alphabeta
                     foreach (Node node in checkedNodes)
                     {
                         newPowerPlant.occupyingNodes.Add(node);
-                        node.tileData = newPowerPlant;
+                        node.hasTileData = true;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newPowerPlant);
                 }
@@ -326,7 +341,7 @@ namespace CitySkylines0._5alphabeta
                         {
                             placement = n.coords;
                         }
-                        n.tileData = newWaterPump;
+                        n.hasTileData = true;
                     }
                     newWaterPump.coords = placement;
                     audioManager.PlayPlaceSound();
@@ -337,7 +352,7 @@ namespace CitySkylines0._5alphabeta
                     foreach (Node node in checkedNodes)
                     {
                         newWaterPump.occupyingNodes.Add(node);
-                        node.tileData = newWaterPump;
+                        node.hasTileData = true;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newWaterPump);
                 }
@@ -351,7 +366,7 @@ namespace CitySkylines0._5alphabeta
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
-                if (node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad)
+                if (node.isGrass && node.hasTileData == false && node.isNearRoad && !node.isRoad)
                 {
                     return 0; //can place building here
                 }
@@ -369,7 +384,7 @@ namespace CitySkylines0._5alphabeta
             if (node.coords.X + 8 <= currentPoint.X + (8 * checkWidth) && node.coords.X + 8 >= currentPoint.X - (8 * checkWidth) &&
                 node.coords.Y + 8 <= currentPoint.Y + (8 * checkHeight) && node.coords.Y + 8 >= currentPoint.Y - (8 * checkHeight))
             {
-                if (!(node.isGrass && node.tileData == null && node.isNearRoad && !node.isRoad)) { return 1; }
+                if (!(node.isGrass && node.hasTileData == false && node.isNearRoad && !node.isRoad)) { return 1; }
 
                 if (!isWaterPump) { return 0; }
 
@@ -395,7 +410,7 @@ namespace CitySkylines0._5alphabeta
                         foreach (Point p in blockPoints)
                         {
                             Node neighbourNode = grid.nodes.FirstOrDefault(n => n.coords == p);
-                            if (neighbourNode == null || !neighbourNode.isGrass || neighbourNode.tileData != null || !neighbourNode.isNearRoad)
+                            if (neighbourNode == null || !neighbourNode.isGrass || neighbourNode.hasTileData == true || !neighbourNode.isNearRoad)
                             {
                                 allBuildable = false;
                                 break;

@@ -46,7 +46,7 @@ namespace CitySkylines0._5alphabeta
                 for (int y = 0; y < height; y++)
                 {
                     Point coords = new Point(x * rectSize, y * rectSize);
-                    Node node = new Node(new Point(coords.X, coords.Y), null, false, tempNum++, false, false);
+                    Node node = new Node(new Point(coords.X, coords.Y), false, false, tempNum++, false, false);
                     nodes.Add(node);
                 }
             }
@@ -197,7 +197,7 @@ namespace CitySkylines0._5alphabeta
             {
                 nodes[i].coords = new Point(bg.tiles[i].coords.X, bg.tiles[i].coords.Y);
                 nodes[i].isGrass = bg.tiles[i].isGrass;
-                nodes[i].tileData = bg.tiles[i].tileData;
+                nodes[i].hasTileData = bg.tiles[i].hasTileData;
             }
         }
 

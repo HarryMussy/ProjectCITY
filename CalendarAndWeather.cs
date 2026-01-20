@@ -27,9 +27,14 @@ namespace CitySkylines0._5alphabeta
         }
 
         [JsonIgnore] Form1 form1PassIn;
+        [JsonIgnore] private double timeToAdvanceMinute = 240.0 / 1440.0; //in milliseconds
+        [JsonIgnore] private double timeToAdvanceDay = 1; //in seconds
+        [JsonIgnore] private int advanceMinutes = 5;
+
 
         // Must be serialized or time will jump after load
-        public double elapsedTotal { get; set; }
+        public double elapsedMilliSeconds { get; set; }
+        public double elapsedSeconds { get; set; }
 
         // configuration for visual alpha ranges
         private const int MaxAlpha = 150;
@@ -45,7 +50,8 @@ namespace CitySkylines0._5alphabeta
             year = yearIn;
             hour = hourIn;
             minute = minuteIn;
-            elapsedTotal = 0;
+            elapsedMilliSeconds = 0;
+            elapsedSeconds = 0;
             form1PassIn = form1;
         }
 
@@ -53,12 +59,10 @@ namespace CitySkylines0._5alphabeta
 
         public void AdvanceTime(double elapsed)
         {
-            double timeToAdvanceMinute = 120.0 / 1440.0;
-            int advanceMinutes = 1;
+            elapsedMilliSeconds += elapsed;
+            elapsedSeconds += elapsed/1000;
 
-            elapsedTotal += elapsed;
-
-            if (elapsedTotal >= timeToAdvanceMinute)
+            if (elapsedMilliSeconds >= timeToAdvanceMinute)
             {
                 minute += advanceMinutes;
 
@@ -66,12 +70,17 @@ namespace CitySkylines0._5alphabeta
                 {
                     hour += 1;
                     minute = 0;
+                    elapsedMilliSeconds = 0;
                 }
-
-                elapsedTotal = 0;
             }
 
-            if (hour >= 24)
+            if (elapsedSeconds >= timeToAdvanceDay)
+            {
+                day++;
+                elapsedSeconds = 0;
+            }
+
+            if (hour >= 24) //days go forward every second or when 1 second has passed
             {
                 day += 1;
                 hour = 0;
@@ -81,12 +90,14 @@ namespace CitySkylines0._5alphabeta
             if (day > DaysInMonth(month))
             {
                 month += 1;
+                form1PassIn.populationManager.UpdatePopulationByMonth();
                 day = 1;
             }
 
             if (month > 12)
             {
                 year += 1;
+                form1PassIn.populationManager.UpdatePopulationByYear();
                 month = 1;
             }
         }
