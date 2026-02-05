@@ -19,9 +19,9 @@ public class AudioManager : IDisposable
         mixer.ReadFully = true;
         outputDevice.Init(mixer);
         outputDevice.Play();
-        masterVolume = 0.0f;
-        efxVolume = 0.0f;
-        musicVolume = 0.0f;
+        masterVolume = 0.5f;
+        efxVolume = 0.5f;
+        musicVolume = 0.5f;
     }
 
     public void PlayTrack(string filePath, bool loop = true)

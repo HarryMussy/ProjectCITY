@@ -9,6 +9,7 @@ namespace CitySkylines0._5alphabeta
     public class Node
     {
         public Point coords { get; set; }
+        public Car OccupyingCar { get; set; } = null;
         public bool hasTileData { get; set; }
         public bool isNearRoad { get; set; }
         public int nodeNumber { get; set; }

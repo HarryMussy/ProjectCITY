@@ -94,7 +94,7 @@ public class UIManager
 
 
             string pathToTurbineImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 68, (int)zoomedBottomLeftY + 15), new Size(64, 48), form, 6, Image.FromFile(pathToTurbineImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 70, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToTurbineImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
 
             interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedWidth - 100, (int)zoomedBottomLeftY + 15), new Size(70, 25), form, 6).Click += (s, e) =>
@@ -103,12 +103,16 @@ public class UIManager
             };
 
             string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 200, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 250, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
                 .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
             string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 140, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 130, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
+
+            string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 190, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToHospitalImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "hospital");
 
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 220, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;

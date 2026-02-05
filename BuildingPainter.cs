@@ -11,6 +11,7 @@ namespace CitySkylines0._5alphabeta
         private List<Image> houseImages;
         private Image powerPlantImage;
         private Image waterPumpImage;
+        private Image hospitalImage;
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
         public AudioManager audioManager;
@@ -22,7 +23,7 @@ namespace CitySkylines0._5alphabeta
         Size houseSize;
         Size powerPlantSize;
         Size waterPumpSize;
-
+        Size hospitalSize;
 
         private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
         private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
@@ -44,6 +45,7 @@ namespace CitySkylines0._5alphabeta
             this.calendar = calendar;
 
             houseSize = new Size(2, 2);
+            hospitalSize = new Size(3, 2);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
         }
@@ -147,6 +149,38 @@ namespace CitySkylines0._5alphabeta
                         g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
                     }
                 }
+
+                else if (buildingType == "hospital")
+                {
+                    if (grid.cash >= 100000)
+                    {
+                        foreach (Node node in grid.nodes)
+                        {
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, hospitalSize.Width, hospitalSize.Height);
+                            if (isTrue == 0)
+                            {
+                                g.FillRectangle(validBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
+                                g.DrawString("-£100000", font, moneyCostBrush, mousePos.X - 10, mousePos.Y - 10);
+                            }
+                            else if (isTrue == 1)
+                            {
+                                g.FillRectangle(invalidBrushBuilding, node.coords.X, node.coords.Y, rectSize, rectSize);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (Node node in grid.nodes)
+                        {
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, waterPumpSize.Width, waterPumpSize.Height);
+                            if (isTrue == 0 || isTrue == 1)
+                            {
+                                g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
+                            }
+                        }
+                        g.DrawString("NOT\nENOUGH\nMONEY", font2, moneyCostBrush, mousePos.X - 29, mousePos.Y - 29);
+                    }
+                }
             }
 
             // Use the form's zoomLevel if available
@@ -176,7 +210,7 @@ namespace CitySkylines0._5alphabeta
                     }
                     // Use building.size for drawing
                     g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
-                    g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);
+/*                    g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);*/
 
                     foreach (Person p in building.Occupants.Where(p => p != null))
                     {
@@ -190,6 +224,7 @@ namespace CitySkylines0._5alphabeta
                         }
                     }
                 }
+
                 else if (building.type == "powerplant")
                 {
                     g.DrawImage(powerPlantImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
@@ -198,6 +233,11 @@ namespace CitySkylines0._5alphabeta
                 else if (building.type == "waterpump")
                 {
                     g.DrawImage(waterPumpImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);*/
+                }
+                else if (building.type == "hospital")
+                {
+                    g.DrawImage(hospitalImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
 
@@ -234,6 +274,9 @@ namespace CitySkylines0._5alphabeta
 
             string waterPumpPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
             waterPumpImage = Image.FromFile(waterPumpPath);
+
+            string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
+            hospitalImage = Image.FromFile(pathToHospitalImage);
         }
 
 
@@ -355,6 +398,41 @@ namespace CitySkylines0._5alphabeta
                         node.hasTileData = true;
                     }
                     smokeParticleManager.SpawnParticlesOnBuilding(newWaterPump);
+                }
+            }
+
+            if (grid.cash >= 100000 && buildingType == "hospital")
+            {
+                foreach (Node node in grid.nodes)
+                {
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, waterPumpSize.Width, waterPumpSize.Height);
+                    if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
+                }
+                if (checkedSpaces.Contains(1)) { }
+                else
+                {
+                    Point placement = new Point(int.MaxValue, int.MaxValue);
+                    Hospital newHospital = new Hospital(hospitalSize, placement, "hospital", 250, 250);
+                    foreach (Node n in checkedNodes)
+                    {
+                        if (n.coords.X < placement.X && n.coords.Y < placement.Y)
+                        {
+                            placement = n.coords;
+                        }
+                        n.hasTileData = true;
+                    }
+                    newHospital.coords = placement;
+                    audioManager.PlayPlaceSound();
+                    grid.buildings.Add(newHospital);
+                    grid.cash -= newHospital.cost;
+
+
+                    foreach (Node node in checkedNodes)
+                    {
+                        newHospital.occupyingNodes.Add(node);
+                        node.hasTileData = true;
+                    }
+                    smokeParticleManager.SpawnParticlesOnBuilding(newHospital);
                 }
             }
         }

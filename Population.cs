@@ -131,11 +131,11 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                foreach (Person p in b.Occupants) //1% chance of being unhealthy
+                foreach (Person p in b.Occupants) //1 in a million chance of being unhealthy
                 {
-                    if (p != null)
+                    if (p != null && p.IsHealthy)
                     {
-                        p.IsHealthy = !(rng.Next(100) == 1);
+                        p.IsHealthy = !(rng.Next(1000000) == 1);
                     }
                 }
             }

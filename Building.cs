@@ -102,7 +102,7 @@ namespace CitySkylines0._5alphabeta
         float waterDemand { get; set; }
 
         public Hospital() { }
-        public Hospital(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants) : base(size, coords, type, powerDemand, waterDemand, MaxOccupants)
+        public Hospital(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 50, true)
         {
             type = "hospital";
             cost = 50000;

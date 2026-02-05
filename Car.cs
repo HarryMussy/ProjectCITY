@@ -6,35 +6,49 @@ namespace CitySkylines0._5alphabeta
     {
         public PointF currentPosition;
         public Image image;
+
         public Node startNode;
-        public Point[] currentTrack = new Point[2];
-        public float Progress; //0=start, 1=end
-        public double Speed; //units per tick
+        public Node currentNode;
         public Node destinationNode;
+
         public Queue<Node> route = new Queue<Node>();
-        public bool isMoving = true;
+
+        public double Speed;
         public float RotationAngle;
+
+        public bool isMoving = true;
+        public bool hasPriority = false;
+
+        public float stuckTimeSeconds = 0f;
+        public HashSet<Node> blockedNodes = new HashSet<Node>();
 
         public Car(Node startNodeIn, double speed, Node destinationNodeIn)
         {
             startNode = startNodeIn;
+            currentNode = startNodeIn;
             destinationNode = destinationNodeIn;
-            Progress = 0f;
             Speed = speed;
-            currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
+
+            currentPosition = new PointF(
+                startNodeIn.coords.X + 8,
+                startNodeIn.coords.Y + 8
+            );
+
+            startNode.OccupyingCar = this;
         }
     }
 
     public class EmergencyServiceVehicle : Car
     {
         public string type;
-        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath) : base(startNodeIn, speed, destinationNodeIn)
+
+        public EmergencyServiceVehicle(
+            Node startNodeIn,
+            double speed,
+            Node destinationNodeIn,
+            string imageFilePath
+        ) : base(startNodeIn, speed, destinationNodeIn)
         {
-            startNode = startNodeIn;
-            destinationNode = destinationNodeIn;
-            Progress = 0f;
-            Speed = speed;
-            currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
             image = Image.FromFile(imageFilePath);
         }
     }
@@ -43,20 +57,26 @@ namespace CitySkylines0._5alphabeta
     public class CarManager
     {
         public Grid grid;
-        public List<Image> carImages;
         public List<Car> cars = new List<Car>();
+        public List<Image> carImages = new List<Image>();
+
         private readonly Calendar calendar;
+        private readonly Random rng = new Random();
+
+        private const float TickDelta = 1f / 60f;
 
         public CarManager(Grid gridPassIn, Calendar calendarPassIn)
         {
             grid = gridPassIn;
-            LoadImages();
             calendar = calendarPassIn;
+            LoadImages();
         }
+
+        /* ----------CAR VISUALS---------- */
 
         public void AssignImage(Car car)
         {
-            car.image = carImages[new Random().Next(carImages.Count)];
+            car.image = carImages[rng.Next(carImages.Count)];
         }
 
         public void CarPaint(object? sender, Graphics g)
@@ -64,157 +84,191 @@ namespace CitySkylines0._5alphabeta
             foreach (Car car in cars)
             {
                 var state = g.Save();
+
                 g.TranslateTransform(car.currentPosition.X, car.currentPosition.Y);
                 g.RotateTransform(car.RotationAngle + 90);
 
                 if (calendar.GetHour() >= 21 || calendar.GetHour() <= 5)
                 {
-                    using Brush glow1 = new SolidBrush(Color.FromArgb(180, 255, 255, 200));  // bright center
-                    using Brush glow2 = new SolidBrush(Color.FromArgb(90, 255, 255, 200));   // mid glow
-                    using Brush glow3 = new SolidBrush(Color.FromArgb(40, 255, 255, 200));   // outer glow
+                    using Brush glow1 = new SolidBrush(Color.FromArgb(180, 255, 255, 200));
+                    using Brush glow2 = new SolidBrush(Color.FromArgb(90, 255, 255, 200));
+                    using Brush glow3 = new SolidBrush(Color.FromArgb(40, 255, 255, 200));
 
-                    const float sourceY = -4; 
-                  
-                    g.FillEllipse(glow3, -6, sourceY - 13, 12, 20);  // outer
-                    g.FillEllipse(glow2, -4, sourceY - 8, 8, 15);  // mid
-                    g.FillEllipse(glow1, -2, sourceY - 2, 4, 9);   // bright center
+                    g.FillEllipse(glow3, -6, -17, 12, 20);
+                    g.FillEllipse(glow2, -4, -12, 8, 15);
+                    g.FillEllipse(glow1, -2, -6, 4, 9);
                 }
-                g.DrawImage(car.image, -4, -4, 12, 12);
 
+                g.DrawImage(car.image, -4, -4, 12, 12);
                 g.Restore(state);
             }
         }
 
-
         private void LoadImages()
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string folder = Path.Combine(root, "gameAssets", "gameArt", "Cars");
 
-            string carsFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Cars");
-            carImages = new List<Image>();
-
-            foreach (string path in Directory.GetFiles(carsFolder, "*.png"))
+            foreach (string path in Directory.GetFiles(folder, "*.png"))
             {
                 using var original = Image.FromFile(path);
-                Bitmap transparentBitmap = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                using (Graphics g = Graphics.FromImage(transparentBitmap))
+                Bitmap bmp = new Bitmap(original.Width, original.Height);
+                using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    g.Clear(System.Drawing.Color.Transparent);
-                    g.DrawImage(original, 0, 0, original.Width, original.Height);
+                    g.DrawImage(original, 0, 0);
                 }
-                carImages.Add(transparentBitmap);
+                carImages.Add(bmp);
             }
         }
+
+        /* ----------MOVEMENT---------- */
 
         public bool MoveCar(Car car)
         {
-            try
+            if (!car.isMoving || car.route.Count == 0)
+                return false;
+
+            Node nextNode = car.route.Peek();
+
+            if (IsBlocked(car, nextNode))
+                return false;
+
+            MoveTowardsNode(car, nextNode);
+
+            if (car.route.Count == 0 && car.currentNode == car.destinationNode)
             {
-                if (car == null) return false;
-
-                if (car.route == null || car.route.Count == 0)
-                {
-                    Console.WriteLine("Car has no route.");
-                    // nothing to do — keep car stopped
-                    car.isMoving = false;
-                    return false;
-                }
-
-                //get the next node safely
-                Node nextNode = car.route.Peek();
-                if (nextNode == null)
-                {
-                    Console.WriteLine("Next node from route is null.");
-                    car.isMoving = false;
-                    return false;
-                }
-
-                PointF target = new PointF(nextNode.coords.X + 8, nextNode.coords.Y + 8);
-                float dx = target.X - car.currentPosition.X;
-                float dy = target.Y - car.currentPosition.Y;
-                float angleRad = (float)Math.Atan2(dy, dx);
-                car.RotationAngle = angleRad * 180f / (float)Math.PI;
-                float dist = (float)Math.Sqrt(dx * dx + dy * dy);
-
-                if (dist <= car.Speed) // reached or close enough
-                {
-                    car.currentPosition = target;
-                    car.route.Dequeue();
-                    car.Progress = 0f;
-                }
-                else
-                {
-                    car.currentPosition = new PointF(
-                        car.currentPosition.X + (float)(dx / dist * car.Speed),
-                        car.currentPosition.Y + (float)(dy / dist * car.Speed)
-                    );
-                }
-
-                //after movement, check the node the car is occupying
-                Node occupying = CarOccupyingNode(car);
-                if (occupying == null)
-                {
-                    //no road nodes available — stop the car to avoid repeated exceptions
-                    Console.WriteLine("CarOccupyingNode returned null.");
-                    car.isMoving = false;
-                    return false;
-                }
-
-                //if we still have nodes in route, compare occupying to next route node
-                if (car.route.Count > 0)
-                {
-                    Node peekNode = car.route.Peek();
-                    if (peekNode != null && occupying.coords == peekNode.coords)
-                    {
-                        //we are at the next queued node — consume it
-                        car.route.Dequeue();
-                        car.Progress = 0f;
-                    }
-                }
-                else
-                {
-                    //route became empty after the earlier Dequeue. If we're at destination stop the car.
-                    if (occupying.coords == car.destinationNode.coords)
-                    {
-                        car.isMoving = false;
-                        return true; // signal finished
-                    }
-                }
-
-                //if now at destination (double check) and route empty
-                if (car.route.Count == 0 && occupying.coords == car.destinationNode.coords)
-                {
-                    car.isMoving = false;
-                    return true;
-                }
-
-                return false; //not finished
+                DespawnCar(car);
+                return true;
             }
-            catch (Exception ex)
+
+            return false;
+        }
+
+        private bool IsBlocked(Car car, Node nextNode)
+        {
+            if (nextNode.OccupyingCar == null || nextNode.OccupyingCar == car)
+                return false;
+
+            car.stuckTimeSeconds += TickDelta;
+            car.blockedNodes.Add(nextNode);
+
+            if (IsHeadOnDeadlock(car, nextNode) && car.stuckTimeSeconds >= 1.5f)
             {
-                Console.WriteLine("Exception in MoveCar: " + ex.ToString());
-                //stop the car to avoid crash loops
-                car.isMoving = false;
+                car.hasPriority = true;
                 return false;
             }
+
+            if (car.stuckTimeSeconds >= 1f)
+            {
+                TryRerouteCar(car);
+                car.stuckTimeSeconds = 0f;
+            }
+
+            if (car.stuckTimeSeconds >= 10f)
+            {
+                DespawnCar(car);
+                return true;
+            }
+
+            return true;
         }
 
-        private Node CarOccupyingNode(Car car)
+        private void MoveTowardsNode(Car car, Node nextNode)
         {
-            Node n = grid.roadNodes.OrderBy(node => Distance(car.currentPosition, new PointF(node.coords.X + 8, node.coords.Y + 8))).First();
-            return n;
+            car.stuckTimeSeconds = 0f;
+            car.blockedNodes.Clear();
+
+            PointF target = new PointF(
+                nextNode.coords.X + 8,
+                nextNode.coords.Y + 8
+            );
+
+            float dx = target.X - car.currentPosition.X;
+            float dy = target.Y - car.currentPosition.Y;
+            float dist = MathF.Sqrt(dx * dx + dy * dy);
+
+            car.RotationAngle = MathF.Atan2(dy, dx) * 180f / MathF.PI;
+
+            if (dist <= car.Speed)
+            {
+                if (nextNode.OccupyingCar != null &&
+                    nextNode.OccupyingCar != car &&
+                    !car.hasPriority)
+                    return;
+
+                // free old node
+                if (car.currentNode.OccupyingCar == car)
+                    car.currentNode.OccupyingCar = null;
+
+                car.currentNode = nextNode;
+                nextNode.OccupyingCar = car;
+
+                car.currentPosition = target;
+                car.route.Dequeue();
+                car.hasPriority = false;
+            }
+            else
+            {
+                car.currentPosition = new PointF(
+                    car.currentPosition.X + dx / dist * (float)car.Speed,
+                    car.currentPosition.Y + dy / dist * (float)car.Speed
+                );
+            }
         }
 
-        private float Distance(PointF a, PointF b)
+        private void DespawnCar(Car car)
         {
-            float dx = a.X - b.X;
-            float dy = a.Y - b.Y;
-            return (float)Math.Sqrt(dx * dx + dy * dy);
+            if (car.currentNode != null && car.currentNode.OccupyingCar == car)
+            {
+                car.currentNode.OccupyingCar = null;
+                for (int i = cars.Count - 1; i >= 0; i--) { if (MoveCar(cars[i])) { cars.RemoveAt(i); } }
+            }
+            
+
+            car.isMoving = false;
+        }
+
+        /* ----------DEADLOCK / ROUTING---------- */
+
+        private bool IsHeadOnDeadlock(Car car, Node nextNode)
+        {
+            Car other = nextNode.OccupyingCar;
+            if (other == null || other.route.Count == 0)
+                return false;
+
+            return other.route.Peek() == car.currentNode;
+        }
+
+        private void TryRerouteCar(Car car)
+        {
+            if (car.blockedNodes.Count == 0)
+                return;
+
+            Queue<Node> newRoute = CreateCarRouteAvoidingNodes(
+                car.currentNode,
+                car.destinationNode,
+                car.blockedNodes
+            );
+
+            if (newRoute != null && newRoute.Count > 0)
+            {
+                car.route = newRoute;
+                car.blockedNodes.Clear();
+            }
+        }
+
+        /* ----------PATHFINDING---------- */
+        private float Heuristic(Node a, Node b)
+        {
+            return Math.Abs(a.coords.X - b.coords.X) + Math.Abs(a.coords.Y - b.coords.Y);
         }
 
         public Queue<Node> CreateCarRoute(Car car)
         {
-            foreach (Node n in grid.roadNodes) //reset data to stop potential crashes/ freezes
+            Node start = car.startNode;
+            Node destination = car.destinationNode;
+            // reset pathfinding data
+            foreach (Node n in grid.roadNodes)
             {
                 n.parent = null;
                 n.gCost = float.MaxValue;
@@ -224,10 +278,9 @@ namespace CitySkylines0._5alphabeta
             List<Node> openList = new List<Node>();
             HashSet<Node> closedList = new HashSet<Node>();
 
-            car.startNode.gCost = 0;
-            car.startNode.hCost = Heuristic(car.startNode, car.destinationNode);
-
-            openList.Add(car.startNode);
+            start.gCost = 0;
+            start.hCost = Heuristic(start, destination);
+            openList.Add(start);
 
             while (openList.Count > 0)
             {
@@ -235,16 +288,17 @@ namespace CitySkylines0._5alphabeta
                 openList.Remove(current);
                 closedList.Add(current);
 
-                if (current == car.destinationNode)
+                if (current == destination)
                 {
-                    //reconstruct path
                     Stack<Node> stack = new Stack<Node>();
                     Node pathNode = current;
+
                     while (pathNode != null)
                     {
                         stack.Push(pathNode);
                         pathNode = pathNode.parent;
                     }
+
                     return new Queue<Node>(stack);
                 }
 
@@ -253,7 +307,9 @@ namespace CitySkylines0._5alphabeta
                     if (closedList.Contains(neighbor))
                         continue;
 
-                    float tentativeG = current.gCost + Distance(current.coords, neighbor.coords);
+                    float tentativeG = current.gCost +
+                                       Distance(current.coords, neighbor.coords);
+
                     bool isBetter = false;
 
                     if (!openList.Contains(neighbor))
@@ -270,26 +326,74 @@ namespace CitySkylines0._5alphabeta
                     {
                         neighbor.parent = current;
                         neighbor.gCost = tentativeG;
-                        neighbor.hCost = Heuristic(neighbor, car.destinationNode);
+                        neighbor.hCost = Heuristic(neighbor, destination);
                     }
                 }
             }
 
-            return null; //no path found
+            return null; // no path found
         }
 
-        private float Heuristic(Node a, Node b)
+        private Queue<Node> CreateCarRouteAvoidingNodes(Node start, Node destination, HashSet<Node> forbidden)
         {
-            return Math.Abs(a.coords.X - b.coords.X) + Math.Abs(a.coords.Y - b.coords.Y); // Manhattan
+            foreach (Node n in grid.roadNodes)
+            {
+                n.parent = null;
+                n.gCost = float.MaxValue;
+            }
+
+            List<Node> open = new();
+            HashSet<Node> closed = new();
+
+            start.gCost = 0;
+            open.Add(start);
+
+            while (open.Count > 0)
+            {
+                Node current = open.OrderBy(n => n.gCost).First();
+                open.Remove(current);
+                closed.Add(current);
+
+                if (current == destination)
+                {
+                    Stack<Node> path = new();
+                    while (current != null)
+                    {
+                        path.Push(current);
+                        current = current.parent;
+                    }
+                    return new Queue<Node>(path);
+                }
+
+                foreach (Node neighbor in GetNeighbors(current))
+                {
+                    if (forbidden.Contains(neighbor) || closed.Contains(neighbor)) { continue; }
+                        
+
+                    float g = current.gCost + Distance(current.coords, neighbor.coords);
+
+                    if (g < neighbor.gCost)
+                    {
+                        neighbor.parent = current;
+                        neighbor.gCost = g;
+                        if (!open.Contains(neighbor)) { open.Add(neighbor); }
+                            
+                    }
+                }
+            }
+            return null;
+        }
+
+        private float Distance(PointF a, PointF b)
+        {
+            float dx = a.X - b.X;
+            float dy = a.Y - b.Y;
+            return MathF.Sqrt(dx * dx + dy * dy);
         }
 
         private List<Node> GetNeighbors(Node node)
         {
-            List<Node> neighbors = new List<Node>();
-            neighbors.AddRange(grid.roadNodes.Where(n => (Math.Abs(n.coords.X - node.coords.X) == 16 && n.coords.Y == node.coords.Y) ||
-                                                        (Math.Abs(n.coords.Y - node.coords.Y) == 16 && n.coords.X == node.coords.X)));
-            return neighbors;
+            return grid.roadNodes.Where(n => (Math.Abs(n.coords.X - node.coords.X) == 16 && n.coords.Y == node.coords.Y) ||(Math.Abs(n.coords.Y - node.coords.Y) == 16 && n.coords.X == node.coords.X)).ToList();
         }
-
     }
 }
