@@ -28,13 +28,14 @@ namespace CitySkylines0._5alphabeta
     public class EmergencyServiceVehicle : Car
     {
         public string type;
-        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn) : base(startNodeIn, speed, destinationNodeIn)
+        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath) : base(startNodeIn, speed, destinationNodeIn)
         {
             startNode = startNodeIn;
             destinationNode = destinationNodeIn;
             Progress = 0f;
             Speed = speed;
             currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
+            image = Image.FromFile(imageFilePath);
         }
     }
 

@@ -178,9 +178,9 @@ namespace CitySkylines0._5alphabeta
                     g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);
 
-                    if (building.Occupants.Where(p => p != null).Count() > 0)
+                    foreach (Person p in building.Occupants.Where(p => p != null))
                     {
-                        if (building.Occupants.Any(p => p.IsHealthy == false))
+                        if (p.IsHealthy == false)
                         {
                             Unhealthy ne = new Unhealthy(10);
                             ne.type = "Health";
