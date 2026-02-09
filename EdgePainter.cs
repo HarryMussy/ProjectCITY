@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System.Security.Cryptography;
+using System.Windows.Forms.VisualStyles;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -87,13 +89,21 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            foreach (Edge e in grid.edges)
+            {
+                using Pen p = new Pen(Color.FromArgb(55, 255, 255, 255), 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
+                DrawArrowLine(g, p, e.a, e.b, 6f);
+                DrawArrowLine(g, p, e.b, e.a, 6f);
+            }
+
             if (startPoint != null)
             {
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
-                Point setPoint = SnapTo8Directions(startPoint.Value, mousePos);
+                Point setPoint = SnapTo4Directions(startPoint.Value, mousePos);
 
                 // highlight intersecting nodes as before
-                Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp");
+                int edgeAngle = FindAngle(startPoint.Value, setPoint);
+                Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp", edgeAngle);
                 List<Node> nodes = grid.FindAdjacentTilesToARoad(tempEdge);
                 if (cost > grid.cash)
                 {
@@ -111,6 +121,10 @@ namespace CitySkylines0._5alphabeta
                 string displayedcost = cost.ToString("F2");
                 g.DrawString(displayedcost, new Font("Comic Sans", 10), greenBrush, linecenter);
 
+                using Pen p = new Pen(Color.Black, 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
+
+                DrawArrowLine(g, p, tempEdge.a, tempEdge.b, 6f);
+                DrawArrowLine(g, p, tempEdge.b, tempEdge.a, 6f);
                 tempEdge = null;
             }
 
@@ -147,6 +161,38 @@ namespace CitySkylines0._5alphabeta
             // Return the (possibly snapped) point a
             return a;
         }
+
+        private void DrawArrowLine(Graphics g, Pen p, Point a, Point b, float perpendicularOffset)
+        {
+            float dx = b.X - a.X, dy = b.Y - a.Y;
+            float len = (float)Math.Sqrt(dx * dx + dy * dy);
+            if (len == 0) return;
+
+            float px = -dy / len;
+            float py = dx / len;
+
+            g.DrawLine(
+                p,
+                new Point((int)(b.X + px * perpendicularOffset), (int)(b.Y + py * perpendicularOffset)),
+                new Point((int)(a.X + px * perpendicularOffset), (int)(a.Y + py * perpendicularOffset))
+            );
+        }
+
+
+
+        public int FindAngle(Point a, Point b)
+        {
+            if (b.X == a.X)
+            {
+                return 0;
+            }
+            else
+            {
+                return (int)Math.Tanh((b.Y - a.Y) / (b.X - a.X));
+            }
+                
+        }
+
         public List<Point> FindWaterNodePoints(Background bg)
         {
             List<Point> waterNodePoints = new List<Point>();
@@ -261,7 +307,7 @@ namespace CitySkylines0._5alphabeta
             {
                 bool isOverlapping = false;
                 Point endPoint = snappedPoint == null ? clickedPoint : snappedPoint.Value;
-                endPoint = SnapTo8Directions(startPoint.Value, endPoint);
+                endPoint = SnapTo4Directions(startPoint.Value, endPoint);
                 if (startPoint == endPoint)
                 {
                     isOverlapping = true;
@@ -273,7 +319,8 @@ namespace CitySkylines0._5alphabeta
                     if (isOverlapping == false && grid.cash >= cost)
                     {
                         string roadname = nameProvider.GetRandomName();
-                        Road newroad = new Road(8, startPoint.Value, endPoint, roadname);
+                        Road newroad = new Road(8, startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
+                        AssignLaneDirections(newroad, newroad.occupyingNodes);
                         audioManager.PlayPlaceSound();
                         newroad.AddIntersection(startPoint.Value, newroad);
                         newroad.AddIntersection(endPoint, newroad);
@@ -309,9 +356,60 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        public Point SnapTo8Directions(Point a, Point b)
+        private void AssignLaneDirections(Edge edge, List<Node> roadNodes)
         {
-            int[] allowedAngles = { 0, 45, 90, 135, 180, 225, 270, 315 };
+            Point roadDir = new Point(
+                Math.Sign(edge.b.X - edge.a.X),
+                Math.Sign(edge.b.Y - edge.a.Y)
+            );
+
+            foreach (Node node in roadNodes)
+            {
+                node.allowedDirs.Clear();
+
+                // 🟢 INTERSECTION → allow all turns
+                var neighbors = GetConnectedRoadNeighbors(node);
+                if (neighbors.Count >= 3)
+                {
+                    foreach (Node n in neighbors)
+                    {
+                        Point dir = new Point(
+                            Math.Sign(n.coords.X - node.coords.X),
+                            Math.Sign(n.coords.Y - node.coords.Y)
+                        );
+                        node.allowedDirs.Add(dir);
+                    }
+                    continue;
+                }
+
+                // 🔵 NORMAL ROAD TILE → one direction per lane
+                if (node.laneIndex == 0)
+                    node.allowedDirs.Add(roadDir);
+                else
+                    node.allowedDirs.Add(new Point(-roadDir.X, -roadDir.Y));
+            }
+        }
+
+
+        private List<Node> GetConnectedRoadNeighbors(Node node)
+        {
+            List<Node> result = new();
+
+            foreach (Node n in grid.roadNodes)
+            {
+                int dx = Math.Abs(n.coords.X - node.coords.X);
+                int dy = Math.Abs(n.coords.Y - node.coords.Y);
+
+                if ((dx == 16 && dy == 0) || (dx == 0 && dy == 16))
+                    result.Add(n);
+            }
+
+            return result;
+        }
+
+        public Point SnapTo4Directions(Point a, Point b)
+        {
+            int[] allowedAngles = { 0, 90, 180, 270 };
 
             double changeX = b.X - a.X;
             double changeY = b.Y - a.Y;

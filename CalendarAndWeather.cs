@@ -27,9 +27,9 @@ namespace CitySkylines0._5alphabeta
         }
 
         [JsonIgnore] Form1 form1PassIn;
-        [JsonIgnore] private double timeToAdvanceMinute = 240.0 / 1440.0; //in milliseconds
+        [JsonIgnore] private double timeToAdvanceMinute = 100; //in milliseconds
         [JsonIgnore] private double timeToAdvanceDay = 1; //in seconds
-        [JsonIgnore] private int advanceMinutes = 5;
+        [JsonIgnore] private int advanceMinutes = 1; //how much to advance minutes by
 
 
         // Must be serialized or time will jump after load
@@ -62,6 +62,8 @@ namespace CitySkylines0._5alphabeta
             elapsedMilliSeconds += elapsed;
             elapsedSeconds += elapsed/1000;
 
+            hour = 1;
+
             if (elapsedMilliSeconds >= timeToAdvanceMinute)
             {
                 minute += advanceMinutes;
@@ -70,8 +72,9 @@ namespace CitySkylines0._5alphabeta
                 {
                     hour += 1;
                     minute = 0;
-                    elapsedMilliSeconds = 0;
                 }
+
+                elapsedMilliSeconds = 0;
             }
 
             if (elapsedSeconds >= timeToAdvanceDay)

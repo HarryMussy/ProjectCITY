@@ -20,7 +20,7 @@ namespace CitySkylines0._5alphabeta
         public bool hasPriority = false;
 
         public float stuckTimeSeconds = 0f;
-        public HashSet<Node> blockedNodes = new HashSet<Node>();
+        public List<Node> blockedNodes = new List<Node>();
 
         public Car(Node startNodeIn, double speed, Node destinationNodeIn)
         {
@@ -29,11 +29,7 @@ namespace CitySkylines0._5alphabeta
             destinationNode = destinationNodeIn;
             Speed = speed;
 
-            currentPosition = new PointF(
-                startNodeIn.coords.X + 8,
-                startNodeIn.coords.Y + 8
-            );
-
+            currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
             startNode.OccupyingCar = this;
         }
     }
@@ -42,12 +38,7 @@ namespace CitySkylines0._5alphabeta
     {
         public string type;
 
-        public EmergencyServiceVehicle(
-            Node startNodeIn,
-            double speed,
-            Node destinationNodeIn,
-            string imageFilePath
-        ) : base(startNodeIn, speed, destinationNodeIn)
+        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath) : base(startNodeIn, speed, destinationNodeIn)
         {
             image = Image.FromFile(imageFilePath);
         }
@@ -70,6 +61,7 @@ namespace CitySkylines0._5alphabeta
             grid = gridPassIn;
             calendar = calendarPassIn;
             LoadImages();
+            Random rng = new Random();
         }
 
         /* ----------CAR VISUALS---------- */
@@ -94,9 +86,9 @@ namespace CitySkylines0._5alphabeta
                     using Brush glow2 = new SolidBrush(Color.FromArgb(90, 255, 255, 200));
                     using Brush glow3 = new SolidBrush(Color.FromArgb(40, 255, 255, 200));
 
-                    g.FillEllipse(glow3, -6, -17, 12, 20);
-                    g.FillEllipse(glow2, -4, -12, 8, 15);
-                    g.FillEllipse(glow1, -2, -6, 4, 9);
+                    g.FillEllipse(glow3, -16, -15, 12, 20);
+                    g.FillEllipse(glow2, -4, -15, 8, 15);
+                    g.FillEllipse(glow1, 0, -15, 4, 9);
                 }
 
                 g.DrawImage(car.image, -4, -4, 12, 12);
@@ -158,10 +150,9 @@ namespace CitySkylines0._5alphabeta
                 return false;
             }
 
-            if (car.stuckTimeSeconds >= 1f)
+            if (car.stuckTimeSeconds >= rng.Next(1, 10))
             {
                 TryRerouteCar(car);
-                car.stuckTimeSeconds = 0f;
             }
 
             if (car.stuckTimeSeconds >= 10f)
@@ -175,47 +166,62 @@ namespace CitySkylines0._5alphabeta
 
         private void MoveTowardsNode(Car car, Node nextNode)
         {
-            car.stuckTimeSeconds = 0f;
-            car.blockedNodes.Clear();
+            if (nextNode == car.currentNode)
+            {
+                car.route.Dequeue();
+                return;
+            }
 
+            car.stuckTimeSeconds = 0f;
+
+            // center of next tile
             PointF target = new PointF(
                 nextNode.coords.X + 8,
                 nextNode.coords.Y + 8
+            );
+
+            // direction from node → node (NOT position-based)
+            Point dir = new Point(
+                Math.Sign(nextNode.coords.X - car.currentNode.coords.X),
+                Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y)
             );
 
             float dx = target.X - car.currentPosition.X;
             float dy = target.Y - car.currentPosition.Y;
             float dist = MathF.Sqrt(dx * dx + dy * dy);
 
+            if (dist < 0.01f)
+                return;
+
             car.RotationAngle = MathF.Atan2(dy, dx) * 180f / MathF.PI;
 
-            if (dist <= car.Speed)
+            float step = (float)(car.Speed);
+
+            if (dist <= step)
             {
                 if (nextNode.OccupyingCar != null &&
                     nextNode.OccupyingCar != car &&
                     !car.hasPriority)
                     return;
 
-                // free old node
                 if (car.currentNode.OccupyingCar == car)
                     car.currentNode.OccupyingCar = null;
 
                 car.currentNode = nextNode;
                 nextNode.OccupyingCar = car;
-
                 car.currentPosition = target;
+
                 car.route.Dequeue();
                 car.hasPriority = false;
             }
             else
             {
                 car.currentPosition = new PointF(
-                    car.currentPosition.X + dx / dist * (float)car.Speed,
-                    car.currentPosition.Y + dy / dist * (float)car.Speed
+                    car.currentPosition.X + dx / dist * step,
+                    car.currentPosition.Y + dy / dist * step
                 );
             }
         }
-
         private void DespawnCar(Car car)
         {
             if (car.currentNode != null && car.currentNode.OccupyingCar == car)
@@ -233,7 +239,7 @@ namespace CitySkylines0._5alphabeta
         private bool IsHeadOnDeadlock(Car car, Node nextNode)
         {
             Car other = nextNode.OccupyingCar;
-            if (other == null || other.route.Count == 0)
+            if (other == null || other.route == null || other.route.Count == 0)
                 return false;
 
             return other.route.Peek() == car.currentNode;
@@ -244,10 +250,7 @@ namespace CitySkylines0._5alphabeta
             if (car.blockedNodes.Count == 0)
                 return;
 
-            Queue<Node> newRoute = CreateCarRouteAvoidingNodes(
-                car.currentNode,
-                car.destinationNode,
-                car.blockedNodes
+            Queue<Node> newRoute = CreateCarRouteAvoidingNodes(car.currentNode, car.destinationNode, car.blockedNodes
             );
 
             if (newRoute != null && newRoute.Count > 0)
@@ -267,7 +270,7 @@ namespace CitySkylines0._5alphabeta
         {
             Node start = car.startNode;
             Node destination = car.destinationNode;
-            // reset pathfinding data
+
             foreach (Node n in grid.roadNodes)
             {
                 n.parent = null;
@@ -275,66 +278,58 @@ namespace CitySkylines0._5alphabeta
                 n.hCost = 0;
             }
 
-            List<Node> openList = new List<Node>();
-            HashSet<Node> closedList = new HashSet<Node>();
+            List<Node> open = new();
+            HashSet<Node> closed = new();
 
             start.gCost = 0;
             start.hCost = Heuristic(start, destination);
-            openList.Add(start);
+            open.Add(start);
 
-            while (openList.Count > 0)
+            while (open.Count > 0)
             {
-                Node current = openList.OrderBy(n => n.fCost).First();
-                openList.Remove(current);
-                closedList.Add(current);
+                Node current = open.OrderBy(n => n.fCost).First();
+                open.Remove(current);
+                closed.Add(current);
 
                 if (current == destination)
                 {
-                    Stack<Node> stack = new Stack<Node>();
-                    Node pathNode = current;
-
-                    while (pathNode != null)
+                    Stack<Node> path = new();
+                    while (current != null)
                     {
-                        stack.Push(pathNode);
-                        pathNode = pathNode.parent;
+                        path.Push(current);
+                        current = current.parent;
                     }
-
-                    return new Queue<Node>(stack);
+                    return new Queue<Node>(path);
                 }
 
                 foreach (Node neighbor in GetNeighbors(current))
                 {
-                    if (closedList.Contains(neighbor))
+                    if (closed.Contains(neighbor))
                         continue;
 
-                    float tentativeG = current.gCost +
-                                       Distance(current.coords, neighbor.coords);
+                    float trafficPenalty =
+                        neighbor.OccupyingCar != null ? 50f : 0f;
 
-                    bool isBetter = false;
+                    float tentativeG =
+                        current.gCost +
+                        Distance(current.coords, neighbor.coords) +
+                        trafficPenalty;
 
-                    if (!openList.Contains(neighbor))
-                    {
-                        openList.Add(neighbor);
-                        isBetter = true;
-                    }
-                    else if (tentativeG < neighbor.gCost)
-                    {
-                        isBetter = true;
-                    }
-
-                    if (isBetter)
+                    if (!open.Contains(neighbor) || tentativeG < neighbor.gCost)
                     {
                         neighbor.parent = current;
                         neighbor.gCost = tentativeG;
                         neighbor.hCost = Heuristic(neighbor, destination);
+
+                        if (!open.Contains(neighbor))
+                            open.Add(neighbor);
                     }
                 }
             }
 
-            return null; // no path found
+            return null;
         }
-
-        private Queue<Node> CreateCarRouteAvoidingNodes(Node start, Node destination, HashSet<Node> forbidden)
+        private Queue<Node> CreateCarRouteAvoidingNodes(Node start, Node destination, List<Node> forbidden)
         {
             foreach (Node n in grid.roadNodes)
             {
@@ -367,20 +362,24 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node neighbor in GetNeighbors(current))
                 {
-                    if (forbidden.Contains(neighbor) || closed.Contains(neighbor)) { continue; }
-                        
+                    if (forbidden.Contains(neighbor) || closed.Contains(neighbor))
+                        continue;
 
-                    float g = current.gCost + Distance(current.coords, neighbor.coords);
+                    float g =
+                        current.gCost +
+                        Distance(current.coords, neighbor.coords);
 
                     if (g < neighbor.gCost)
                     {
                         neighbor.parent = current;
                         neighbor.gCost = g;
-                        if (!open.Contains(neighbor)) { open.Add(neighbor); }
-                            
+
+                        if (!open.Contains(neighbor))
+                            open.Add(neighbor);
                     }
                 }
             }
+
             return null;
         }
 
@@ -393,7 +392,68 @@ namespace CitySkylines0._5alphabeta
 
         private List<Node> GetNeighbors(Node node)
         {
-            return grid.roadNodes.Where(n => (Math.Abs(n.coords.X - node.coords.X) == 16 && n.coords.Y == node.coords.Y) ||(Math.Abs(n.coords.Y - node.coords.Y) == 16 && n.coords.X == node.coords.X)).ToList();
+            List<Node> result = new();
+            node.isIntersection = IsIntersection(node);
+
+            foreach (Node n in grid.roadNodes)
+            {
+                if (n == node) { continue; }
+
+                int dx = n.coords.X - node.coords.X;
+                int dy = n.coords.Y - node.coords.Y;
+
+                // Must be cardinally adjacent
+                if (!((Math.Abs(dx) == 16 && dy == 0) || (Math.Abs(dy) == 16 && dx == 0)))
+                {
+                    continue;
+                }
+
+                Point dir = new Point(Math.Sign(dx), Math.Sign(dy));
+                // 🚫 MID-ROAD LANE CHANGES ARE ILLEGAL
+                if (!node.isIntersection)
+                {
+                    // must stay on same lane
+                    if (n.laneIndex == node.laneIndex) { continue; }
+
+                    // must follow lane direction
+                    if (!node.allowedDirs.Contains(dir)) { continue; }
+                }
+
+                // 🟢 INTERSECTION: allow all
+                else
+                {
+                    // but still enforce neighbor accepts us
+                    Point reverse = new Point(-dir.X, -dir.Y);
+                    if (n.allowedDirs.Count > 0 &&
+                        !n.allowedDirs.Contains(reverse))
+                        continue;
+                }
+
+                result.Add(n);
+            }
+
+            return result;
         }
+
+
+        private bool IsIntersection(Node node)
+        {
+            int count = 0;
+            foreach (Node n in grid.roadNodes)
+            {
+                if (n == node) { continue; }
+
+                int dx = Math.Abs(n.coords.X - node.coords.X);
+                int dy = Math.Abs(n.coords.Y - node.coords.Y);
+
+                if ((dx == 16 && dy == 0) || (dx == 0 && dy == 16))
+                {
+                    count++;
+                }    
+            }
+            return count >= 3;
+        }
+
+
     }
 }

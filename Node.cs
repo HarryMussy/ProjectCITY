@@ -10,6 +10,11 @@ namespace CitySkylines0._5alphabeta
     {
         public Point coords { get; set; }
         public Car OccupyingCar { get; set; } = null;
+
+        public bool isIntersection { get; set; } = false;
+        public int laneIndex { get; set; } = 0; //0 is one way 1 is the other
+        public Edge parentEdge { get; set; }
+        public HashSet<Point> allowedDirs { get; set; } = new();
         public bool hasTileData { get; set; }
         public bool isNearRoad { get; set; }
         public int nodeNumber { get; set; }

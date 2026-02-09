@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using System.Windows.Controls;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -218,25 +219,93 @@ namespace CitySkylines0._5alphabeta
             }
             return intersectingNodesWithEdge;
         }
+
         public List<Node> FindRoadTilesForSpecificEdge(Road road)
         {
-            List<Node> newRoadNodes = new List<Node>();
-
-            foreach (Point n in road.pointsOnTheEdge)
+            foreach (Node node in nodes)
             {
-                foreach (Node node in nodes)
+                if (node.parentEdge == road)
                 {
-                    // ROAD NODE
-                    if (node.coords.X + 8 <= n.X + rectSize && node.coords.X + 8 >= n.X - rectSize &&
-                            node.coords.Y + 8 <= n.Y + rectSize && node.coords.Y + 8 >= n.Y - rectSize)
-                    {
-                        node.isRoad = true;
-                        newRoadNodes.Add(node);
-                    }
+                    node.isRoad = false;
+                    node.allowedDirs.Clear();
+                    node.laneIndex = -1;
+                    node.parentEdge = null;
                 }
             }
+
+            List<Node> newRoadNodes = new();
+
+            Point roadDir = new Point(
+                Math.Sign(road.b.X - road.a.X),
+                Math.Sign(road.b.Y - road.a.Y)
+            );
+
+            Point perp = new Point(-roadDir.Y, roadDir.X);
+
+            foreach (Point p in road.pointsOnTheEdge)
+            {
+                Point lanePos0 = new Point(
+                    p.X + perp.X,
+                    p.Y + perp.Y
+                );
+
+                Point lanePos1 = new Point(
+                    p.X - perp.X,
+                    p.Y - perp.Y
+                );
+
+
+                Node lane0 = null;
+                Node lane1 = null;
+
+                foreach (Node node in nodes)
+                {
+                    if (IsNodeAt(node, lanePos0))
+                        lane0 = node;
+
+                    if (IsNodeAt(node, lanePos1))
+                        lane1 = node;
+                }
+
+                if (lane0 != null)
+                {
+                    lane0.isRoad = true;
+                    lane0.laneIndex = 0;
+                    lane0.parentEdge = road;
+                    lane0.allowedDirs.Clear();
+                    lane0.allowedDirs.Add(roadDir);
+
+                    newRoadNodes.Add(lane0);
+                    if (!roadNodes.Contains(lane0))
+                        roadNodes.Add(lane0);
+                }
+
+                if (lane1 != null)
+                {
+                    lane1.isRoad = true;
+                    lane1.laneIndex = 1;
+                    lane1.parentEdge = road;
+                    lane1.allowedDirs.Clear();
+                    lane1.allowedDirs.Add(new Point(-roadDir.X, -roadDir.Y));
+
+                    newRoadNodes.Add(lane1);
+                    if (!roadNodes.Contains(lane1))
+                        roadNodes.Add(lane1);
+                }
+            }
+
             return newRoadNodes;
         }
+
+        private bool IsNodeAt(Node node, Point p)
+        {
+            return
+                node.coords.X + 8 <= p.X + rectSize &&
+                node.coords.X + 8 >= p.X - rectSize &&
+                node.coords.Y + 8 <= p.Y + rectSize &&
+                node.coords.Y + 8 >= p.Y - rectSize;
+        }
+
 
         public void FindRoadTilesAndAdjacentRoadTiles()
         {

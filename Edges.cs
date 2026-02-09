@@ -6,20 +6,21 @@
         public string name { get; set; }
         public Point a { get; set; }
         public Point b { get; set; }
-
+        public int angle { get; set; } //anywhere from 0 to 360
         public List<IntersectingNode> intersections { get; set; } = new();
         public List<Node> occupyingNodes { get; set; } = new();
         public List<Point> pointsOnTheEdge { get; set; } = new();
 
         public Edge() { }
 
-        public Edge(int weight, Point a, Point b, string name)
+        public Edge(int weight, Point a, Point b, string name, int angle)
         {
             edgeWeight = weight;
             this.a = a;
             this.b = b;
             this.name = name;
             FindAllPointOnEdge(this);
+            this.angle = angle;
         }
 
 
@@ -63,7 +64,7 @@
     {
         public string type;
 
-        public Road(int edgeweight, Point a, Point b, string name) : base(edgeweight, a, b, name)
+        public Road(int edgeweight, Point a, Point b, string name, int angle) : base(edgeweight, a, b, name, angle)
         {
             type = "road";
             this.FindAllPointOnEdge(this);

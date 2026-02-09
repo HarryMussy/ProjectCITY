@@ -623,7 +623,7 @@ namespace CitySkylines0._5alphabeta
             if (building == null) return;
 
             Node closestNode = grid.roadNodes.OrderBy(n => Distance(building.coords, n.coords)).FirstOrDefault();
-            if (closestNode == null) return;
+            if (closestNode == null || closestNode.OccupyingCar != null) return;
 
             building = grid.buildings[rng.Next(grid.buildings.Count)];
             if (building == null) return;
