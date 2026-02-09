@@ -9,7 +9,7 @@ namespace CitySkylines0._5alphabeta
         public List<Node> roadNodes { get; set; } = new();
         public List<Node> buildableNodes { get; set; } = new();
         public List<Edge> edges { get; set; } = new();
-        public List<IntersectingNode> roadIntersections { get; set; } = new();
+        /*public List<IntersectionNode> roadIntersections { get; set; } = new();*/
         public List<Node> nodesIntersectingRoads { get; set; } = new();
         public List<Building> buildings { get; set; } = new();
 

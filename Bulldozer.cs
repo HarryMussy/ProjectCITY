@@ -55,7 +55,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (e.intersections != null)
+            /*if (e.intersections != null)
             {
                 foreach (var inter in e.intersections.ToList())
                 {
@@ -67,7 +67,7 @@ namespace CitySkylines0._5alphabeta
                         gridRef.roadIntersections.Remove(inter);
                     }
                 }
-            }
+            }*/
 
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
         }

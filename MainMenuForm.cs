@@ -11,6 +11,7 @@ namespace CitySkylines0._5alphabeta
         private Button btnOptions;
         private Button btnQuit;
         private PictureBox backgroundBox;
+        private AudioManager audioManager;
 
         public MainMenuForm()
         {
@@ -21,6 +22,7 @@ namespace CitySkylines0._5alphabeta
             this.ClientSize = new Size(3, 3);
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
+            audioManager = new AudioManager();
 
             // --- Load background ---
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
@@ -114,7 +116,7 @@ namespace CitySkylines0._5alphabeta
                             this.Close();
 
                             // Start the game with selected difficulty
-                            Form1 form = new Form1(diffForm.SelectedDifficulty);
+                            Form1 form = new Form1(diffForm.SelectedDifficulty, audioManager);
                             form.Show();
                         }
                     }
@@ -128,7 +130,7 @@ namespace CitySkylines0._5alphabeta
                         playMenu.DialogResult = DialogResult.OK;
                         playMenu.Close();
                         this.Close();
-                        Form1 form = new Form1(save);
+                        Form1 form = new Form1(save, audioManager);
                         form.Show();
                     }
                     else
@@ -149,7 +151,7 @@ namespace CitySkylines0._5alphabeta
 
         private void BtnOptions_Click(object? sender, EventArgs e)
         {
-            OptionsForm optionsForm = new OptionsForm(false);
+            OptionsForm optionsForm = new OptionsForm(false, audioManager);
             optionsForm.Show();
         }
 
@@ -157,6 +159,7 @@ namespace CitySkylines0._5alphabeta
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+            Application.Exit();
         }
 
         private void MainMenuForm_Load(object sender, EventArgs e)

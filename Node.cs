@@ -10,8 +10,6 @@ namespace CitySkylines0._5alphabeta
     {
         public Point coords { get; set; }
         public Car OccupyingCar { get; set; } = null;
-
-        public bool isIntersection { get; set; } = false;
         public int laneIndex { get; set; } = 0; //0 is one way 1 is the other
         public Edge parentEdge { get; set; }
         public HashSet<Point> allowedDirs { get; set; } = new();
@@ -21,13 +19,10 @@ namespace CitySkylines0._5alphabeta
         public bool isRoad { get; set; }
         public bool isGrass { get; set; }
         public bool isBuildable { get; set; }
-
         public float gCost { get; set; }
         public float hCost { get; set; }
         public float fCost => gCost + hCost;
-
         public Node parent { get; set; }
-
         public string imageKey { get; set; }
 
         public Node() { } // required
@@ -51,31 +46,31 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
-    public class IntersectingNode
+   /* public class IntersectionNode
     {
         public Point coords { get; set; }
+        public Size size { get; set; }
         public List<Edge> connectedEdges { get; set; } = new();
 
-        public IntersectingNode() { }
-        public IntersectingNode(Point coords)
+        public IntersectionNode() { }
+        public IntersectionNode(Point coords, Size size)
         {
             this.coords = coords;
+            this.size = size;
         }
 
-
-        public bool Equals(IntersectingNode? other)
+        public bool Equals(IntersectionNode? other)
         {
             if (other is null) return false;
             return coords == other.coords;
         }
 
-        public override bool Equals(object? obj) => Equals(obj as IntersectingNode);
+        public override bool Equals(object? obj) => Equals(obj as IntersectionNode);
 
         public override int GetHashCode() => coords.GetHashCode();
 
-        public static bool operator ==(IntersectingNode? left, IntersectingNode? right) =>
-            object.ReferenceEquals(left, right) ? true : (left?.Equals(right) ?? false);
+        public static bool operator ==(IntersectionNode? left, IntersectionNode? right) => object.ReferenceEquals(left, right) ? true : (left?.Equals(right) ?? false);
 
-        public static bool operator !=(IntersectingNode? left, IntersectingNode? right) => !(left == right);
-    }
+        public static bool operator !=(IntersectionNode? left, IntersectionNode? right) => !(left == right);
+    }*/
 }

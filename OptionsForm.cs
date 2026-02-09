@@ -40,10 +40,10 @@ namespace CitySkylines0._5alphabeta
             PopulateValuesFromAudio();
         }
 
-        public OptionsForm(bool fromGame)
+        public OptionsForm(bool fromGame, AudioManager audio)
         {
             openedInGame = fromGame;
-
+            audioManager = audio;
             Text = "OPTIONS";
             ClientSize = new Size(620, 420);
             BackColor = Color.FromArgb(40, 40, 40);

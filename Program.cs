@@ -47,7 +47,7 @@ namespace CitySkylines0._5alphabeta
 
             await Task.Delay(1000); // simulate load or do actual loading
 
-            mainForm = new Form1();
+            mainForm = new Form1(new AudioManager());
 
             loadingForm.Hide();
             loadingForm.Dispose();

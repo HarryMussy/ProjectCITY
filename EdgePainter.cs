@@ -164,21 +164,15 @@ namespace CitySkylines0._5alphabeta
 
         private void DrawArrowLine(Graphics g, Pen p, Point a, Point b, float perpendicularOffset)
         {
-            float dx = b.X - a.X, dy = b.Y - a.Y;
+            float dx = b.X - a.X;
+            float dy = b.Y - a.Y;
             float len = (float)Math.Sqrt(dx * dx + dy * dy);
-            if (len == 0) return;
 
             float px = -dy / len;
             float py = dx / len;
 
-            g.DrawLine(
-                p,
-                new Point((int)(b.X + px * perpendicularOffset), (int)(b.Y + py * perpendicularOffset)),
-                new Point((int)(a.X + px * perpendicularOffset), (int)(a.Y + py * perpendicularOffset))
-            );
+            g.DrawLine(p,new Point((int)(b.X + px * perpendicularOffset), (int)(b.Y + py * perpendicularOffset)), new Point((int)(a.X + px * perpendicularOffset), (int)(a.Y + py * perpendicularOffset)));
         }
-
-
 
         public int FindAngle(Point a, Point b)
         {
@@ -322,10 +316,10 @@ namespace CitySkylines0._5alphabeta
                         Road newroad = new Road(8, startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
                         AssignLaneDirections(newroad, newroad.occupyingNodes);
                         audioManager.PlayPlaceSound();
-                        newroad.AddIntersection(startPoint.Value, newroad);
-                        newroad.AddIntersection(endPoint, newroad);
+                        /*newroad.AddIntersection(startPoint.Value, newroad);
+                        newroad.AddIntersection(endPoint, newroad);*/
                         grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
-                        grid.edges.Add(newroad);  // This is now safe
+                        grid.edges.Add(newroad); //this is now safe
                         //grid.CheckIntersectingRoads();
                         grid.FindRoadTilesAndAdjacentRoadTiles();
                         newroad.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad);
@@ -346,10 +340,11 @@ namespace CitySkylines0._5alphabeta
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
                         smokeParticleManager.SpawnParticlesOnEdge(newroad);
-                        foreach (IntersectingNode n in newroad.intersections)
+
+/*                        foreach (IntersectionNode n in newroad.intersections)
                         {
                             grid.roadIntersections.Add(n);
-                        }
+                        }*/
                     }
                 }
 

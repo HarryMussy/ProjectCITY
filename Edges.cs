@@ -7,7 +7,7 @@
         public Point a { get; set; }
         public Point b { get; set; }
         public int angle { get; set; } //anywhere from 0 to 360
-        public List<IntersectingNode> intersections { get; set; } = new();
+        /*public List<IntersectionNode> intersections { get; set; } = new();*/
         public List<Node> occupyingNodes { get; set; } = new();
         public List<Point> pointsOnTheEdge { get; set; } = new();
 
@@ -24,13 +24,13 @@
         }
 
 
-        public void AddIntersection(Point p, Edge e)
+        /*public void AddIntersection(Point p, Edge e)
         {
             var existingNode = intersections.FirstOrDefault(n => n.coords == p);
 
             if (existingNode == null)
             {
-                existingNode = new IntersectingNode(p);
+                existingNode = new IntersectionNode(p, new Size(16, 16));
                 intersections.Add(existingNode);
             }
 
@@ -38,7 +38,7 @@
             {
                 existingNode.connectedEdges.Add(e);
             }
-        }
+        }*/
 
 
         public void FindAllPointOnEdge(Edge road)
@@ -54,10 +54,10 @@
             }
         }
 
-        public void IntersectionAlreadyExists()
+        /*public void IntersectionAlreadyExists()
         {
             intersections.Distinct();
-        }
+        }*/
     }
 
     public class Road : Edge

@@ -70,7 +70,7 @@ namespace CitySkylines0._5alphabeta
         public int gridDimensions = 100;
         public Point camera = new Point(0, 0);
 
-        public Form1(int difficulty)
+        public Form1(int difficulty, AudioManager audioManagerIn)
         {
             //initiate loading form
             loadingForm = new LoadingForm();
@@ -78,7 +78,7 @@ namespace CitySkylines0._5alphabeta
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
-            audioManager = new AudioManager();
+            audioManager = audioManagerIn;
             rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             this.MouseWheel += Form1_MouseWheel;
@@ -123,7 +123,7 @@ namespace CitySkylines0._5alphabeta
         }
 
         //difficulty falls to 1 if there is no difficulty input
-        public Form1()
+        public Form1(AudioManager audioManagerIn)
         {
             //initiate loading form
             loadingForm = new LoadingForm();
@@ -131,7 +131,7 @@ namespace CitySkylines0._5alphabeta
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
-            audioManager = new AudioManager();
+            audioManager = audioManagerIn;
             rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             this.MouseWheel += Form1_MouseWheel;
@@ -174,14 +174,14 @@ namespace CitySkylines0._5alphabeta
             lastTickTime = DateTime.Now;
         }
 
-        public Form1(SaveManager.SaveData save)
+        public Form1(SaveManager.SaveData save, AudioManager audioManagerIn)
         {
             loadingForm = new LoadingForm();
             loadingForm.Show();
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
-            audioManager = new AudioManager();
+            audioManager = audioManagerIn;
             rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             this.MouseWheel += Form1_MouseWheel;
@@ -330,11 +330,6 @@ namespace CitySkylines0._5alphabeta
 
             if (necessitiesManager.globalPowerSupply > necessitiesManager.globalPowerDemand) { grid.cash += (necessitiesManager.globalPowerSupply - necessitiesManager.globalPowerDemand) / 1000; } //sells excess electricity for cash
             if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; } //sells excess water for cash
-
-            foreach (Edge edge in grid.edges)
-            {
-                edge.IntersectionAlreadyExists();
-            }
 
             buildingPainter.buildingType = buildingType;
             background.UpdateWaterAnimations();
@@ -538,6 +533,7 @@ namespace CitySkylines0._5alphabeta
                 notselecting = false;
                 selectingBulldozing = true;
                 currentOperation = 3;
+                edgePainter.startPoint = null;
             }
             else
             {
@@ -546,6 +542,7 @@ namespace CitySkylines0._5alphabeta
                 selectingEdgePainting = false;
                 selectingBuildingPainting = false;
                 currentOperation = 0;
+                edgePainter.startPoint = null;
             }
         }
 
@@ -556,6 +553,7 @@ namespace CitySkylines0._5alphabeta
                 selectingEdgePainting = true;
                 selectingBuildingPainting = false;
                 notselecting = false;
+                edgePainter.startPoint = null;
                 selectingBulldozing = false;
                 currentOperation = 1;
             }
@@ -565,6 +563,7 @@ namespace CitySkylines0._5alphabeta
                 notselecting = true;
                 selectingEdgePainting = false;
                 selectingBuildingPainting = false;
+                edgePainter.startPoint = null;
                 currentOperation = 0;
             }
         }
@@ -580,6 +579,7 @@ namespace CitySkylines0._5alphabeta
                 allOperations[2] = "Building " + typeIn.ToUpper();
                 currentOperation = 2;
                 buildingType = typeIn;
+                edgePainter.startPoint = null;
             }
             else
             {
@@ -587,6 +587,7 @@ namespace CitySkylines0._5alphabeta
                 notselecting = true;
                 selectingBuildingPainting = false;
                 selectingEdgePainting = false;
+                edgePainter.startPoint = null;
                 buildingType = "hello";
                 currentOperation = 0;
             }

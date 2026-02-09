@@ -19,9 +19,9 @@ public class AudioManager : IDisposable
         mixer.ReadFully = true;
         outputDevice.Init(mixer);
         outputDevice.Play();
-        masterVolume = 0.5f;
-        efxVolume = 0.5f;
-        musicVolume = 0.5f;
+        masterVolume = 0.0f;
+        efxVolume = 0.0f;
+        musicVolume = 0.0f;
     }
 
     public void PlayTrack(string filePath, bool loop = true)
@@ -71,21 +71,19 @@ public class AudioManager : IDisposable
     public void SetMasterVolume(float v)
     {
         masterVolume = v;
-        foreach (var t in trackVolumeProviders)
-            t.Volume = masterVolume * musicVolume;
+        foreach (var t in trackVolumeProviders) { t.Volume = masterVolume * musicVolume; }
     }
 
     public void SetMusicVolume(float v)
     {
         musicVolume = v;
-        foreach (var t in trackVolumeProviders)
-            t.Volume = masterVolume * musicVolume;
+        foreach (var t in trackVolumeProviders) { t.Volume = masterVolume * musicVolume; }
     }
 
     public void SetEffectsVolume(float v)
     {
         efxVolume = v;
-        // Effects volume is applied per effect in PlayPlaceSound
+        //effects volume is applied per effect in PlayPlaceSound
     }
 
     public void Dispose()
