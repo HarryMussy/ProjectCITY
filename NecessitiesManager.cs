@@ -97,33 +97,40 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            float availableWater = globalWaterSupply;
+            float availablePower = globalPowerSupply;
+
             foreach (Building b in grid.buildings)
             {
                 foreach (Necessity necessity in b.necessities)
                 {
                     if (necessity.type is "Power")
                     {
-                        if (globalPowerSupply < globalPowerDemand && b.type != "powerplant")
+                        
+                        if (availablePower < necessity.demand && b.type != "powerplant")
                         {
                             necessity.fulFilled = false;
                         }
                         else
                         {
+                            availablePower -= necessity.demand;
                             necessity.fulFilled = true;
                         }
                     }
                     else if (necessity.type is "Water")
                     {
-
-                        if (globalWaterSupply < globalWaterDemand && b.type != "waterpump")
+                        
+                        if (availableWater < necessity.demand && b.type != "waterpump")
                         {
                             necessity.fulFilled = false;
                         }
                         else
                         {
+                            availableWater -= necessity.demand;
                             necessity.fulFilled = true;
                         }
                     }
+
                     else if (necessity.type is "Workers")
                     {
                         necessity.fulFilled = b.Occupants.Count(p => p != null) > 0;

@@ -172,7 +172,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         foreach (Node node in grid.nodes)
                         {
-                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, waterPumpSize.Width, waterPumpSize.Height);
+                            int isTrue = FindNearbyBuildableNodes(sender, mousePos, node, hospitalSize.Width, hospitalSize.Height);
                             if (isTrue == 0 || isTrue == 1)
                             {
                                 g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize);
@@ -342,7 +342,7 @@ namespace CitySkylines0._5alphabeta
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    PowerPlant newPowerPlant = new PowerPlant(powerPlantSize, placement, "powerplant", 500, 50);
+                    PowerPlant newPowerPlant = new PowerPlant(powerPlantSize, placement, "powerplant", 1000, 50);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
@@ -377,7 +377,7 @@ namespace CitySkylines0._5alphabeta
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, 250);
+                    WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, 500);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)

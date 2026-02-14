@@ -62,8 +62,6 @@ namespace CitySkylines0._5alphabeta
             elapsedMilliSeconds += elapsed;
             elapsedSeconds += elapsed/1000;
 
-            hour = 1;
-
             if (elapsedMilliSeconds >= timeToAdvanceMinute)
             {
                 minute += advanceMinutes;

@@ -8,8 +8,8 @@ namespace CitySkylines0._5alphabeta
         public Point coords { get; set; }
         public Size size { get; set; }
         public string type { get; set; }
-        public List<Node> occupyingNodes { get; set; } = new();
-        public List<Necessity> necessities { get; set; } = new();
+        [JsonIgnore] public List<Node> occupyingNodes { get; set; } = new();
+        [JsonIgnore] public List<Necessity> necessities { get; set; } = new();
         public int MaxOccupants { get; set; }
         public Person[] Occupants { get; set; }
 

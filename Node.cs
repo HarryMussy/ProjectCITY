@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace CitySkylines0._5alphabeta
@@ -9,9 +10,9 @@ namespace CitySkylines0._5alphabeta
     public class Node
     {
         public Point coords { get; set; }
-        public Car OccupyingCar { get; set; } = null;
+        [JsonIgnore] public Car OccupyingCar { get; set; } = null;
         public int laneIndex { get; set; } = 0; //0 is one way 1 is the other
-        public Edge parentEdge { get; set; }
+        [JsonIgnore] public Edge parentEdge { get; set; }
         public HashSet<Point> allowedDirs { get; set; } = new();
         public bool hasTileData { get; set; }
         public bool isNearRoad { get; set; }

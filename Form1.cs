@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Security.Cryptography;
 
 
 
@@ -66,7 +67,7 @@ namespace CitySkylines0._5alphabeta
         public Graphics g;
         public CarManager carManager;
         public Calendar calendar;
-        private Random carRandom = new Random();
+        
         public int gridDimensions = 100;
         public Point camera = new Point(0, 0);
 
@@ -169,6 +170,7 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_ViewBuildingSpaces);
             allEventHandlers.Add(Form1_toggleGrid);
             allEventHandlers.Add(Form1_ChangeVolume);
+            allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
             lastTickTime = DateTime.Now;
@@ -240,6 +242,7 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_ViewBuildingSpaces);
             allEventHandlers.Add(Form1_toggleGrid);
             allEventHandlers.Add(Form1_ChangeVolume);
+            allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
             lastTickTime = DateTime.Now;
@@ -315,8 +318,8 @@ namespace CitySkylines0._5alphabeta
             necessitiesManager.globalWaterDemand = 0;
             necessitiesManager.globalPowerSupply = 0;
             necessitiesManager.globalWaterSupply = 0;
-
             necessitiesManager.UpdateGlobalNecessities();
+
             foreach (Building b in grid.buildings)
             {
                 bool necessitiesFilled = true;
@@ -335,9 +338,9 @@ namespace CitySkylines0._5alphabeta
             background.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
-            if (carRandom.NextDouble() < 0.1 && carManager.cars.Count <= grid.buildings.Count)
+            if (carManager.cars.Count() < grid.buildings.Count() && new Random().Next(100) < 100)
             {
-                SpawnCarNearBuilding();
+                carManager.SpawnCarNearBuilding();
             }
 
             List<Car> carsToRemove = new List<Car>();
@@ -612,39 +615,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        private void SpawnCarNearBuilding()
-        {
-            if (grid.buildings == null || grid.buildings.Count == 0) return;
-            if (grid.roadNodes == null || grid.roadNodes.Count == 0) return;
-
-            // use the shared RNG
-            var rng = carRandom;
-
-            var building = grid.buildings[rng.Next(grid.buildings.Count)];
-            if (building == null) return;
-
-            Node closestNode = grid.roadNodes.OrderBy(n => Distance(building.coords, n.coords)).FirstOrDefault();
-            if (closestNode == null || closestNode.OccupyingCar != null) return;
-
-            building = grid.buildings[rng.Next(grid.buildings.Count)];
-            if (building == null) return;
-
-            Node nDest = grid.roadNodes.OrderBy(n => Distance(building.coords, n.coords)).FirstOrDefault();
-            if (nDest == null) return;
-
-            Car car = new Car(closestNode, 3, nDest);
-            carManager.AssignImage(car);
-            car.route = carManager.CreateCarRoute(car);
-
-            if (car.route == null || car.route.Count == 0)
-            {
-                Debug.WriteLine("Car has no route — cannot move.");
-                // decide: either don't add the car or add it but mark not moving
-                return;
-            }
-
-            carManager.cars.Add(car);
-        }
+        
 
 
         private float Distance(Point a, Point b)

@@ -15,8 +15,8 @@ namespace CitySkylines0._5alphabeta
         public bool IsPregnant { get; set; }
         public int MonthTimer { get; set; }
         public bool IsMale { get; set; }
-        public Building Residence {  get; set; }
-        public Building WorkPlace { get; set; }
+        [JsonIgnore] public Building Residence {  get; set; }
+        [JsonIgnore] public Building WorkPlace { get; set; }
         public Person() { }
 
         public Person(Building b)
@@ -131,11 +131,11 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                foreach (Person p in b.Occupants) //1 in a million chance of being unhealthy
+                foreach (Person p in b.Occupants) //1 in a hundred thou chance of being unhealthy
                 {
                     if (p != null && p.IsHealthy)
                     {
-                        p.IsHealthy = !(rng.Next(1000000) == 1);
+                        p.IsHealthy = !(rng.Next(100000) == 1);
                     }
                 }
             }
