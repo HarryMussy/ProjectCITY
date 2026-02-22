@@ -1,8 +1,10 @@
 ﻿using CitySkylines0._5alphabeta;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Text.Json.Serialization;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 public class Background
 {
@@ -16,6 +18,11 @@ public class Background
     [JsonIgnore] private float noiseScale = 0.05F;
     [JsonIgnore] private float landThreshold = 0.25F;
     [JsonIgnore] Dictionary<string, Image> imageLookup;
+    [JsonIgnore] private ImageAttributes? seasonalAttributes;
+
+    private Dictionary<string, ColorMatrix> seasonalMatrices = new Dictionary<string, ColorMatrix>();
+    private string? lastSeason;
+    private ImageAttributes? cachedAttributes;
 
     public int difficulty { get; set; }
     public int width { get; set; }
@@ -53,8 +60,79 @@ public class Background
         }
 
         LoadImages();
+        PrecomputeSeasonalColors();
         GenerateMap();
         GenerateDetails();
+    }
+
+    public void PrecomputeSeasonalColors()
+    {
+        seasonalMatrices["Winter"] = WinterMatrix();
+        seasonalMatrices["Spring"] = SpringMatrix();
+        seasonalMatrices["Summer"] = SummerMatrix();
+        seasonalMatrices["Autumn"] = AutumnMatrix();
+    }
+
+    private ColorMatrix LerpColorMatrix(ColorMatrix from, ColorMatrix to, float t)
+    {
+        float[][] result = new float[5][];
+        for (int i = 0; i < 5; i++)
+        {
+            result[i] = new float[5];
+            for (int j = 0; j < 5; j++)
+            {
+                result[i][j] = from[i, j] + (to[i, j] - from[i, j]) * t;
+            }
+        }
+        return new ColorMatrix(result);
+    }
+
+    private ColorMatrix WinterMatrix()
+    {
+        return new ColorMatrix(new float[][]
+        {
+        new float[]{0.6f, 0.6f, 0.7f, 0, 0}, // R
+        new float[]{0.6f, 0.6f, 0.7f, 0, 0}, // G
+        new float[]{0.6f, 0.6f, 0.8f, 0, 0}, // B
+        new float[]{0,    0,    0,   1, 0}, // Alpha
+        new float[]{0.1f, 0.1f, 0.2f, 0, 1}  // Offset (slight cool shadow)
+        });
+    }
+
+    private ColorMatrix SpringMatrix()
+    {
+        return new ColorMatrix(new float[][]
+        {
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0,0,0,0,0},
+            new float[]{0,0,0,0,0}
+        });
+    }
+
+    private ColorMatrix SummerMatrix()
+    {
+        return new ColorMatrix(new float[][]
+        {
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0f,0f,0f,0,0},
+            new float[]{0,0,0,0,0},
+            new float[]{0,0,0,0,0}
+        });
+    }
+
+    private ColorMatrix AutumnMatrix()
+    {
+        return new ColorMatrix(new float[][]
+        {
+            new float[]{1.2f,0.1f,0,0,0},
+            new float[]{0.3f,0.8f,0,0,0},
+            new float[]{0.1f,0.2f,0.6f,0,0},
+            new float[]{0,0,0,1,0},
+            new float[]{0,0,0,0,1}
+        });
     }
 
     private void LoadImages()
@@ -157,8 +235,23 @@ public class Background
 
     private void DrawEdge(string key, int x, int y, int tileSize, Graphics g)
     {
-        if (grassEdgeImages.TryGetValue(key, out var img))
-            g.DrawImage(img, x, y, tileSize, tileSize);
+        // Draw a water tile underneath
+        Image waterTile = imageLookup["water2.gif"]; // or choose random water GIF if you want animation
+        g.DrawImage(waterTile, x, y, tileSize + 1, tileSize + 1);
+
+        // Draw the grass edge on top
+        if (grassEdgeImages.TryGetValue(key, out var edgeImg))
+        {
+            if (seasonalAttributes != null)
+            {
+                Rectangle destRect = new Rectangle(x, y, tileSize + 1, tileSize + 1);
+                g.DrawImage(edgeImg, destRect, 0, 0, edgeImg.Width, edgeImg.Height, GraphicsUnit.Pixel, seasonalAttributes);
+            }
+            else
+            {
+                g.DrawImage(edgeImg, x, y, tileSize + 1, tileSize + 1);
+            }
+        }
     }
 
     public void DrawMap(object? sender, Graphics g, float zoomLevel)
@@ -193,12 +286,21 @@ public class Background
 
             if (node.isGrass)
             {
-                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
+                Image img = imageLookup[node.imageKey];
+
+                if (seasonalAttributes != null)
+                {
+                    Rectangle destRect = new Rectangle(node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
+                    g.DrawImage(img, destRect, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, seasonalAttributes);
+                }
+                else
+                {
+                    g.DrawImage(img, node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
+                }
 
                 //determine edges based on surrounding tiles
                 int x = node.coords.X;
                 int y = node.coords.Y;
-
                 //edge tiles
                 if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", x, y, tileSize, g);
                 if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_W", x, y, tileSize, g);
@@ -216,25 +318,28 @@ public class Background
                 if (hasWaterNE && !hasWaterN && !hasWaterE) DrawEdge("GrassEdge_Inner_NE", x, y, tileSize, g);
                 if (hasWaterSW && !hasWaterS && !hasWaterW) DrawEdge("GrassEdge_Inner_SW", x, y, tileSize, g);
                 if (hasWaterSE && !hasWaterS && !hasWaterE) DrawEdge("GrassEdge_Inner_NW", x, y, tileSize, g);
-
             }
             else
             {
-                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize, tileSize);
+                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
             }
         }
-        
-         // debug info - uncomment to see node details on tiles
-        /*foreach (Node node in tiles)
-        {
-            Font font2 = new Font("Comic Sans", 1);
-            SolidBrush houseBrush = new SolidBrush(Color.Black);
-            Point mousePos = node.coords;
-            if (node.isNearRoad) { g.DrawString("NEAR ROAD", font2, houseBrush, mousePos.X, mousePos.Y + 3); }
-            if (node.isGrass) { g.DrawString("GRASS", font2, houseBrush, mousePos.X, mousePos.Y + 8); }
-            if (node.tiledata == null) { g.DrawString("NOT OCCUPIED", font2, houseBrush, mousePos.X, mousePos.Y + 13); }
-            if (node.isBuildable) { g.DrawString("BUILDABLE", font2, houseBrush, mousePos.X, mousePos.Y + 18); }
-        }*/
+
+    }
+    public void UpdateSeasonalAttributes()
+    {
+        string currentSeason = Form1.calendar.CurrentSeason;
+        string nextSeason = Form1.calendar.GetNextSeason(currentSeason);
+
+        // Determine fade factor (0-1) based on week of month, e.g., last 7 days fade
+        float t = Form1.calendar.GetSeasonTransitionFactor(); // implement in Calendar
+
+        ColorMatrix currentMatrix = seasonalMatrices[currentSeason];
+        ColorMatrix nextMatrix = seasonalMatrices[nextSeason];
+
+        cachedAttributes = new ImageAttributes();
+        cachedAttributes.SetColorMatrix(LerpColorMatrix(currentMatrix, nextMatrix, t));
+        seasonalAttributes = cachedAttributes;
     }
 
     public List<Node> GetBuildableNodes()

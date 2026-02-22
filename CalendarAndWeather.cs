@@ -1,6 +1,4 @@
-﻿using System;
-using System.Drawing;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -26,10 +24,13 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        [JsonIgnore] Form1 form1PassIn;
+        [JsonIgnore] public Form1 form1PassIn;
         [JsonIgnore] private double timeToAdvanceMinute = 100; //in milliseconds
         [JsonIgnore] private double timeToAdvanceDay = 1; //in seconds
         [JsonIgnore] private int advanceMinutes = 1; //how much to advance minutes by
+
+        [JsonIgnore]
+        public string CurrentSeason;
 
 
         // Must be serialized or time will jump after load
@@ -57,10 +58,55 @@ namespace CitySkylines0._5alphabeta
 
         public int GetHour() => hour;
 
+        // Return a fade factor 0-1 depending on how close we are to season end
+        public float GetSeasonTransitionFactor()
+        {
+            int monthLength = DaysInMonth(month);
+            int fadeStart = monthLength - 7; // last 7 days of season
+            if (day <= fadeStart) return 0f;
+
+            return (float)(day - fadeStart) / 7f;
+        }
+
+        public string GetNextSeason(string currentSeason)
+        {
+            if (currentSeason == "Spring") return "Summer";
+            if (currentSeason == "Summer") return "Autumn";
+            if (currentSeason == "Autumn") return "Winter";
+            if (currentSeason == "Winter") return "Spring";
+            else { return "Spring"; }
+        }
+
+        public void UpdateCurrentSeason()
+        {
+
+            if (month == 12 || month == 1 || month == 2)
+            {
+                CurrentSeason = "Winter";
+                form1PassIn.background.UpdateSeasonalAttributes();
+            }
+            if (month >= 3 && month <= 5)
+            {
+                CurrentSeason = "Spring";
+                form1PassIn.background.UpdateSeasonalAttributes();
+            }
+            if (month >= 6 && month <= 8)
+            {
+                CurrentSeason = "Summer";
+                form1PassIn.background.UpdateSeasonalAttributes();
+            }
+            else
+            {
+                CurrentSeason = "Autumn";
+                form1PassIn.background.UpdateSeasonalAttributes();
+
+            }
+        }
+
         public void AdvanceTime(double elapsed)
         {
             elapsedMilliSeconds += elapsed;
-            elapsedSeconds += elapsed/1000;
+            elapsedSeconds += elapsed / 1000;
 
             if (elapsedMilliSeconds >= timeToAdvanceMinute)
             {
@@ -91,6 +137,7 @@ namespace CitySkylines0._5alphabeta
             if (day > DaysInMonth(month))
             {
                 month += 1;
+                UpdateCurrentSeason();
                 form1PassIn.populationManager.UpdatePopulationByMonth();
                 day = 1;
             }

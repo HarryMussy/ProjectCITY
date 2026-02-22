@@ -29,8 +29,9 @@ namespace CitySkylines0._5alphabeta
         private Dictionary<string, Image> roadImages = new();
         private Random rng = new Random();
         private List<string> roadImagePaths = new();
+        private int rectSize;
 
-        public EdgePainter(Grid gridPassIn, Form1 Form1PassIn, NameProvider nameProviderPassIn, Background backgroundMap, Graphics g)
+        public EdgePainter(Grid gridPassIn, Form1 Form1PassIn, NameProvider nameProviderPassIn, Background backgroundMap, Graphics g, int rectSize)
         {
             grid = gridPassIn;
             form1 = Form1PassIn;
@@ -42,6 +43,7 @@ namespace CitySkylines0._5alphabeta
             audioManager = form1.audioManager;
             smokeParticleManager = form1.smokeParticleManager;
             LoadRoadTiles();
+            this.rectSize = rectSize;
         }
         private void LoadRoadTiles()
         {
@@ -85,15 +87,15 @@ namespace CitySkylines0._5alphabeta
 
                 if (img != null)
                 {
-                    g.DrawImage(img, node.coords.X, node.coords.Y, 16, 16);
+                    g.DrawImage(img, node.coords.X, node.coords.Y, 17, 17);
                 }
             }
 
-            foreach (Edge e in grid.edges)
+            foreach (Road r in grid.edges)
             {
                 using Pen p = new Pen(Color.FromArgb(55, 255, 255, 255), 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
-                DrawArrowLine(g, p, e.a, e.b, 6f);
-                DrawArrowLine(g, p, e.b, e.a, 6f);
+                DrawArrowLine(g, p, r.lane1.a, r.lane1.b);
+                DrawArrowLine(g, p, r.lane2.a, r.lane2.b);
             }
 
             if (startPoint != null)
@@ -103,8 +105,10 @@ namespace CitySkylines0._5alphabeta
 
                 // highlight intersecting nodes as before
                 int edgeAngle = FindAngle(startPoint.Value, setPoint);
-                Edge tempEdge = new Edge(8, startPoint.Value, setPoint, "temp", edgeAngle);
-                List<Node> nodes = grid.FindAdjacentTilesToARoad(tempEdge);
+                Road tempRoad = new Road(8, startPoint.Value, setPoint, "temp", edgeAngle);
+
+                List<Node> nodes = grid.FindAdjacentTilesToARoad(tempRoad);
+
                 if (cost > grid.cash)
                 {
                     using var invalidroad = new SolidBrush(Color.Red);
@@ -123,9 +127,9 @@ namespace CitySkylines0._5alphabeta
 
                 using Pen p = new Pen(Color.Black, 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
 
-                DrawArrowLine(g, p, tempEdge.a, tempEdge.b, 6f);
-                DrawArrowLine(g, p, tempEdge.b, tempEdge.a, 6f);
-                tempEdge = null;
+                DrawArrowLine(g, p, tempRoad.lane1.a, tempRoad.lane1.b);
+                DrawArrowLine(g, p, tempRoad.lane2.a, tempRoad.lane2.b);
+                tempRoad = null;
             }
 
             foreach (Edge edge in grid.edges)
@@ -138,40 +142,9 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        public Point SnapPoint(Point a, Point b)
+        private void DrawArrowLine(Graphics g, Pen p, Point a, Point b)
         {
-            // Check if it's within 10-pixel radius
-            if (a.X <= b.X + 10 && a.X >= b.X - 10 && a.Y <= b.Y + 10 && a.Y >= b.Y - 10)
-            {
-                // Snap a to b
-                a = b;
-
-                // Check if the difference in the 2 points is the closest value
-                if (Math.Abs(b.X - a.X) < closest_x)
-                {
-                    closest_x = Math.Abs(b.X - a.X);
-                }
-
-                if (Math.Abs(b.Y - a.Y) < closest_y)
-                {
-                    closest_y = Math.Abs(b.Y - a.Y);
-                }
-            }
-
-            // Return the (possibly snapped) point a
-            return a;
-        }
-
-        private void DrawArrowLine(Graphics g, Pen p, Point a, Point b, float perpendicularOffset)
-        {
-            float dx = b.X - a.X;
-            float dy = b.Y - a.Y;
-            float len = (float)Math.Sqrt(dx * dx + dy * dy);
-
-            float px = -dy / len;
-            float py = dx / len;
-
-            g.DrawLine(p,new Point((int)(b.X + px * perpendicularOffset), (int)(b.Y + py * perpendicularOffset)), new Point((int)(a.X + px * perpendicularOffset), (int)(a.Y + py * perpendicularOffset)));
+            g.DrawLine(p, a.X, a.Y, b.X, b.Y);
         }
 
         public int FindAngle(Point a, Point b)
@@ -280,11 +253,9 @@ namespace CitySkylines0._5alphabeta
             var clickedPoint = worldMousePos;
 
             int tile = form1.rectSize;
-            clickedPoint = new Point(
-                (clickedPoint.X / tile) * tile,
-                (clickedPoint.Y / tile) * tile
-            );
-
+            clickedPoint = new Point((clickedPoint.X / tile) * tile, (clickedPoint.Y / tile) * tile);
+            clickedPoint.X -= 8;
+            clickedPoint.Y -= 8;
             snappedPoint = clickedPoint;
 
 
@@ -297,6 +268,7 @@ namespace CitySkylines0._5alphabeta
                     startPoint = null;
                 }
             }
+
             else
             {
                 bool isOverlapping = false;
@@ -314,19 +286,29 @@ namespace CitySkylines0._5alphabeta
                     {
                         string roadname = nameProvider.GetRandomName();
                         Road newroad = new Road(8, startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
-                        AssignLaneDirections(newroad, newroad.occupyingNodes);
                         audioManager.PlayPlaceSound();
-                        /*newroad.AddIntersection(startPoint.Value, newroad);
-                        newroad.AddIntersection(endPoint, newroad);*/
-                        grid.cash = grid.cash - grid.RoadCashCost(startPoint.Value, endPoint);
+                        grid.cash -= grid.RoadCashCost(startPoint.Value, endPoint);
                         grid.edges.Add(newroad); //this is now safe
-                        //grid.CheckIntersectingRoads();
+
                         grid.FindRoadTilesAndAdjacentRoadTiles();
-                        newroad.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad);
+
+                        newroad.lane1.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad.lane1, 0);
+                        newroad.lane2.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad.lane2, 1);
 
                         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
                         string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
-                        foreach (Node n in newroad.occupyingNodes)
+
+                        foreach (Node n in newroad.lane1.occupyingNodes)
+                        {
+                            int num = rng.Next(100);
+                            n.imageKey = "road_000.png";
+                            if (num > 95) n.imageKey = "road_001.png";
+                            if (num > 96) n.imageKey = "road_002.png";
+                            if (num > 97) n.imageKey = "road_003.png";
+                            if (num > 98) n.imageKey = "road_004.png";
+                            if (num > 99) n.imageKey = "road_005.png";
+                        }
+                        foreach (Node n in newroad.lane2.occupyingNodes)
                         {
                             int num = rng.Next(100);
                             n.imageKey = "road_000.png";
@@ -340,68 +322,20 @@ namespace CitySkylines0._5alphabeta
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
                         smokeParticleManager.SpawnParticlesOnEdge(newroad);
+                        grid.RebuildEntireRoadGraph();
 
-/*                        foreach (IntersectionNode n in newroad.intersections)
+
+                        foreach (Car car in form1.carManager.cars)
                         {
-                            grid.roadIntersections.Add(n);
-                        }*/
+                            car.route = form1.carManager.CreateCarRoute(car);
+                        }
                     }
                 }
 
             }
         }
 
-        private void AssignLaneDirections(Edge edge, List<Node> roadNodes)
-        {
-            Point roadDir = new Point(
-                Math.Sign(edge.b.X - edge.a.X),
-                Math.Sign(edge.b.Y - edge.a.Y)
-            );
-
-            foreach (Node node in roadNodes)
-            {
-                node.allowedDirs.Clear();
-
-                // 🟢 INTERSECTION → allow all turns
-                var neighbors = GetConnectedRoadNeighbors(node);
-                if (neighbors.Count >= 3)
-                {
-                    foreach (Node n in neighbors)
-                    {
-                        Point dir = new Point(
-                            Math.Sign(n.coords.X - node.coords.X),
-                            Math.Sign(n.coords.Y - node.coords.Y)
-                        );
-                        node.allowedDirs.Add(dir);
-                    }
-                    continue;
-                }
-
-                // 🔵 NORMAL ROAD TILE → one direction per lane
-                if (node.laneIndex == 0)
-                    node.allowedDirs.Add(roadDir);
-                else
-                    node.allowedDirs.Add(new Point(-roadDir.X, -roadDir.Y));
-            }
-        }
-
-
-        private List<Node> GetConnectedRoadNeighbors(Node node)
-        {
-            List<Node> result = new();
-
-            foreach (Node n in grid.roadNodes)
-            {
-                int dx = Math.Abs(n.coords.X - node.coords.X);
-                int dy = Math.Abs(n.coords.Y - node.coords.Y);
-
-                if ((dx == 16 && dy == 0) || (dx == 0 && dy == 16))
-                    result.Add(n);
-            }
-
-            return result;
-        }
-
+        
         public Point SnapTo4Directions(Point a, Point b)
         {
             int[] allowedAngles = { 0, 90, 180, 270 };

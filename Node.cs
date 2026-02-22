@@ -12,8 +12,9 @@ namespace CitySkylines0._5alphabeta
         public Point coords { get; set; }
         [JsonIgnore] public Car OccupyingCar { get; set; } = null;
         public int laneIndex { get; set; } = 0; //0 is one way 1 is the other
-        [JsonIgnore] public Edge parentEdge { get; set; }
+/*        [JsonIgnore] public Edge parentEdge { get; set; }*/
         public HashSet<Point> allowedDirs { get; set; } = new();
+        public HashSet<Node> neighbors { get; set; } = new();
         public bool hasTileData { get; set; }
         public bool isNearRoad { get; set; }
         public int nodeNumber { get; set; }
@@ -46,32 +47,4 @@ namespace CitySkylines0._5alphabeta
             }
         }
     }
-
-   /* public class IntersectionNode
-    {
-        public Point coords { get; set; }
-        public Size size { get; set; }
-        public List<Edge> connectedEdges { get; set; } = new();
-
-        public IntersectionNode() { }
-        public IntersectionNode(Point coords, Size size)
-        {
-            this.coords = coords;
-            this.size = size;
-        }
-
-        public bool Equals(IntersectionNode? other)
-        {
-            if (other is null) return false;
-            return coords == other.coords;
-        }
-
-        public override bool Equals(object? obj) => Equals(obj as IntersectionNode);
-
-        public override int GetHashCode() => coords.GetHashCode();
-
-        public static bool operator ==(IntersectionNode? left, IntersectionNode? right) => object.ReferenceEquals(left, right) ? true : (left?.Equals(right) ?? false);
-
-        public static bool operator !=(IntersectionNode? left, IntersectionNode? right) => !(left == right);
-    }*/
 }

@@ -11,10 +11,6 @@
 
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
-using System.Security.Cryptography;
 
 
 
@@ -67,9 +63,10 @@ namespace CitySkylines0._5alphabeta
         public Graphics g;
         public CarManager carManager;
         public Calendar calendar;
-        
+
         public int gridDimensions = 100;
         public Point camera = new Point(0, 0);
+        Random spawnCarRandom = new Random();
 
         public Form1(int difficulty, AudioManager audioManagerIn)
         {
@@ -87,7 +84,7 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 4;
+            tickSpeed.Interval = 8;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             //close loading form
@@ -98,14 +95,15 @@ namespace CitySkylines0._5alphabeta
             DateTime now = DateTime.Now;
             calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             background = new Background(gridDimensions, gridDimensions, this, rectSize, difficulty);
+            calendar.UpdateCurrentSeason();
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
-            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
-            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
             bulldozer = new Bulldozer(grid, this);
             List<EventHandler> allEventHandlers = new List<EventHandler>();
@@ -140,7 +138,7 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 4;
+            tickSpeed.Interval = 8;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             //close loading form
@@ -155,10 +153,10 @@ namespace CitySkylines0._5alphabeta
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
-            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
-            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
             bulldozer = new Bulldozer(grid, this);
 
@@ -218,6 +216,7 @@ namespace CitySkylines0._5alphabeta
             if (save != null && save.calendar != null)
             {
                 calendar = save.calendar;
+                calendar.form1PassIn = this;
             }
             else
             {
@@ -228,10 +227,10 @@ namespace CitySkylines0._5alphabeta
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
-            edgePainter = new EdgePainter(grid, this, nameProvider, background, g);
-            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar);
+            edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
             carManager = new CarManager(grid, calendar);
+            buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
             bulldozer = new Bulldozer(grid, this);
 
@@ -306,7 +305,7 @@ namespace CitySkylines0._5alphabeta
             bottomLeft = new Point(0, this.ClientSize.Height);
             smokeParticleManager.Update();
             fps = GetFps();
-            this.Invalidate();
+            
 
             var now = DateTime.Now;
             double elapseds = (now - lastTickTime).TotalMilliseconds;
@@ -327,8 +326,16 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (!n.fulFilled) { necessitiesFilled = false; break; }
                 }
-                if (necessitiesFilled) { grid.cash += b.tax; } //taxes the houses as long as they have running water and electricity
-                else { grid.cash -= b.tax / 100; }
+
+                if (necessitiesFilled)
+                {
+                    float modifier = populationManager.AverageWellBeing / 100f;
+                    grid.cash += b.tax * modifier;
+                }
+                else
+                {
+                    grid.cash -= b.tax / 100;
+                }
             }
 
             if (necessitiesManager.globalPowerSupply > necessitiesManager.globalPowerDemand) { grid.cash += (necessitiesManager.globalPowerSupply - necessitiesManager.globalPowerDemand) / 1000; } //sells excess electricity for cash
@@ -338,7 +345,7 @@ namespace CitySkylines0._5alphabeta
             background.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
-            if (carManager.cars.Count() < grid.buildings.Count() && new Random().Next(100) < 100)
+            if (carManager.cars.Count() < grid.buildings.Count() && spawnCarRandom.Next(100) < 50)
             {
                 carManager.SpawnCarNearBuilding();
             }
@@ -346,25 +353,19 @@ namespace CitySkylines0._5alphabeta
             List<Car> carsToRemove = new List<Car>();
             foreach (Car car in carManager.cars.ToList()) // iterate a copy to be safe
             {
-                try
-                {
-                    bool finished = carManager.MoveCar(car);
-                    if (finished)
-                        carsToRemove.Add(car);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("TimerTick MoveCar exception: " + ex.ToString());
-                    // don't crash whole game — mark car for removal or stop it
-                    car.isMoving = false;
-                }
+                bool needsRemoving = carManager.MoveCar(car);
+                if (needsRemoving) { carsToRemove.Add(car); }
             }
+
             foreach (Car car in carsToRemove)
             {
-                carManager.cars.Remove(car);
+                carManager.DespawnCar(car);
             }
 
             populationManager.UpdatePopulation();
+            populationManager.UpdateWellBeing();
+
+            this.Invalidate();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -418,14 +419,13 @@ namespace CitySkylines0._5alphabeta
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
             // now draw cars on top of darkness
-            carManager.CarPaint(sender, g);
             buildingPainter.BuildingPaint(sender, g, mousePos);
+            carManager.CarPaint(sender, g);
             bulldozer.BulldozerPainter(sender, g);
             smokeParticleManager.Draw(g);
-            
+
             g.ResetTransform();
             uiManager.ConstructUI(sender, g);
-
         }
 
         public void Form1_toggleGrid(object? sender, EventArgs e)
@@ -614,17 +614,6 @@ namespace CitySkylines0._5alphabeta
                 }
             }
         }
-
-        
-
-
-        private float Distance(Point a, Point b)
-        {
-            float dx = a.X - b.X;
-            float dy = a.Y - b.Y;
-            return (float)Math.Sqrt(dx * dx + dy * dy);
-        }
-
 
         public void ReturnToMainMenu()
         {

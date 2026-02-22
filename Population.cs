@@ -15,6 +15,8 @@ namespace CitySkylines0._5alphabeta
         public bool IsPregnant { get; set; }
         public int MonthTimer { get; set; }
         public bool IsMale { get; set; }
+        public float WellBeing { get; set; } = 100f;   // NEW
+        public List<string> UnmetDesires { get; set; } = new(); // NEW
         [JsonIgnore] public Building Residence {  get; set; }
         [JsonIgnore] public Building WorkPlace { get; set; }
         public Person() { }
@@ -46,6 +48,8 @@ namespace CitySkylines0._5alphabeta
     {
         public List<Person> Population { get; set; }
 
+        [JsonIgnore] public float AverageWellBeing;
+        [JsonIgnore] public Dictionary<string, int> GlobalDesires = new();
         [JsonIgnore] public Grid grid;
         [JsonIgnore] List<Building> possibleWorkplaces = new List<Building>();
         [JsonIgnore] Random rng;
@@ -56,6 +60,64 @@ namespace CitySkylines0._5alphabeta
             this.grid = grid;
             rng = new Random();
             Population = new List<Person>();
+        }
+
+        public void UpdateWellBeing()
+        {
+            if (Population.Count == 0) return;
+
+            GlobalDesires.Clear();
+            float total = 0f;
+
+            bool hospitalExists = grid.buildings.Any(b => b.type == "hospital");
+
+            foreach (Person p in Population)
+            {
+                if (!p.IsAlive) continue;
+
+                float well = 100f;
+                p.UnmetDesires.Clear();
+
+                //check house necessities
+                if (p.Residence != null)
+                {
+                    foreach (Necessity n in p.Residence.necessities)
+                    {
+                        if (!n.fulFilled)
+                        {
+                            well -= 20f;
+                            p.UnmetDesires.Add(n.GetType().Name);
+                        }
+                    }
+                }
+
+                if (!p.IsHealthy)
+                {
+                    well -= 15f;
+                    p.UnmetDesires.Add("Health");
+                }
+
+                if (p.WorkPlace == null && p.Age >= 18)
+                {
+                    well -= 10f;
+                    p.UnmetDesires.Add("Job");
+                }
+
+                well = Math.Clamp(well, 0f, 100f);
+                p.WellBeing = well;
+                total += well;
+
+                //track global desires
+                foreach (string desire in p.UnmetDesires)
+                {
+                    if (!GlobalDesires.ContainsKey(desire))
+                        GlobalDesires[desire] = 0;
+
+                    GlobalDesires[desire]++;
+                }
+            }
+
+            AverageWellBeing = total / Population.Count;
         }
 
         public void MakePregnant(Person person)

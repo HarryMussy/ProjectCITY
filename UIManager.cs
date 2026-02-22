@@ -21,6 +21,7 @@ public class UIManager
     private EventHandler volSlider;
     private EventHandler bulldozingButtonClickHandler;
     private bool buttonsCreated = false; // Flag to track if buttons are already created
+    private float displayWellbeing = 100f;
 
 
     public UIManager(float zoomLevel, Func<(float, float)> getDimensions, Grid map, InteractingObjectManager buttonManager, Form1 form, List<EventHandler> allEventHandlers, Calendar calendarIn)
@@ -59,63 +60,125 @@ public class UIManager
         string doing = form.allOperations[form.currentOperation];
 
         int fps = form.fps;
-        form.AddStrokeToText(sender, g, totalcash, strokeWidth, font, outerBrush, new Point(20, 20));
-        form.AddStrokeToText(sender, g, "Currently doing: " + doing, strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 300, (int)zoomedBottomLeftY + 70));
-        //form.AddStrokeToText(sender, g, "-------------VOLUME-------------", strokeWidth, font, outerBrush, new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 10));
-        form.AddStrokeToText(sender, g, "FPS: " + Convert.ToString(fps), strokeWidth, font, outerBrush, new Point(20, 0));
-        form.AddStrokeToText(sender, g, "Energy Demand: " + form.necessitiesManager.globalPowerStatus, strokeWidth, font, outerBrush, new Point(20, 40));
-        form.AddStrokeToText(sender, g, "Water Demand: " + form.necessitiesManager.globalWaterStatus, strokeWidth, font, outerBrush, new Point(20, 60));
-        form.AddStrokeToText(sender, g, "Population: " + form.populationManager.Population.Count, strokeWidth, font, outerBrush, new Point(20, 120));
 
-        form.AddStrokeToText(sender, g, calendar.time, strokeWidth, font, outerBrush, new Point(20, 80));
-        form.AddStrokeToText(sender, g, calendar.date, strokeWidth, font, outerBrush, new Point(20, 100));
-        g.DrawString(calendar.time, font, innerBrush, 20, 80);
-        g.DrawString(calendar.date, font, innerBrush, 20, 100);
+        //UI
 
-        g.DrawString("Energy Demand: " + form.necessitiesManager.globalPowerStatus, font, innerBrush, 20, 40);
-        g.DrawString("Water Demand: " + form.necessitiesManager.globalWaterStatus, font, innerBrush, 20, 60);
-        g.DrawString(totalcash, font, innerBrush, 20, 20);
-        g.DrawString("Currently doing: " + doing, font, innerBrush, zoomedBottomLeftX + 300, zoomedBottomLeftY + 70);
-        g.DrawString("Population: " + form.populationManager.Population.Count, font, innerBrush, 20, 120);
-        //g.DrawString("-------------VOLUME-------------", font, innerBrush, zoomedBottomLeftX + 580, zoomedBottomLeftY + 10);
-        g.DrawString("FPS: " + Convert.ToString(fps), font, innerBrush, 20, 0);
+        int padding = 20;
+        int leftColumnX = (int)zoomedBottomLeftX + padding;
+        int topRowY = (int)zoomedBottomLeftY + 10;
+        int lineSpacing = 20;
 
+        //city stats
+        int statsY = topRowY;
+
+        string cashText = "Musbux: " + map.cash.ToString("F0");
+        string popText = "Population: " + form.populationManager.Population.Count;
+        string energyText = "Power: " + form.necessitiesManager.globalPowerStatus;
+        string waterText = "Water: " + form.necessitiesManager.globalWaterStatus;
+        string fpsText = "FPS: " + form.fps;
+        string dateText = calendar.date + "  " + calendar.time;
+
+        string[] leftStats = { cashText, popText, energyText, waterText, fpsText, dateText };
+
+        foreach (string stat in leftStats)
+        {
+            form.AddStrokeToText(sender, g, stat, 2, font, outerBrush, new Point(leftColumnX, statsY));
+            g.DrawString(stat, font, innerBrush, leftColumnX, statsY);
+            statsY += lineSpacing;
+        }
+
+        //currently doing
+        doing = "Currently: " + form.allOperations[form.currentOperation];
+
+        int centerX = (int)(zoomedWidth / 2 - 100);
+        int centerY = (int)(zoomedBottomLeftY + zoomedHeight - 30);
+
+        form.AddStrokeToText(sender, g, doing, 2, font, outerBrush, new Point(centerX, centerY - 100));
+        g.DrawString(doing, font, innerBrush, centerX, centerY - 100);
+
+        //wellbeing/ wellness
+
+        float actualWellbeing = form.populationManager.AverageWellBeing;
+
+        // Smooth animation (lerp)
+        displayWellbeing += (actualWellbeing - displayWellbeing) * 0.08f;
+
+        // Clamp just in case
+        displayWellbeing = Math.Clamp(displayWellbeing, 0f, 100f);
+
+        int barWidth = 220;
+        int barHeight = 18;
+
+        int wellnessX = (int)(zoomedWidth - barWidth - padding);
+        int wellnessY = (int)(zoomedBottomLeftY + 25);
+
+        string wellText = "City Wellbeing: " + displayWellbeing.ToString("F0") + "%";
+
+        form.AddStrokeToText(sender, g, wellText, 2, font, outerBrush, new Point(wellnessX, wellnessY - 22));
+        g.DrawString(wellText, font, innerBrush, wellnessX, wellnessY - 22);
+
+        int filledWidth = (int)(barWidth * (displayWellbeing / 100f));
+
+        Color barColor = Color.LimeGreen;
+        if (displayWellbeing < 60) barColor = Color.Gold;
+        if (displayWellbeing < 40) barColor = Color.OrangeRed;
+        if (displayWellbeing < 20) barColor = Color.DarkRed;
+
+        using (Brush backBrush = new SolidBrush(Color.FromArgb(70, 40, 40, 40)))
+        using (Brush fillBrush = new SolidBrush(barColor))
+        {
+            g.FillRectangle(backBrush, wellnessX, wellnessY, barWidth, barHeight);
+            g.FillRectangle(fillBrush, wellnessX, wellnessY, filledWidth, barHeight);
+        }
+
+        // Top 3 unmet desires
+        int desireY = wellnessY + barHeight + 6;
+
+        foreach (var desire in form.populationManager.GlobalDesires.OrderByDescending(d => d.Value).Take(3))
+        {
+            string desireText = desire.Key + ": " + desire.Value;
+
+            form.AddStrokeToText(sender, g, desireText, 1, font, outerBrush, new Point(wellnessX, desireY));
+            g.DrawString(desireText, font, innerBrush, wellnessX, desireY);
+
+            desireY += 18;
+        }
 
         if (!buttonsCreated)
         {
-            interactingObjectManager.CreateButton("ROAD", new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 10).Click += roadButtonClickHandler;
-            interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 80, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
+            interactingObjectManager.CreateButton("ROAD", new Point((int)zoomedBottomLeftX + 310, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 10).Click += roadButtonClickHandler;
+            interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 380, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "house1.png");
             Image i = Image.FromFile(pathToHouseImage);
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 10, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 310, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
 
 
             string pathToTurbineImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 70, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToTurbineImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 370, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToTurbineImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
 
-            interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedWidth - 100, (int)zoomedBottomLeftY + 15), new Size(70, 25), form, 6).Click += (s, e) =>
+            interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedWidth - 100, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += (s, e) =>
             {
                 new OptionsForm(true, form.audioManager, form).ShowDialog();
             };
 
             string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 250, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 550, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
                 .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
             string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 130, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 430, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
 
             string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 190, (int)zoomedBottomLeftY + 15), new Size(48, 48), form, 6, Image.FromFile(pathToHospitalImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 490, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHospitalImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "hospital");
 
-            interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 150, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
-            interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 220, (int)zoomedBottomLeftY + 70), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
+            interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 450, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
+            interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 520, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
             //interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;
             buttonsCreated = true;
         }
@@ -125,7 +188,7 @@ public class UIManager
     {
         var (windowWidth, windowHeight) = getDimensions();
         zoomedWidth = windowWidth * zoomLevel;
-        zoomedHeight = 100 * zoomLevel;
+        zoomedHeight = 140 * zoomLevel;
         zoomedBottomLeftX = (windowWidth * zoomLevel) - zoomedWidth;
         zoomedBottomLeftY = (windowHeight * zoomLevel) - zoomedHeight;
         interactingObjectManager.RemoveButtons();

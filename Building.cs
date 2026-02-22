@@ -1,15 +1,18 @@
 ﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Text.Json.Serialization;
+using System.Diagnostics;
+using System.IO;
+
 
 namespace CitySkylines0._5alphabeta
 {
-    public abstract class Building
+    public class Building
     {
         public Point coords { get; set; }
         public Size size { get; set; }
         public string type { get; set; }
-        [JsonIgnore] public List<Node> occupyingNodes { get; set; } = new();
-        [JsonIgnore] public List<Necessity> necessities { get; set; } = new();
+        public List<Node> occupyingNodes { get; set; } = new();
+        public List<Necessity> necessities { get; set; } = new();
         public int MaxOccupants { get; set; }
         public Person[] Occupants { get; set; }
 
@@ -97,12 +100,15 @@ namespace CitySkylines0._5alphabeta
 
     public class Hospital : Building
     {
-        Car ambulance { get; set; }
+        EmergencyServiceVehicle[] ambulances;
+
+        [JsonIgnore] Grid grid;
+        [JsonIgnore] CarManager carManager;
         float powerDemand { get; set; }
         float waterDemand { get; set; }
 
         public Hospital() { }
-        public Hospital(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 50, true)
+        public Hospital(Size size, Point coords, string type, float powerDemand, float waterDemand, Grid gridIn, CarManager carManagerIn) : base(size, coords, type, powerDemand, waterDemand, 50, true)
         {
             type = "hospital";
             cost = 50000;
@@ -110,6 +116,55 @@ namespace CitySkylines0._5alphabeta
             this.powerDemand = powerDemand;
             this.waterDemand = waterDemand;
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+            grid = gridIn;
+            carManager = carManagerIn;
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+            ambulances = 
+            [
+                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null)
+            ];
+        }
+
+        public void UpdateHospital()
+        {
+            foreach (House h in grid.buildings.Where(b => b.type == "house"))
+            {
+                foreach (Person p in h.Occupants.Where(p => p != null))
+                {
+                    if (p.IsHealthy == false)
+                    {
+                        for (int i = 0; i < ambulances.Length; i++)
+                        {
+                            if (!ambulances[i].inService)
+                            {
+                                SendAmbulanceToBuilding(ambulances[i], h);
+                                ambulances[i].inService = true;
+                                ambulances[i].destBuilding = h;
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (EmergencyServiceVehicle a in ambulances)
+            {
+                if (a.inService && !a.isMoving)
+                {
+                    SendAmbulanceToBuilding(a, this);
+                    foreach (Person p in a.destBuilding.Occupants.Where(p => p != null))
+                    {
+                        p.IsHealthy = true;
+                    }
+                }
+            }
+        }
+        public void SendAmbulanceToBuilding(EmergencyServiceVehicle ambulance, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(ambulance, this, building);
         }
     }
+
 }

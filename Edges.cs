@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using System.Windows.Controls;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -10,7 +11,7 @@ namespace CitySkylines0._5alphabeta
         public Point b { get; set; }
         public int angle { get; set; } //anywhere from 0 to 360
         /*public List<IntersectionNode> intersections { get; set; } = new();*/
-        [JsonIgnore] public List<Node> occupyingNodes { get; set; } = new();
+        public List<Node> occupyingNodes { get; set; } = new();
         public List<Point> pointsOnTheEdge { get; set; } = new();
 
         public Edge() { }
@@ -25,51 +26,47 @@ namespace CitySkylines0._5alphabeta
             this.angle = angle;
         }
 
-
-        /*public void AddIntersection(Point p, Edge e)
+        public void FindAllPointOnEdge(Edge edge)
         {
-            var existingNode = intersections.FirstOrDefault(n => n.coords == p);
+            Point dir = new Point(Math.Sign(edge.b.X - edge.a.X), Math.Sign(edge.b.Y - edge.a.Y));
 
-            if (existingNode == null)
+            int rectSize = 16;
+            int steps = Math.Max(Math.Abs(edge.b.X - edge.a.X) / rectSize, Math.Abs(edge.b.Y - edge.a.Y) / rectSize);
+
+            Point current = edge.a;
+
+            for (int i = 0; i <= steps; i++)
             {
-                existingNode = new IntersectionNode(p, new Size(16, 16));
-                intersections.Add(existingNode);
-            }
-
-            if (!existingNode.connectedEdges.Contains(e))
-            {
-                existingNode.connectedEdges.Add(e);
-            }
-        }*/
-
-
-        public void FindAllPointOnEdge(Edge road)
-        {
-            int steps = Math.Max(Math.Abs(road.b.X - road.a.X), Math.Abs(road.b.Y - road.a.Y));
-            for (int step = 0; step <= steps; step += 16)
-            {
-                float t = step / (float)steps; // t is a parameter from 0 to 1
-                float x = road.a.X + t * (road.b.X - road.a.X);
-                float y = road.a.Y + t * (road.b.Y - road.a.Y);
-                Point n = new Point((int)x, (int)y); // All points along the line become n
-                road.pointsOnTheEdge.Add(n);
+                edge.pointsOnTheEdge.Add(current);
+                current = new Point(current.X + (dir.X * rectSize), current.Y + (dir.Y * rectSize));
             }
         }
-
-        /*public void IntersectionAlreadyExists()
-        {
-            intersections.Distinct();
-        }*/
     }
 
     public class Road : Edge
     {
         public string type;
+        public Edge lane1;
+        public Edge lane2;
 
         public Road(int edgeweight, Point a, Point b, string name, int angle) : base(edgeweight, a, b, name, angle)
         {
             type = "road";
-            this.FindAllPointOnEdge(this);
+
+            Point roadDir = new Point(Math.Sign(b.X - a.X), Math.Sign(b.Y - a.Y));
+            Point perp = new Point(-roadDir.Y, roadDir.X);
+            int laneOffset = 16;
+
+            // Lane 1 = original line
+            lane1 = new Edge(edgeweight, a, b, name + "_L1", angle);
+
+            // Lane 2 = shifted exactly one tile
+            Point lane2A = new Point(a.X + perp.X * laneOffset, a.Y + perp.Y * laneOffset);
+            Point lane2B = new Point(b.X + perp.X * laneOffset, b.Y + perp.Y * laneOffset);
+
+            // Reverse direction for opposite traffic
+            lane2 = new Edge(edgeweight, lane2B, lane2A, name + "_L2", angle);
+
         }
     }
 }

@@ -24,7 +24,7 @@ namespace CitySkylines0._5alphabeta
         Size powerPlantSize;
         Size waterPumpSize;
         Size hospitalSize;
-
+        CarManager carManager;
         private readonly Brush invalidBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.DarkRed));
         private readonly Brush validBrushBuilding = new SolidBrush(Color.FromArgb(200, Color.Green));
         private readonly Brush moneyCostBrush = new SolidBrush(Color.Black);
@@ -33,7 +33,7 @@ namespace CitySkylines0._5alphabeta
         private readonly Font font2 = new Font("Comic Sans", 9);
 
 
-        public BuildingPainter(Grid gridPassIn, Form1 Form1PassIn, Graphics g, int rectSizeIn, Calendar calendar)
+        public BuildingPainter(Grid gridPassIn, Form1 Form1PassIn, Graphics g, int rectSizeIn, Calendar calendar, CarManager carManagerIn)
         {
             rectSize = rectSizeIn;
             this.g = g;
@@ -43,9 +43,9 @@ namespace CitySkylines0._5alphabeta
             audioManager = Form1.audioManager;
             smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
-
+            carManager = carManagerIn;
             houseSize = new Size(2, 2);
-            hospitalSize = new Size(3, 2);
+            hospitalSize = new Size(4, 3);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
         }
@@ -248,6 +248,11 @@ namespace CitySkylines0._5alphabeta
                     ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + (i * 8), building.coords.Y));
                 }
             }
+
+            foreach (Hospital h in grid.buildings.Where(b => b.type == "hospital"))
+            {
+                h.UpdateHospital();
+            }
         }
 
         private void LoadBuildingImages()
@@ -405,14 +410,14 @@ namespace CitySkylines0._5alphabeta
             {
                 foreach (Node node in grid.nodes)
                 {
-                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, waterPumpSize.Width, waterPumpSize.Height);
+                    int isTrue = FindNearbyBuildableNodes(sender, clickedPoint, node, hospitalSize.Width, hospitalSize.Height);
                     if (isTrue == 1 || isTrue == 0) { checkedSpaces.Add(isTrue); checkedNodes.Add(node); }
                 }
                 if (checkedSpaces.Contains(1)) { }
                 else
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
-                    Hospital newHospital = new Hospital(hospitalSize, placement, "hospital", 250, 250);
+                    Hospital newHospital = new Hospital(hospitalSize, placement, "hospital", 250, 250, grid, carManager);
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)

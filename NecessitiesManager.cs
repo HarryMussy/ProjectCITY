@@ -1,12 +1,14 @@
 ﻿using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Text.Json.Serialization;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using System.Windows.Documents;
+using System.Windows.Forms;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -60,6 +62,11 @@ namespace CitySkylines0._5alphabeta
 
         public void UpdateGlobalNecessities()
         {
+            globalPowerSupply = 0;
+            globalWaterSupply = 0;
+            globalPowerDemand = 0;
+            globalWaterDemand = 0;
+
             foreach (Building b in grid.buildings)
             {
                 int workers = b.Occupants.Count(p => p != null);
@@ -97,41 +104,52 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            float availableWater = globalWaterSupply;
             float availablePower = globalPowerSupply;
+            float availableWater = globalWaterSupply;
 
             foreach (Building b in grid.buildings)
             {
                 foreach (Necessity necessity in b.necessities)
                 {
-                    if (necessity.type is "Power")
+                    if (necessity.type == "Power")
                     {
-                        
-                        if (availablePower < necessity.demand && b.type != "powerplant")
+                        if (b.type == "powerplant")
                         {
-                            necessity.fulFilled = false;
+                            necessity.fulFilled = true;
+                            continue; // DO NOT subtract
                         }
-                        else
+
+                        if (availablePower >= necessity.demand)
                         {
+                            necessity.fulFilled = true;
                             availablePower -= necessity.demand;
-                            necessity.fulFilled = true;
-                        }
-                    }
-                    else if (necessity.type is "Water")
-                    {
-                        
-                        if (availableWater < necessity.demand && b.type != "waterpump")
-                        {
-                            necessity.fulFilled = false;
                         }
                         else
                         {
-                            availableWater -= necessity.demand;
-                            necessity.fulFilled = true;
+                            necessity.fulFilled = false;
                         }
                     }
 
-                    else if (necessity.type is "Workers")
+                    else if (necessity.type == "Water")
+                    {
+                        if (b.type == "waterpump")
+                        {
+                            necessity.fulFilled = true;
+                            continue;
+                        }
+
+                        if (availableWater >= necessity.demand)
+                        {
+                            necessity.fulFilled = true;
+                            availableWater -= necessity.demand;
+                        }
+                        else
+                        {
+                            necessity.fulFilled = false;
+                        }
+                    }
+
+                    else if (necessity.type == "Workers")
                     {
                         necessity.fulFilled = b.Occupants.Count(p => p != null) > 0;
                     }
@@ -152,6 +170,9 @@ namespace CitySkylines0._5alphabeta
 
         [JsonIgnore] public Image image { get; set; }
 
+        static Font font = new Font("Segoe UI", 8, FontStyle.Bold);
+        static Brush brush = new SolidBrush(Color.White);
+        static Brush brushOutline = new SolidBrush(Color.FromArgb(60, 60, 60));
         public bool fulFilled { get; set; }
         public Necessity() { }
 
@@ -173,12 +194,13 @@ namespace CitySkylines0._5alphabeta
             {
                 if (this.type == "Health")
                 {
-                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4
-                        && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
+                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4 && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
                     {
-                        g.DrawString("House is ill", new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), pos.X, pos.Y - 19);
+                        AddStrokeToText(sender, g, "House is ill", 1, font, brushOutline, new Point(pos.X, pos.Y - 19));
+                        g.DrawString("House is ill", font, brush, pos.X, pos.Y - 19);
                         g.DrawImage(image, pos.X, pos.Y, 16, 16);
                     }
+
                     else if (image != null)
                     {
                         g.DrawImage(image, pos.X, pos.Y, 8, 8);
@@ -186,16 +208,30 @@ namespace CitySkylines0._5alphabeta
                 }
                 else
                 {
-                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4
-                        && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
+                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4 && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
                     {
-
-                        g.DrawString("Needs: " + this.type, new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), pos.X, pos.Y - 11);
+                        AddStrokeToText(sender, g, "Needs: " + this.type, 1, font, brushOutline, new Point(pos.X, pos.Y - 11));
+                        g.DrawString("Needs: " + this.type, font, brush, pos.X, pos.Y - 11);
                         g.DrawImage(image, pos.X, pos.Y, 16, 16);
                     }
+
                     else if (image != null)
                     {
                         g.DrawImage(image, pos.X, pos.Y, 8, 8);
+                    }
+                }
+            }
+        }
+
+        void AddStrokeToText(object? sender, Graphics g, string text, int strokeWidth, Font font, Brush brush, Point point)
+        {
+            for (float dx = -strokeWidth; dx <= strokeWidth; dx++)
+            {
+                for (float dy = -strokeWidth; dy <= strokeWidth; dy++)
+                {
+                    if (dx != 0 || dy != 0)
+                    {
+                        g.DrawString(text, font, brush, point.X + dx, point.Y + dy);
                     }
                 }
             }
