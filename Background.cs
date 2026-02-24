@@ -1,9 +1,11 @@
 ﻿using CitySkylines0._5alphabeta;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using System.Windows.Forms;
 using System.Xml.Linq;
 
 public class Background
@@ -12,16 +14,19 @@ public class Background
     [JsonIgnore] private Random random;
     [JsonIgnore] private PerlinNoise perlinNoise;
     [JsonIgnore] public Form1 Form1;
-    [JsonIgnore] private List<Image> grassImages;
+    [JsonIgnore] private Dictionary<string, List<Image>> seasonalGrassImages;
+    [JsonIgnore] private Dictionary<string, Image> imageLookup;
     [JsonIgnore] private Dictionary<string, Image> sharedWaterImages;
-    [JsonIgnore] private Dictionary<string, Image> grassEdgeImages;
+    [JsonIgnore] private Dictionary<string, Dictionary<string, Image>> seasonalGrassEdgeImages;
     [JsonIgnore] private float noiseScale = 0.05F;
     [JsonIgnore] private float landThreshold = 0.25F;
-    [JsonIgnore] Dictionary<string, Image> imageLookup;
-    [JsonIgnore] private ImageAttributes? seasonalAttributes;
 
-    private Dictionary<string, ColorMatrix> seasonalMatrices = new Dictionary<string, ColorMatrix>();
-    private string? lastSeason;
+    private Bitmap? currentSeasonMap;
+    private Bitmap? nextSeasonMap;
+
+    private string? cachedSeason;
+    private string? cachedNextSeason;
+
     private ImageAttributes? cachedAttributes;
 
     public int difficulty { get; set; }
@@ -60,131 +65,31 @@ public class Background
         }
 
         LoadImages();
-        PrecomputeSeasonalColors();
         GenerateMap();
         GenerateDetails();
     }
 
-    public void PrecomputeSeasonalColors()
+    private void DrawEdgesForTile(
+    Graphics g,
+    Rectangle destRect,
+    string season,
+    bool hasWaterN, bool hasWaterS, bool hasWaterE, bool hasWaterW,
+    bool hasWaterNW, bool hasWaterNE, bool hasWaterSW, bool hasWaterSE)
     {
-        seasonalMatrices["Winter"] = WinterMatrix();
-        seasonalMatrices["Spring"] = SpringMatrix();
-        seasonalMatrices["Summer"] = SummerMatrix();
-        seasonalMatrices["Autumn"] = AutumnMatrix();
-    }
+        if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", g, destRect, season);
+        if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_W", g, destRect, season);
+        if (hasWaterE && !hasWaterW && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_N", g, destRect, season);
+        if (hasWaterW && !hasWaterE && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_S", g, destRect, season);
 
-    private ColorMatrix LerpColorMatrix(ColorMatrix from, ColorMatrix to, float t)
-    {
-        float[][] result = new float[5][];
-        for (int i = 0; i < 5; i++)
-        {
-            result[i] = new float[5];
-            for (int j = 0; j < 5; j++)
-            {
-                result[i][j] = from[i, j] + (to[i, j] - from[i, j]) * t;
-            }
-        }
-        return new ColorMatrix(result);
-    }
+        if (hasWaterN && hasWaterW && hasWaterNW) DrawEdge("GrassEdge_Outer_SE", g, destRect, season);
+        if (hasWaterN && hasWaterE && hasWaterNE) DrawEdge("GrassEdge_Outer_NE", g, destRect, season);
+        if (hasWaterS && hasWaterW && hasWaterSW) DrawEdge("GrassEdge_Outer_SW", g, destRect, season);
+        if (hasWaterS && hasWaterE && hasWaterSE) DrawEdge("GrassEdge_Outer_NW", g, destRect, season);
 
-    private ColorMatrix WinterMatrix()
-    {
-        return new ColorMatrix(new float[][]
-        {
-        new float[]{0.6f, 0.6f, 0.7f, 0, 0}, // R
-        new float[]{0.6f, 0.6f, 0.7f, 0, 0}, // G
-        new float[]{0.6f, 0.6f, 0.8f, 0, 0}, // B
-        new float[]{0,    0,    0,   1, 0}, // Alpha
-        new float[]{0.1f, 0.1f, 0.2f, 0, 1}  // Offset (slight cool shadow)
-        });
-    }
-
-    private ColorMatrix SpringMatrix()
-    {
-        return new ColorMatrix(new float[][]
-        {
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0,0,0,0,0},
-            new float[]{0,0,0,0,0}
-        });
-    }
-
-    private ColorMatrix SummerMatrix()
-    {
-        return new ColorMatrix(new float[][]
-        {
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0f,0f,0f,0,0},
-            new float[]{0,0,0,0,0},
-            new float[]{0,0,0,0,0}
-        });
-    }
-
-    private ColorMatrix AutumnMatrix()
-    {
-        return new ColorMatrix(new float[][]
-        {
-            new float[]{1.2f,0.1f,0,0,0},
-            new float[]{0.3f,0.8f,0,0,0},
-            new float[]{0.1f,0.2f,0.6f,0,0},
-            new float[]{0,0,0,1,0},
-            new float[]{0,0,0,0,1}
-        });
-    }
-
-    private void LoadImages()
-    {
-        grassImages = new List<Image>();
-        sharedWaterImages = new Dictionary<string, Image>();
-        grassEdgeImages = new Dictionary<string, Image>();
-        imageLookup = new Dictionary<string, Image>();
-
-        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-
-        string grassFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", "GrassVar");
-        grassImages = new List<Image>();
-
-        foreach (string path in Directory.GetFiles(grassFolder, "*.png"))
-        {
-            using var original = Image.FromFile(path);
-            Bitmap transparentBitmap = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(transparentBitmap))
-            {
-                g.Clear(Color.Transparent);
-                g.DrawImage(original, 0, 0, original.Width, original.Height);
-            }
-            grassImages.Add(transparentBitmap);
-        }
-
-        string waterFolder = Path.Combine(projectRoot,"gameAssets", "gameArt", "Water");
-        foreach (string path in Directory.GetFiles(waterFolder, "*.gif"))
-        {
-            string fileName = Path.GetFileName(path);
-            Image gifImage = Image.FromFile(path);
-            ImageAnimator.Animate(gifImage, null); // Register for animation
-            sharedWaterImages[fileName] = gifImage;
-        }
-
-        // Load grass edge images
-        string edgeFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", "GrassEdges");
-        foreach (string path in Directory.GetFiles(edgeFolder, "*.png"))
-        {
-            string fileName = Path.GetFileNameWithoutExtension(path);
-            grassEdgeImages[fileName] = Image.FromFile(path);
-        }
-
-        for (int i = 0; i < grassImages.Count; i++)
-        {
-            imageLookup["grass" + i] = grassImages[i];
-        }
-
-        foreach (var kv in sharedWaterImages)
-        {
-            imageLookup[kv.Key] = kv.Value;
-        }
+        if (hasWaterNW && !hasWaterN && !hasWaterW) DrawEdge("GrassEdge_Inner_SE", g, destRect, season);
+        if (hasWaterNE && !hasWaterN && !hasWaterE) DrawEdge("GrassEdge_Inner_NE", g, destRect, season);
+        if (hasWaterSW && !hasWaterS && !hasWaterW) DrawEdge("GrassEdge_Inner_SW", g, destRect, season);
+        if (hasWaterSE && !hasWaterS && !hasWaterE) DrawEdge("GrassEdge_Inner_NW", g, destRect, season);
     }
 
     public void GenerateMap()
@@ -205,57 +110,112 @@ public class Background
             }
         }
     }
+    private void LoadImages()
+    {
+        sharedWaterImages = new Dictionary<string, Image>();
+        seasonalGrassImages = new Dictionary<string, List<Image>>();
+        seasonalGrassEdgeImages = new Dictionary<string, Dictionary<string, Image>>();
+        imageLookup = new Dictionary<string, Image>();
+
+        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+
+        string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
+
+        foreach (var season in seasons)
+        {
+            // =========================
+            // LOAD GRASS VARIANTS
+            // =========================
+            string grassFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", season, "GrassVar");
+
+            var grassList = new List<Image>();
+
+            if (Directory.Exists(grassFolder))
+            {
+                foreach (string path in Directory.GetFiles(grassFolder, "*.png"))
+                {
+                    grassList.Add(Image.FromFile(path));
+                }
+            }
+
+            seasonalGrassImages[season] = grassList;
+
+            // =========================
+            // LOAD SEASONAL EDGE IMAGES
+            // =========================
+            string edgeFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", season, "GrassEdges");
+
+            var edgeDict = new Dictionary<string, Image>();
+
+            if (Directory.Exists(edgeFolder))
+            {
+                foreach (string path in Directory.GetFiles(edgeFolder, "*.png"))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(path);
+                    edgeDict[fileName] = Image.FromFile(path);
+                }
+            }
+
+            seasonalGrassEdgeImages[season] = edgeDict;
+        }
+
+        // =========================
+        // LOAD WATER GIFS
+        // =========================
+        string waterFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Water");
+
+        if (Directory.Exists(waterFolder))
+        {
+            foreach (string path in Directory.GetFiles(waterFolder, "*.gif"))
+            {
+                string fileName = Path.GetFileName(path);
+                Image gifImage = Image.FromFile(path);
+                ImageAnimator.Animate(gifImage, null);
+
+                sharedWaterImages[fileName] = gifImage;
+                imageLookup[fileName] = gifImage;
+            }
+        }
+    }
 
     public void GenerateDetails()
     {
         var gifKeys = sharedWaterImages.Keys.ToList();
 
+        int variantCount = seasonalGrassImages["Spring"].Count;
+
         foreach (Node node in tiles)
         {
-            node.imageKey = "grass" + random.Next(grassImages.Count);
-
             if (!node.isGrass)
             {
-                //assign one of the water GIFs to this node
-                int randomIndex = random.Next(1, 10);
-                if (randomIndex == 1 && gifKeys.Count > 0) //10% chance to assign a water1
+                if (gifKeys.Count > 0)
                 {
-                    string chosenKey = gifKeys[0];
+                    string chosenKey = gifKeys[random.Next(gifKeys.Count)];
                     node.imageKey = chosenKey;
                 }
-                else
-                {
-                    string chosenKey = gifKeys[1];
-                    node.imageKey = chosenKey;
-                }
-
-            }
-        }
-    }
-
-    private void DrawEdge(string key, int x, int y, int tileSize, Graphics g)
-    {
-        // Draw a water tile underneath
-        Image waterTile = imageLookup["water2.gif"]; // or choose random water GIF if you want animation
-        g.DrawImage(waterTile, x, y, tileSize + 1, tileSize + 1);
-
-        // Draw the grass edge on top
-        if (grassEdgeImages.TryGetValue(key, out var edgeImg))
-        {
-            if (seasonalAttributes != null)
-            {
-                Rectangle destRect = new Rectangle(x, y, tileSize + 1, tileSize + 1);
-                g.DrawImage(edgeImg, destRect, 0, 0, edgeImg.Width, edgeImg.Height, GraphicsUnit.Pixel, seasonalAttributes);
             }
             else
             {
-                g.DrawImage(edgeImg, x, y, tileSize + 1, tileSize + 1);
+                node.imageKey = "grass" + random.Next(variantCount);
             }
         }
     }
 
-    public void DrawMap(object? sender, Graphics g, float zoomLevel)
+    private void DrawEdge(string key, Graphics g, Rectangle destRect, string season)
     {
+        if (seasonalGrassEdgeImages.TryGetValue(season, out var dict) &&
+            dict.TryGetValue(key, out var img))
+        {
+            g.DrawImage(img, destRect);
+        }
+    }
+
+    private Bitmap BuildSeasonBitmap(string season)
+    {
+        Bitmap map = new Bitmap(width * rectSize, height * rectSize);
+
+        using Graphics g = Graphics.FromImage(map);
+
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
@@ -263,95 +223,131 @@ public class Background
 
         int tileSize = rectSize;
 
-        for (int i = 0; i < tiles.Count; i++)
+        for (int y = 0; y < height; y++)
         {
-            Node node = tiles[i];
-            int gridX = i % width;
-            int gridY = i / width;
-
-            //helper to check if a neighbor index is in bounds
-            bool InBounds(int x, int y) => x >= 0 && x < width && y >= 0 && y < height;
-            int idx(int x, int y) => y * width + x;
-
-            //8-way water checks (safe, based on list order): treat out-of-bounds neighbors as water
-            bool hasWaterN = !InBounds(gridX, gridY - 1) || !tiles[idx(gridX, gridY - 1)].isGrass;
-            bool hasWaterS = !InBounds(gridX, gridY + 1) || !tiles[idx(gridX, gridY + 1)].isGrass;
-            bool hasWaterE = !InBounds(gridX + 1, gridY) || !tiles[idx(gridX + 1, gridY)].isGrass;
-            bool hasWaterW = !InBounds(gridX - 1, gridY) || !tiles[idx(gridX - 1, gridY)].isGrass;
-
-            bool hasWaterNW = !InBounds(gridX - 1, gridY - 1) || !tiles[idx(gridX - 1, gridY - 1)].isGrass;
-            bool hasWaterNE = !InBounds(gridX + 1, gridY - 1) || !tiles[idx(gridX + 1, gridY - 1)].isGrass;
-            bool hasWaterSW = !InBounds(gridX - 1, gridY + 1) || !tiles[idx(gridX - 1, gridY + 1)].isGrass;
-            bool hasWaterSE = !InBounds(gridX + 1, gridY + 1) || !tiles[idx(gridX + 1, gridY + 1)].isGrass;
-
-            if (node.isGrass)
+            for (int x = 0; x < width; x++)
             {
-                Image img = imageLookup[node.imageKey];
+                int i = y * width + x;
+                Node node = tiles[i];
 
-                if (seasonalAttributes != null)
+                int drawX = node.coords.X;
+                int drawY = node.coords.Y;
+
+                Rectangle destRect = new Rectangle(drawX, drawY, tileSize + 1, tileSize + 1);
+
+                bool InBounds(int ix, int iy) => ix >= 0 && ix < width && iy >= 0 && iy < height;
+                int idx(int ix, int iy) => iy * width + ix;
+
+                bool hasWaterN = !InBounds(x, y - 1) || !tiles[idx(x, y - 1)].isGrass;
+                bool hasWaterS = !InBounds(x, y + 1) || !tiles[idx(x, y + 1)].isGrass;
+                bool hasWaterE = !InBounds(x + 1, y) || !tiles[idx(x + 1, y)].isGrass;
+                bool hasWaterW = !InBounds(x - 1, y) || !tiles[idx(x - 1, y)].isGrass;
+
+                bool hasWaterNW = !InBounds(x - 1, y - 1) || !tiles[idx(x - 1, y - 1)].isGrass;
+                bool hasWaterNE = !InBounds(x + 1, y - 1) || !tiles[idx(x + 1, y - 1)].isGrass;
+                bool hasWaterSW = !InBounds(x - 1, y + 1) || !tiles[idx(x - 1, y + 1)].isGrass;
+                bool hasWaterSE = !InBounds(x + 1, y + 1) || !tiles[idx(x + 1, y + 1)].isGrass;
+
+                if (node.isGrass)
                 {
-                    Rectangle destRect = new Rectangle(node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
-                    g.DrawImage(img, destRect, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, seasonalAttributes);
+                    bool isShoreTile = hasWaterN || hasWaterS || hasWaterE || hasWaterW || hasWaterNW || hasWaterNE || hasWaterSW || hasWaterSE;
+
+                    if (isShoreTile)
+                    {
+                        if (imageLookup.TryGetValue("water.gif", out var waterImg)) { g.DrawImage(waterImg, destRect); }
+                    }
+                    else
+                    {
+                        int grassIndex = int.Parse(node.imageKey.Replace("grass", ""));
+                        Image grassImg = seasonalGrassImages[season][grassIndex];
+                        g.DrawImage(grassImg, destRect);
+                    }
+
+                    DrawEdgesForTile(g, destRect, season, hasWaterN, hasWaterS, hasWaterE, hasWaterW, hasWaterNW, hasWaterNE, hasWaterSW, hasWaterSE);
                 }
                 else
                 {
-                    g.DrawImage(img, node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
+                    if (imageLookup.TryGetValue(node.imageKey, out var img)) { g.DrawImage(img, destRect); }
                 }
-
-                //determine edges based on surrounding tiles
-                int x = node.coords.X;
-                int y = node.coords.Y;
-                //edge tiles
-                if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", x, y, tileSize, g);
-                if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_W", x, y, tileSize, g);
-                if (hasWaterE && !hasWaterW && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_N", x, y, tileSize, g);
-                if (hasWaterW && !hasWaterE && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_S", x, y, tileSize, g);
-
-                //outer corners
-                if (hasWaterN && hasWaterW && hasWaterNW) DrawEdge("GrassEdge_Outer_SE", x, y, tileSize, g);
-                if (hasWaterN && hasWaterE && hasWaterNE) DrawEdge("GrassEdge_Outer_NE", x, y, tileSize, g);
-                if (hasWaterS && hasWaterW && hasWaterSW) DrawEdge("GrassEdge_Outer_SW", x, y, tileSize, g);
-                if (hasWaterS && hasWaterE && hasWaterSE) DrawEdge("GrassEdge_Outer_NW", x, y, tileSize, g);
-
-                //inner corners
-                if (hasWaterNW && !hasWaterN && !hasWaterW) DrawEdge("GrassEdge_Inner_SE", x, y, tileSize, g);
-                if (hasWaterNE && !hasWaterN && !hasWaterE) DrawEdge("GrassEdge_Inner_NE", x, y, tileSize, g);
-                if (hasWaterSW && !hasWaterS && !hasWaterW) DrawEdge("GrassEdge_Inner_SW", x, y, tileSize, g);
-                if (hasWaterSE && !hasWaterS && !hasWaterE) DrawEdge("GrassEdge_Inner_NW", x, y, tileSize, g);
-            }
-            else
-            {
-                g.DrawImage(imageLookup[node.imageKey], node.coords.X, node.coords.Y, tileSize + 1, tileSize + 1);
             }
         }
 
+        return map;
     }
-    public void UpdateSeasonalAttributes()
+
+    public void DrawMap(object? sender, Graphics g, float zoomLevel)
     {
         string currentSeason = Form1.calendar.CurrentSeason;
         string nextSeason = Form1.calendar.GetNextSeason(currentSeason);
+        float t = Form1.calendar.GetSeasonTransitionFactor();
 
-        // Determine fade factor (0-1) based on week of month, e.g., last 7 days fade
-        float t = Form1.calendar.GetSeasonTransitionFactor(); // implement in Calendar
+        // Rebuild if season changed
+        if (currentSeasonMap == null || cachedSeason != currentSeason)
+        {
+            currentSeasonMap?.Dispose();
+            currentSeasonMap = BuildSeasonBitmap(currentSeason);
+            cachedSeason = currentSeason;
+        }
 
-        ColorMatrix currentMatrix = seasonalMatrices[currentSeason];
-        ColorMatrix nextMatrix = seasonalMatrices[nextSeason];
+        if (nextSeasonMap == null || cachedNextSeason != nextSeason)
+        {
+            nextSeasonMap?.Dispose();
+            nextSeasonMap = BuildSeasonBitmap(nextSeason);
+            cachedNextSeason = nextSeason;
+        }
+
+        if (currentSeasonMap == null)
+            return;
+
+        // 🔥 FORCE PIXEL SHARP RENDERING
+        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+
+        int scaledWidth = (int)(currentSeasonMap.Width * zoomLevel);
+        int scaledHeight = (int)(currentSeasonMap.Height * zoomLevel);
+
+        Rectangle destRect = new Rectangle(0, 0, scaledWidth, scaledHeight);
+
+        // Draw base season
+        g.DrawImage(currentSeasonMap, destRect);
+
+        // Crossfade next season
+        if (t > 0f && nextSeasonMap != null)
+        {
+            using ImageAttributes fadeAttr = new ImageAttributes();
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.Matrix33 = t;
+            fadeAttr.SetColorMatrix(matrix);
+
+            g.DrawImage(
+                nextSeasonMap,
+                destRect,
+                0,
+                0,
+                nextSeasonMap.Width,
+                nextSeasonMap.Height,
+                GraphicsUnit.Pixel,
+                fadeAttr
+            );
+        }
+    }
+
+    private ImageAttributes GetFadeAttributes(float t)
+    {
+        if (cachedAttributes != null)
+        {
+            cachedAttributes.Dispose();
+            cachedAttributes = null;
+        }
 
         cachedAttributes = new ImageAttributes();
-        cachedAttributes.SetColorMatrix(LerpColorMatrix(currentMatrix, nextMatrix, t));
-        seasonalAttributes = cachedAttributes;
-    }
+        ColorMatrix matrix = new ColorMatrix();
+        matrix.Matrix33 = t; // alpha
+        cachedAttributes.SetColorMatrix(matrix);
 
-    public List<Node> GetBuildableNodes()
-    {
-        return tiles.Where(n => n.isNearRoad).ToList();
-    }
-
-    public string GetTileType(Point point)
-    {
-        if (nodeLookup.TryGetValue(point, out var node))
-            return node.isGrass ? "Land" : "Water";
-        return "Water";
+        return cachedAttributes;
     }
 
     // Optional helper to update animated GIFs from Form1

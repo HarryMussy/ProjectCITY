@@ -73,33 +73,26 @@ namespace CitySkylines0._5alphabeta
             if (currentSeason == "Spring") return "Summer";
             if (currentSeason == "Summer") return "Autumn";
             if (currentSeason == "Autumn") return "Winter";
-            if (currentSeason == "Winter") return "Spring";
             else { return "Spring"; }
         }
 
         public void UpdateCurrentSeason()
         {
-
             if (month == 12 || month == 1 || month == 2)
             {
                 CurrentSeason = "Winter";
-                form1PassIn.background.UpdateSeasonalAttributes();
             }
-            if (month >= 3 && month <= 5)
+            else if (month >= 3 && month <= 5)
             {
                 CurrentSeason = "Spring";
-                form1PassIn.background.UpdateSeasonalAttributes();
             }
-            if (month >= 6 && month <= 8)
+            else if (month >= 6 && month <= 8)
             {
                 CurrentSeason = "Summer";
-                form1PassIn.background.UpdateSeasonalAttributes();
             }
             else
             {
                 CurrentSeason = "Autumn";
-                form1PassIn.background.UpdateSeasonalAttributes();
-
             }
         }
 

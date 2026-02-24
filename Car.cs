@@ -180,7 +180,7 @@ namespace CitySkylines0._5alphabeta
             var rng = carRandom;
 
             Node startNode = grid.roadNodes.Where(n => n.OccupyingCar == null).OrderBy(n => Distance(buildingA.coords, n.coords)).FirstOrDefault();
-            if (startNode == null) return;
+            if (startNode == null || startNode.OccupyingCar != null) return;
 
             Node destinationNode = grid.roadNodes.OrderBy(n => Distance(buildingB.coords, n.coords)).FirstOrDefault();
             if (destinationNode == null) return;
@@ -212,6 +212,23 @@ namespace CitySkylines0._5alphabeta
 
         public bool MoveCar(Car car)
         {
+            //despawn cars that are occupying the same space
+            var carsOccupyingDifferentNodes = cars.Where(c => c.currentNode != null).GroupBy(c => c.currentNode).ToDictionary(g => g.Key, g => g.ToList());
+
+            // despawn extras, keep one car per node (if you want to remove all, adjust accordingly)
+            foreach (var kv in carsOccupyingDifferentNodes)
+            {
+                var carsAtNode = kv.Value;
+                if (carsAtNode.Count >= 2)
+                {
+                    // keep the first, despawn the rest
+                    for (int i = 1; i < carsAtNode.Count; i++)
+                    {
+                        DespawnCar(carsAtNode[i]);
+                    }
+                }
+            }
+
             if (car.route != null && car.route.Count > 0)
             {
                 Node nextNode = car.route.Peek();

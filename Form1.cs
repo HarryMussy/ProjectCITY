@@ -84,7 +84,7 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 8;
+            tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             //close loading form
@@ -189,7 +189,7 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 8;
+            tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
             loadingForm.Close();
