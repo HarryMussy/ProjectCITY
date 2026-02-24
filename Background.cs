@@ -27,8 +27,6 @@ public class Background
     private string? cachedSeason;
     private string? cachedNextSeason;
 
-    private ImageAttributes? cachedAttributes;
-
     public int difficulty { get; set; }
     public int width { get; set; }
     public int height { get; set; }
@@ -43,6 +41,7 @@ public class Background
         this.height = height;
         this.rectSize = rectSizeIn;
         Form1 = form1PassIn;
+        this.difficulty = difficulty;
 
         random = new Random();
         tiles = new List<Node>();
@@ -69,12 +68,7 @@ public class Background
         GenerateDetails();
     }
 
-    private void DrawEdgesForTile(
-    Graphics g,
-    Rectangle destRect,
-    string season,
-    bool hasWaterN, bool hasWaterS, bool hasWaterE, bool hasWaterW,
-    bool hasWaterNW, bool hasWaterNE, bool hasWaterSW, bool hasWaterSE)
+    private void DrawEdgesForTile(Graphics g, Rectangle destRect, string season, bool hasWaterN, bool hasWaterS, bool hasWaterE, bool hasWaterW, bool hasWaterNW, bool hasWaterNE, bool hasWaterSW, bool hasWaterSE)
     {
         if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", g, destRect, season);
         if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_W", g, destRect, season);
@@ -123,9 +117,7 @@ public class Background
 
         foreach (var season in seasons)
         {
-            // =========================
-            // LOAD GRASS VARIANTS
-            // =========================
+            //grass variants
             string grassFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", season, "GrassVar");
 
             var grassList = new List<Image>();
@@ -140,9 +132,7 @@ public class Background
 
             seasonalGrassImages[season] = grassList;
 
-            // =========================
-            // LOAD SEASONAL EDGE IMAGES
-            // =========================
+            //edge variants
             string edgeFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", season, "GrassEdges");
 
             var edgeDict = new Dictionary<string, Image>();
@@ -159,9 +149,7 @@ public class Background
             seasonalGrassEdgeImages[season] = edgeDict;
         }
 
-        // =========================
-        // LOAD WATER GIFS
-        // =========================
+        //water variants
         string waterFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Water");
 
         if (Directory.Exists(waterFolder))
@@ -190,7 +178,10 @@ public class Background
             {
                 if (gifKeys.Count > 0)
                 {
-                    string chosenKey = gifKeys[random.Next(gifKeys.Count)];
+                    string chosenKey;
+                    /*if (random.Next(0, 100) <= 95) { chosenKey = gifKeys[1]; }
+                    else { chosenKey = gifKeys[0]; }*/
+                    chosenKey = gifKeys[1];
                     node.imageKey = chosenKey;
                 }
             }
@@ -277,11 +268,11 @@ public class Background
 
     public void DrawMap(object? sender, Graphics g, float zoomLevel)
     {
-        string currentSeason = Form1.calendar.CurrentSeason;
-        string nextSeason = Form1.calendar.GetNextSeason(currentSeason);
+        string currentSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month);
+        string nextSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month + 1);
         float t = Form1.calendar.GetSeasonTransitionFactor();
 
-        // Rebuild if season changed
+        //rebuild if season changed
         if (currentSeasonMap == null || cachedSeason != currentSeason)
         {
             currentSeasonMap?.Dispose();
@@ -296,66 +287,27 @@ public class Background
             cachedNextSeason = nextSeason;
         }
 
-        if (currentSeasonMap == null)
-            return;
+        if (currentSeasonMap == null) { return; }
 
-        // 🔥 FORCE PIXEL SHARP RENDERING
+        //force sharp rendering
         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
         g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
 
-        int scaledWidth = (int)(currentSeasonMap.Width * zoomLevel);
-        int scaledHeight = (int)(currentSeasonMap.Height * zoomLevel);
+        Rectangle destRect = new Rectangle(0, 0, currentSeasonMap.Width, currentSeasonMap.Height);
 
-        Rectangle destRect = new Rectangle(0, 0, scaledWidth, scaledHeight);
-
-        // Draw base season
+        //draw base season
         g.DrawImage(currentSeasonMap, destRect);
 
-        // Crossfade next season
+        //crossfade next season
         if (t > 0f && nextSeasonMap != null)
         {
             using ImageAttributes fadeAttr = new ImageAttributes();
             ColorMatrix matrix = new ColorMatrix();
             matrix.Matrix33 = t;
             fadeAttr.SetColorMatrix(matrix);
-
-            g.DrawImage(
-                nextSeasonMap,
-                destRect,
-                0,
-                0,
-                nextSeasonMap.Width,
-                nextSeasonMap.Height,
-                GraphicsUnit.Pixel,
-                fadeAttr
-            );
-        }
-    }
-
-    private ImageAttributes GetFadeAttributes(float t)
-    {
-        if (cachedAttributes != null)
-        {
-            cachedAttributes.Dispose();
-            cachedAttributes = null;
-        }
-
-        cachedAttributes = new ImageAttributes();
-        ColorMatrix matrix = new ColorMatrix();
-        matrix.Matrix33 = t; // alpha
-        cachedAttributes.SetColorMatrix(matrix);
-
-        return cachedAttributes;
-    }
-
-    // Optional helper to update animated GIFs from Form1
-    public void UpdateWaterAnimations()
-    {
-        foreach (var img in sharedWaterImages.Values)
-        {
-            ImageAnimator.UpdateFrames(img);
+            g.DrawImage(nextSeasonMap, destRect, 0, 0, nextSeasonMap.Width, nextSeasonMap.Height, GraphicsUnit.Pixel, fadeAttr);
         }
     }
 }

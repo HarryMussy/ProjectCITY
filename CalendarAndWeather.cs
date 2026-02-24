@@ -68,14 +68,6 @@ namespace CitySkylines0._5alphabeta
             return (float)(day - fadeStart) / 7f;
         }
 
-        public string GetNextSeason(string currentSeason)
-        {
-            if (currentSeason == "Spring") return "Summer";
-            if (currentSeason == "Summer") return "Autumn";
-            if (currentSeason == "Autumn") return "Winter";
-            else { return "Spring"; }
-        }
-
         public void UpdateCurrentSeason()
         {
             if (month == 12 || month == 1 || month == 2)
@@ -93,6 +85,26 @@ namespace CitySkylines0._5alphabeta
             else
             {
                 CurrentSeason = "Autumn";
+            }
+        }
+
+        public string GetCurrentSeason(int month)
+        {
+            if (month == 12 || month == 1 || month == 2)
+            {
+                return "Winter";
+            }
+            else if (month >= 3 && month <= 5)
+            {
+                return "Spring";
+            }
+            else if (month >= 6 && month <= 8)
+            {
+                return "Summer";
+            }
+            else
+            {
+                return "Autumn";
             }
         }
 

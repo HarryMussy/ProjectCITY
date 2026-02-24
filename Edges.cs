@@ -57,16 +57,17 @@ namespace CitySkylines0._5alphabeta
             Point perp = new Point(-roadDir.Y, roadDir.X);
             int laneOffset = 16;
 
-            // Lane 1 = original line
+            //lane1
             lane1 = new Edge(edgeweight, a, b, name + "_L1", angle);
 
-            // Lane 2 = shifted exactly one tile
+            //lane2
             Point lane2A = new Point(a.X + perp.X * laneOffset, a.Y + perp.Y * laneOffset);
             Point lane2B = new Point(b.X + perp.X * laneOffset, b.Y + perp.Y * laneOffset);
 
-            // Reverse direction for opposite traffic
+            //reverse direction for opposite traffic
             lane2 = new Edge(edgeweight, lane2B, lane2A, name + "_L2", angle);
 
+            FindAllPointOnEdge(this);
         }
     }
 }

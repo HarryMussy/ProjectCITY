@@ -79,6 +79,7 @@ namespace CitySkylines0._5alphabeta
                         intersectingNodesWithEdge.Add(node);
                     }
                 }
+
                 foreach (Point point in road.lane2.pointsOnTheEdge)
                 {
                     //check if the node intersects with the road edge (within range)
@@ -250,8 +251,6 @@ namespace CitySkylines0._5alphabeta
             {
                 node.neighbors.Add(opposite);
             }
-
-
         }
 
         private bool IsLaneEnd(Edge lane, Node n)

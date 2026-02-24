@@ -103,9 +103,10 @@ namespace CitySkylines0._5alphabeta
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
                 Point setPoint = SnapTo4Directions(startPoint.Value, mousePos);
 
+                Point pointB = new Point(setPoint.X - (setPoint.X % 8), setPoint.Y - (setPoint.Y % 8));
                 // highlight intersecting nodes as before
-                int edgeAngle = FindAngle(startPoint.Value, setPoint);
-                Road tempRoad = new Road(8, startPoint.Value, setPoint, "temp", edgeAngle);
+                int edgeAngle = FindAngle(startPoint.Value, pointB);
+                Road tempRoad = new Road(8, startPoint.Value, pointB, "temp", edgeAngle);
 
                 List<Node> nodes = grid.FindAdjacentTilesToARoad(tempRoad);
 
@@ -129,6 +130,9 @@ namespace CitySkylines0._5alphabeta
 
                 DrawArrowLine(g, p, tempRoad.lane1.a, tempRoad.lane1.b);
                 DrawArrowLine(g, p, tempRoad.lane2.a, tempRoad.lane2.b);
+
+                g.DrawLine(new Pen(new SolidBrush(Color.Yellow), 3), tempRoad.lane1.a, tempRoad.lane1.b);
+                g.DrawLine(new Pen(new SolidBrush(Color.Yellow), 3), tempRoad.lane2.a, tempRoad.lane2.b);
                 tempRoad = null;
             }
 

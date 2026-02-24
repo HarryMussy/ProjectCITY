@@ -342,7 +342,6 @@ namespace CitySkylines0._5alphabeta
             if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; } //sells excess water for cash
 
             buildingPainter.buildingType = buildingType;
-            background.UpdateWaterAnimations();
 
             //spawns cars if there are less cars than houses and in a 1% chance
             if (carManager.cars.Count() < grid.buildings.Count() && spawnCarRandom.Next(100) < 50)
