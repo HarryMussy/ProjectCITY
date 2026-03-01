@@ -8,7 +8,7 @@ namespace CitySkylines0._5alphabeta
         public List<Node> nodes { get; set; } = new();
         public List<Node> roadNodes { get; set; } = new();
         public List<Node> buildableNodes { get; set; } = new();
-        public List<Edge> edges { get; set; } = new();
+        public List<Road> roads { get; set; } = new();
         public List<Building> buildings { get; set; } = new();
         [JsonIgnore] public List<PictureBox> roadImages { get; set; }
         public float cash { get; set; }
@@ -74,7 +74,7 @@ namespace CitySkylines0._5alphabeta
                 foreach (Point point in road.lane1.pointsOnTheEdge)
                 {
                     //check if the node intersects with the road edge (within range)
-                    if (node.coords.X + 8 < point.X + rectSize && node.coords.X + 8 > point.X - rectSize && node.coords.Y + 8 < point.Y + rectSize && node.coords.Y + 8 > point.Y - rectSize)
+                    if (IsNodeAt(node, point))
                     {
                         intersectingNodesWithEdge.Add(node);
                     }
@@ -83,7 +83,7 @@ namespace CitySkylines0._5alphabeta
                 foreach (Point point in road.lane2.pointsOnTheEdge)
                 {
                     //check if the node intersects with the road edge (within range)
-                    if (node.coords.X + 8 < point.X + rectSize && node.coords.X + 8 > point.X - rectSize && node.coords.Y + 8 < point.Y + rectSize && node.coords.Y + 8 > point.Y - rectSize)
+                    if (IsNodeAt(node, point))
                     {
                         intersectingNodesWithEdge.Add(node);
                     }
@@ -122,15 +122,22 @@ namespace CitySkylines0._5alphabeta
             return newRoadNodes;
         }
 
-        private bool IsNodeAt(Node node, Point p)
+        public bool IsNodeAt(Node node, Point p)
         {
-            return node.coords == new Point( (p.X / rectSize) * rectSize, (p.Y / rectSize) * rectSize );
+            return Math.Abs(node.Center(rectSize).X - p.X) <= rectSize / 2 && Math.Abs(node.Center(rectSize).Y - p.Y) <= rectSize / 2;
+        }
+
+        public bool IsNodeNear(Node node, Point p, int tileCheckWidth)
+        {
+            var center = node.Center(rectSize);
+
+            return Math.Abs(center.X - p.X) <= rectSize * tileCheckWidth && Math.Abs(center.Y - p.Y) <= rectSize * tileCheckWidth;
         }
 
 
         public void FindRoadTilesAndAdjacentRoadTiles()
         {
-            if (edges == null) return;
+            if (roads == null) return;
 
             //clear previous state
             roadNodes.Clear();
@@ -143,21 +150,21 @@ namespace CitySkylines0._5alphabeta
             }
 
 
-            foreach (Road road in edges)
+            foreach (Road road in roads)
             {
-                foreach (Point n in road.lane1.pointsOnTheEdge)
+                foreach (Point p in road.lane1.pointsOnTheEdge)
                 {
                     foreach (Node node in nodes)
                     {
                         //is road node check
-                        if (node.coords.X + 8 < n.X + rectSize && node.coords.X + 8 > n.X - rectSize && node.coords.Y + 8 < n.Y + rectSize && node.coords.Y + 8 > n.Y - rectSize)
+                        if (IsNodeAt(node, p))
                         {
                             node.isRoad = true;
                             if (!roadNodes.Contains(node)) { roadNodes.Add(node); }
                         }
 
                         //near-road check
-                        else if (node.coords.X + 8 < n.X + (rectSize * 4) && node.coords.X + 8 > n.X - (rectSize * 4) && node.coords.Y + 8 < n.Y + (rectSize * 4) && node.coords.Y + 8 > n.Y - (rectSize * 4))
+                        else if (IsNodeNear(node, p, 4))
                         {
                             node.isNearRoad = true;
                             node.IsNodeBuildable();
@@ -169,19 +176,19 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                foreach (Point n in road.lane2.pointsOnTheEdge)
+                foreach (Point p in road.lane2.pointsOnTheEdge)
                 {
                     foreach (Node node in nodes)
                     {
                         //is road node check
-                        if (node.coords.X + 8 < n.X + rectSize && node.coords.X + 8 > n.X - rectSize && node.coords.Y + 8 < n.Y + rectSize && node.coords.Y + 8 > n.Y - rectSize)
+                        if (IsNodeAt(node, p))
                         {
                             node.isRoad = true;
                             if (!roadNodes.Contains(node)) { roadNodes.Add(node); }
                         }
 
                         //near-road check
-                        else if (node.coords.X + 8 < n.X + (rectSize * 4) && node.coords.X + 8 > n.X - (rectSize * 4) && node.coords.Y + 8 < n.Y + (rectSize * 4) && node.coords.Y + 8 > n.Y - (rectSize * 4))
+                        else if (IsNodeNear(node, p, 4))
                         {
                             node.isNearRoad = true;
                             node.IsNodeBuildable();
@@ -206,7 +213,7 @@ namespace CitySkylines0._5alphabeta
                 n.neighbors.Clear();
             }
 
-            foreach (Road road in edges)
+            foreach (Road road in roads)
             {
                 Point lane1Dir = new Point(Math.Sign(road.lane1.b.X - road.lane1.a.X), Math.Sign(road.lane1.b.Y - road.lane1.a.Y));
                 foreach (Node node in road.lane1.occupyingNodes)

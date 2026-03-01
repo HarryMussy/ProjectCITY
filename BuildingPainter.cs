@@ -7,11 +7,11 @@ namespace CitySkylines0._5alphabeta
         private readonly Grid grid;
         public Form1 Form1;
         public Point screencentre;
-
-        private List<Image> houseImages;
-        private Image powerPlantImage;
-        private Image waterPumpImage;
-        private Image hospitalImage;
+        private Dictionary<string, Image> imageCache = new();
+        private List<string> houseImagesPath;
+        private string powerPlantImagePath;
+        private string waterPumpImagePath;
+        private string hospitalImagePath;
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
         public AudioManager audioManager;
@@ -48,6 +48,15 @@ namespace CitySkylines0._5alphabeta
             hospitalSize = new Size(4, 3);
             powerPlantSize = new Size(4, 3);
             waterPumpSize = new Size(2, 2);
+        }
+
+        public Image GetImage(string path)
+        {
+            if (!imageCache.ContainsKey(path))
+            {
+                imageCache[path] = Image.FromFile(path);
+            }
+            return imageCache[path];
         }
 
         public void BuildingPaint(object? sender, Graphics g, Point mousePos)
@@ -168,6 +177,7 @@ namespace CitySkylines0._5alphabeta
                             }
                         }
                     }
+
                     else
                     {
                         foreach (Node node in grid.nodes)
@@ -205,11 +215,11 @@ namespace CitySkylines0._5alphabeta
                     int imgIdx;
                     if (!tileHouseImageIndex.TryGetValue(building, out imgIdx))
                     {
-                        imgIdx = random.Next(houseImages.Count);
+                        imgIdx = random.Next(houseImagesPath.Count);
                         tileHouseImageIndex[building] = imgIdx;
                     }
                     // Use building.size for drawing
-                    g.DrawImage(houseImages[imgIdx], building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawImage(GetImage(building.imagePath), building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
 /*                    g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);*/
 
                     foreach (Person p in building.Occupants.Where(p => p != null))
@@ -227,17 +237,17 @@ namespace CitySkylines0._5alphabeta
 
                 else if (building.type == "powerplant")
                 {
-                    g.DrawImage(powerPlantImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawImage(GetImage(building.imagePath), building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants}\n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
                 else if (building.type == "waterpump")
                 {
-                    g.DrawImage(waterPumpImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawImage(GetImage(building.imagePath), building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
                 else if (building.type == "hospital")
                 {
-                    g.DrawImage(hospitalImage, building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
+                    g.DrawImage(GetImage(building.imagePath), building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
                     /*g.DrawString($"{building.Occupants.Count(p => p != null)} / {building.MaxOccupants} \n\n {building.efficiency}", font, blueBrush, building.coords);*/
                 }
 
@@ -259,29 +269,27 @@ namespace CitySkylines0._5alphabeta
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses");
-            houseImages = new List<Image>();
+            houseImagesPath = new List<string>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
             {
                 using var original = Image.FromFile(path);
-                Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                /*Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
                     g.Clear(Color.Transparent);
                     g.DrawImage(original, 0, 0, original.Width, original.Height);
                 }
 
-                houseImages.Add(bmp);
+                houseImages.Add(bmp);*/
+                houseImagesPath.Add(path);
             }
 
-            string powerPlantPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
-            powerPlantImage = Image.FromFile(powerPlantPath);
+            powerPlantImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
 
-            string waterPumpPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-            waterPumpImage = Image.FromFile(waterPumpPath);
+            waterPumpImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
 
-            string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
-            hospitalImage = Image.FromFile(pathToHospitalImage);
+            hospitalImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
         }
 
 
@@ -324,8 +332,7 @@ namespace CitySkylines0._5alphabeta
                     grid.cash -= newHouse.cost;
 
                     // Assign a random image index for the new house
-                    int imgIdx = random.Next(houseImages.Count);
-                    tileHouseImageIndex[newHouse] = imgIdx;
+                    newHouse.imagePath = houseImagesPath[random.Next(houseImagesPath.Count)];
 
                     foreach (Node node in checkedNodes)
                     {
@@ -348,6 +355,7 @@ namespace CitySkylines0._5alphabeta
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
                     PowerPlant newPowerPlant = new PowerPlant(powerPlantSize, placement, "powerplant", 1000, 50);
+                    newPowerPlant.imagePath = powerPlantImagePath;
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
@@ -383,6 +391,7 @@ namespace CitySkylines0._5alphabeta
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
                     WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, 500);
+                    newWaterPump.imagePath = waterPumpImagePath;
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)
@@ -418,6 +427,7 @@ namespace CitySkylines0._5alphabeta
                 {
                     Point placement = new Point(int.MaxValue, int.MaxValue);
                     Hospital newHospital = new Hospital(hospitalSize, placement, "hospital", 250, 250, grid, carManager);
+                    newHospital.imagePath = hospitalImagePath;
                     foreach (Node n in checkedNodes)
                     {
                         if (n.coords.X < placement.X && n.coords.Y < placement.Y)

@@ -14,10 +14,9 @@ public class Background
     [JsonIgnore] private Random random;
     [JsonIgnore] private PerlinNoise perlinNoise;
     [JsonIgnore] public Form1 Form1;
-    [JsonIgnore] private Dictionary<string, List<Image>> seasonalGrassImages;
-    [JsonIgnore] private Dictionary<string, Image> imageLookup;
-    [JsonIgnore] private Dictionary<string, Image> sharedWaterImages;
-    [JsonIgnore] private Dictionary<string, Dictionary<string, Image>> seasonalGrassEdgeImages;
+    [JsonIgnore] private Dictionary<string, List<string>> seasonalGrassImages;
+    [JsonIgnore] private List<string> waterImages;
+    [JsonIgnore] private Dictionary<string, Dictionary<string, string>> seasonalGrassEdgeImages;
     [JsonIgnore] private float noiseScale = 0.05F;
     [JsonIgnore] private float landThreshold = 0.25F;
 
@@ -26,6 +25,10 @@ public class Background
 
     private string? cachedSeason;
     private string? cachedNextSeason;
+    
+    // Image cache: path -> Image to avoid reloading every frame
+    [JsonIgnore] private static Dictionary<string, Image> imageCache = new();
+    [JsonIgnore] private bool isInitialized = false;
 
     public int difficulty { get; set; }
     public int width { get; set; }
@@ -106,14 +109,24 @@ public class Background
     }
     private void LoadImages()
     {
-        sharedWaterImages = new Dictionary<string, Image>();
-        seasonalGrassImages = new Dictionary<string, List<Image>>();
-        seasonalGrassEdgeImages = new Dictionary<string, Dictionary<string, Image>>();
-        imageLookup = new Dictionary<string, Image>();
+        waterImages = new List<string>();
+        seasonalGrassImages = new Dictionary<string, List<string>>();
+        seasonalGrassEdgeImages = new Dictionary<string, Dictionary<string, string>>();
 
         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-
         string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
+
+        foreach(string season in seasons)
+        {
+            if (!seasonalGrassImages.ContainsKey(season))
+            {
+                seasonalGrassImages[season] = new List<string>();
+            }
+            if (!seasonalGrassEdgeImages.ContainsKey(season))
+            {
+                seasonalGrassEdgeImages[season] = new Dictionary<string, string>();
+            }   
+        }
 
         foreach (var season in seasons)
         {
@@ -126,78 +139,85 @@ public class Background
             {
                 foreach (string path in Directory.GetFiles(grassFolder, "*.png"))
                 {
-                    grassList.Add(Image.FromFile(path));
+                    seasonalGrassImages[season].Add(path);
                 }
             }
 
-            seasonalGrassImages[season] = grassList;
-
             //edge variants
             string edgeFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Grass", season, "GrassEdges");
-
             var edgeDict = new Dictionary<string, Image>();
-
             if (Directory.Exists(edgeFolder))
             {
                 foreach (string path in Directory.GetFiles(edgeFolder, "*.png"))
                 {
-                    string fileName = Path.GetFileNameWithoutExtension(path);
-                    edgeDict[fileName] = Image.FromFile(path);
+                    string key = Path.GetFileNameWithoutExtension(path);
+                    seasonalGrassEdgeImages[season][key] = path;
                 }
             }
-
-            seasonalGrassEdgeImages[season] = edgeDict;
         }
 
         //water variants
         string waterFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Water");
-
         if (Directory.Exists(waterFolder))
         {
             foreach (string path in Directory.GetFiles(waterFolder, "*.gif"))
             {
-                string fileName = Path.GetFileName(path);
-                Image gifImage = Image.FromFile(path);
-                ImageAnimator.Animate(gifImage, null);
-
-                sharedWaterImages[fileName] = gifImage;
-                imageLookup[fileName] = gifImage;
+                waterImages.Add(path);
             }
         }
     }
 
     public void GenerateDetails()
     {
-        var gifKeys = sharedWaterImages.Keys.ToList();
-
-        int variantCount = seasonalGrassImages["Spring"].Count;
+        string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
 
         foreach (Node node in tiles)
         {
             if (!node.isGrass)
             {
-                if (gifKeys.Count > 0)
+                // assign a single random water image to all seasons
+                string waterPath = waterImages[random.Next(waterImages.Count)];
+                foreach (var season in seasons)
                 {
-                    string chosenKey;
-                    /*if (random.Next(0, 100) <= 95) { chosenKey = gifKeys[1]; }
-                    else { chosenKey = gifKeys[0]; }*/
-                    chosenKey = gifKeys[1];
-                    node.imageKey = chosenKey;
+                    node.seasonalImagePaths[season] = waterPath;
                 }
             }
             else
             {
-                node.imageKey = "grass" + random.Next(variantCount);
+                // assign a random grass image for each season
+                foreach (var season in seasons)
+                {
+                    var grassList = seasonalGrassImages[season];
+                    if (grassList.Count > 0)
+                    {
+                        string grassPath = grassList[random.Next(grassList.Count)];
+                        node.seasonalImagePaths[season] = grassPath;
+                    }
+                }
             }
         }
     }
 
+    private Image GetCachedImage(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            return null;
+
+        if (!imageCache.TryGetValue(path, out var cachedImg))
+        {
+            cachedImg = Image.FromFile(path);
+            imageCache[path] = cachedImg;
+        }
+        return cachedImg;
+    }
+
     private void DrawEdge(string key, Graphics g, Rectangle destRect, string season)
     {
-        if (seasonalGrassEdgeImages.TryGetValue(season, out var dict) &&
-            dict.TryGetValue(key, out var img))
+        if (seasonalGrassEdgeImages.TryGetValue(season, out var dict) && dict.TryGetValue(key, out var path))
         {
-            g.DrawImage(img, destRect);
+            var img = GetCachedImage(path);
+            if (img != null)
+                g.DrawImage(img, destRect);
         }
     }
 
@@ -241,24 +261,22 @@ public class Background
 
                 if (node.isGrass)
                 {
-                    bool isShoreTile = hasWaterN || hasWaterS || hasWaterE || hasWaterW || hasWaterNW || hasWaterNE || hasWaterSW || hasWaterSE;
-
-                    if (isShoreTile)
+                    if (node.seasonalImagePaths.TryGetValue(season, out string filePath))
                     {
-                        if (imageLookup.TryGetValue("water.gif", out var waterImg)) { g.DrawImage(waterImg, destRect); }
+                        var img = GetCachedImage(filePath);
+                        if (img != null)
+                            g.DrawImage(img, destRect);
                     }
-                    else
-                    {
-                        int grassIndex = int.Parse(node.imageKey.Replace("grass", ""));
-                        Image grassImg = seasonalGrassImages[season][grassIndex];
-                        g.DrawImage(grassImg, destRect);
-                    }
-
                     DrawEdgesForTile(g, destRect, season, hasWaterN, hasWaterS, hasWaterE, hasWaterW, hasWaterNW, hasWaterNE, hasWaterSW, hasWaterSE);
                 }
                 else
                 {
-                    if (imageLookup.TryGetValue(node.imageKey, out var img)) { g.DrawImage(img, destRect); }
+                    if (node.seasonalImagePaths.TryGetValue(season, out string filePath))
+                    {
+                        var img = GetCachedImage(filePath);
+                        if (img != null)
+                            g.DrawImage(img, destRect);
+                    }
                 }
             }
         }
@@ -268,6 +286,7 @@ public class Background
 
     public void DrawMap(object? sender, Graphics g, float zoomLevel)
     {
+        if (Form1 == null) { return; }
         string currentSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month);
         string nextSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month + 1);
         float t = Form1.calendar.GetSeasonTransitionFactor();

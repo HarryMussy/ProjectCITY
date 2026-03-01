@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net;
 using System.Security.Cryptography;
 using System.Windows.Forms.VisualStyles;
 
@@ -75,12 +76,12 @@ namespace CitySkylines0._5alphabeta
             Image img = null;
             foreach (Node node in grid.roadNodes)
             {
-                if (!string.IsNullOrEmpty(node.imageKey))
+                if (!string.IsNullOrEmpty(node.imagePath))
                 {
                     // try exact key, then filename fallback
-                    if (!roadImages.TryGetValue(node.imageKey, out img))
+                    if (!roadImages.TryGetValue(node.imagePath, out img))
                     {
-                        string filename = Path.GetFileName(node.imageKey);
+                        string filename = Path.GetFileName(node.imagePath);
                         roadImages.TryGetValue(filename, out img);
                     }
                 }
@@ -91,7 +92,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            foreach (Road r in grid.edges)
+            foreach (Road r in grid.roads)
             {
                 using Pen p = new Pen(Color.FromArgb(55, 255, 255, 255), 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
                 DrawArrowLine(g, p, r.lane1.a, r.lane1.b);
@@ -103,10 +104,18 @@ namespace CitySkylines0._5alphabeta
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
                 Point setPoint = SnapTo4Directions(startPoint.Value, mousePos);
 
-                Point pointB = new Point(setPoint.X - (setPoint.X % 8), setPoint.Y - (setPoint.Y % 8));
+                foreach (Node n in grid.nodes)
+                {
+                    if (grid.IsNodeAt(n, setPoint))
+                    {
+                        setPoint = n.Center(rectSize);
+                    }
+                }
+                Point pointB = setPoint;
+
                 // highlight intersecting nodes as before
                 int edgeAngle = FindAngle(startPoint.Value, pointB);
-                Road tempRoad = new Road(8, startPoint.Value, pointB, "temp", edgeAngle);
+                Road tempRoad = new Road(startPoint.Value, pointB, "temp", edgeAngle);
 
                 List<Node> nodes = grid.FindAdjacentTilesToARoad(tempRoad);
 
@@ -130,13 +139,10 @@ namespace CitySkylines0._5alphabeta
 
                 DrawArrowLine(g, p, tempRoad.lane1.a, tempRoad.lane1.b);
                 DrawArrowLine(g, p, tempRoad.lane2.a, tempRoad.lane2.b);
-
-                g.DrawLine(new Pen(new SolidBrush(Color.Yellow), 3), tempRoad.lane1.a, tempRoad.lane1.b);
-                g.DrawLine(new Pen(new SolidBrush(Color.Yellow), 3), tempRoad.lane2.a, tempRoad.lane2.b);
                 tempRoad = null;
             }
 
-            foreach (Edge edge in grid.edges)
+            foreach (Edge edge in grid.roads)
             {
                 if (!toggleRoadNames)
                 {
@@ -153,15 +159,10 @@ namespace CitySkylines0._5alphabeta
 
         public int FindAngle(Point a, Point b)
         {
-            if (b.X == a.X)
-            {
-                return 0;
-            }
-            else
-            {
-                return (int)Math.Tanh((b.Y - a.Y) / (b.X - a.X));
-            }
-                
+            float dx = b.X - a.X;
+            float dy = b.Y - a.Y;
+            float angle = MathF.Atan2(dy, dx) * 180f / MathF.PI;
+            return (int)angle;
         }
 
         public List<Point> FindWaterNodePoints(Background bg)
@@ -257,16 +258,29 @@ namespace CitySkylines0._5alphabeta
             var clickedPoint = worldMousePos;
 
             int tile = form1.rectSize;
-            clickedPoint = new Point((clickedPoint.X / tile) * tile, (clickedPoint.Y / tile) * tile);
-            clickedPoint.X -= 8;
-            clickedPoint.Y -= 8;
-            snappedPoint = clickedPoint;
+            foreach (Node n in grid.nodes)
+            {
+                if (grid.IsNodeAt(n, clickedPoint))
+                {
+                    clickedPoint = n.Center(rectSize);
+                    break;
+                }
+            }
+            List<Point> roadEndpoints = new List<Point>();
+
+            /*foreach (Road r in grid.roads)
+            {
+                roadEndpoints.Add(r.lane1.a);
+                roadEndpoints.Add(r.lane1.b);
+                roadEndpoints.Add(r.lane2.a);
+                roadEndpoints.Add(r.lane2.b);
+            }*/
 
 
             //if graphics is null, not already drawing a road
             if (startPoint == null)
             {
-                startPoint = snappedPoint == null ? clickedPoint : snappedPoint; // If closest point is not snapable, dont snap together
+                startPoint = clickedPoint; //if closest point is not snapable, dont snap together
                 if (IsOnWater(startPoint.Value) == true)
                 {
                     startPoint = null;
@@ -276,7 +290,7 @@ namespace CitySkylines0._5alphabeta
             else
             {
                 bool isOverlapping = false;
-                Point endPoint = snappedPoint == null ? clickedPoint : snappedPoint.Value;
+                Point endPoint = clickedPoint;
                 endPoint = SnapTo4Directions(startPoint.Value, endPoint);
                 if (startPoint == endPoint)
                 {
@@ -289,10 +303,10 @@ namespace CitySkylines0._5alphabeta
                     if (isOverlapping == false && grid.cash >= cost)
                     {
                         string roadname = nameProvider.GetRandomName();
-                        Road newroad = new Road(8, startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
+                        Road newroad = new Road(startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
                         audioManager.PlayPlaceSound();
                         grid.cash -= grid.RoadCashCost(startPoint.Value, endPoint);
-                        grid.edges.Add(newroad); //this is now safe
+                        grid.roads.Add(newroad); //this is now safe
 
                         grid.FindRoadTilesAndAdjacentRoadTiles();
 
@@ -305,22 +319,22 @@ namespace CitySkylines0._5alphabeta
                         foreach (Node n in newroad.lane1.occupyingNodes)
                         {
                             int num = rng.Next(100);
-                            n.imageKey = "road_000.png";
-                            if (num > 95) n.imageKey = "road_001.png";
-                            if (num > 96) n.imageKey = "road_002.png";
-                            if (num > 97) n.imageKey = "road_003.png";
-                            if (num > 98) n.imageKey = "road_004.png";
-                            if (num > 99) n.imageKey = "road_005.png";
+                            n.imagePath = "road_000.png";
+                            if (num > 95) n.imagePath = "road_001.png";
+                            if (num > 96) n.imagePath = "road_002.png";
+                            if (num > 97) n.imagePath = "road_003.png";
+                            if (num > 98) n.imagePath = "road_004.png";
+                            if (num > 99) n.imagePath = "road_005.png";
                         }
                         foreach (Node n in newroad.lane2.occupyingNodes)
                         {
                             int num = rng.Next(100);
-                            n.imageKey = "road_000.png";
-                            if (num > 95) n.imageKey = "road_001.png";
-                            if (num > 96) n.imageKey = "road_002.png";
-                            if (num > 97) n.imageKey = "road_003.png";
-                            if (num > 98) n.imageKey = "road_004.png";
-                            if (num > 99) n.imageKey = "road_005.png";
+                            n.imagePath = "road_000.png";
+                            if (num > 95) n.imagePath = "road_001.png";
+                            if (num > 96) n.imagePath = "road_002.png";
+                            if (num > 97) n.imagePath = "road_003.png";
+                            if (num > 98) n.imagePath = "road_004.png";
+                            if (num > 99) n.imagePath = "road_005.png";
                         }
 
                         closest_x = float.MaxValue; closest_y = float.MaxValue;

@@ -17,6 +17,7 @@ namespace CitySkylines0._5alphabeta
         public Person[] Occupants { get; set; }
 
         [JsonIgnore] public float efficiency;
+        public string imagePath { get; set; }
 
         public virtual int cost { get; set; }
         public virtual int tax { get; set; }
@@ -122,15 +123,36 @@ namespace CitySkylines0._5alphabeta
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
             ambulances = 
             [
-                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6, null, path, "ambulance", null)
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null)
             ];
+            ambulances[0].hasPriority = true;
+            ambulances[1].hasPriority = true;
+            ambulances[2].hasPriority = true;
+        }
+
+        public void Reconnect(Grid gridIn, CarManager carManagerIn)
+        {
+            grid = gridIn;
+            carManager = carManagerIn;
+
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+            ambulances = 
+            [
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
+                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null)
+            ];
+            ambulances[0].hasPriority = true;
+            ambulances[1].hasPriority = true;
+            ambulances[2].hasPriority = true;
         }
 
         public void UpdateHospital()
         {
-            foreach (House h in grid.buildings.Where(b => b.type == "house"))
+            foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 foreach (Person p in h.Occupants.Where(p => p != null))
                 {
@@ -138,11 +160,13 @@ namespace CitySkylines0._5alphabeta
                     {
                         for (int i = 0; i < ambulances.Length; i++)
                         {
-                            if (!ambulances[i].inService)
+                            if (!ambulances[i].inService && ambulances.Where(e => e.destBuilding == h).Count() == 0)
                             {
+                                ambulances[i].speed = 6f;
                                 SendAmbulanceToBuilding(ambulances[i], h);
                                 ambulances[i].inService = true;
                                 ambulances[i].destBuilding = h;
+                                break;
                             }
                         }
                     }
@@ -158,12 +182,24 @@ namespace CitySkylines0._5alphabeta
                     {
                         p.IsHealthy = true;
                     }
+                    a.inService = false;
+                }
+                if (!a.inService && !a.isMoving)
+                {
+                    a.speed = 3f;
+                    a.isMoving = true;
+                    BringAmbulanceFromBuilding(a, a.destBuilding);
                 }
             }
         }
         public void SendAmbulanceToBuilding(EmergencyServiceVehicle ambulance, Building building)
         {
             carManager.SendSpecificCarToAndFromSpecificBuilding(ambulance, this, building);
+        }
+
+        public void BringAmbulanceFromBuilding(EmergencyServiceVehicle ambulance, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(ambulance, building, this);
         }
     }
 

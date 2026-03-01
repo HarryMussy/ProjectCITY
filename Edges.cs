@@ -5,7 +5,6 @@ namespace CitySkylines0._5alphabeta
 {
     public class Edge
     {
-        public int edgeWeight { get; set; }
         public string name { get; set; }
         public Point a { get; set; }
         public Point b { get; set; }
@@ -16,9 +15,8 @@ namespace CitySkylines0._5alphabeta
 
         public Edge() { }
 
-        public Edge(int weight, Point a, Point b, string name, int angle)
+        public Edge(Point a, Point b, string name, int angle)
         {
-            edgeWeight = weight;
             this.a = a;
             this.b = b;
             this.name = name;
@@ -45,29 +43,30 @@ namespace CitySkylines0._5alphabeta
 
     public class Road : Edge
     {
-        public string type;
-        public Edge lane1;
-        public Edge lane2;
+        public string type { get; set; }
+        public Edge lane1 { get; set; }
+        public Edge lane2 { get; set; }
 
-        public Road(int edgeweight, Point a, Point b, string name, int angle) : base(edgeweight, a, b, name, angle)
+        public Road() { }
+        public Road(Point a, Point b, string name, int angle)
         {
             type = "road";
 
-            Point roadDir = new Point(Math.Sign(b.X - a.X), Math.Sign(b.Y - a.Y));
+            int dx = b.X - a.X;
+            int dy = b.Y - a.Y;
+            Point roadDir = new Point(Math.Sign(dx), Math.Sign(dy));
             Point perp = new Point(-roadDir.Y, roadDir.X);
-            int laneOffset = 16;
 
-            //lane1
-            lane1 = new Edge(edgeweight, a, b, name + "_L1", angle);
+            int laneOffset = 16; // FULL TILE
 
-            //lane2
+            // lane1 stays on original line
+            lane1 = new Edge(a, b, name + "_L1", angle);
+
+            // lane2 offset one full tile perpendicular
             Point lane2A = new Point(a.X + perp.X * laneOffset, a.Y + perp.Y * laneOffset);
             Point lane2B = new Point(b.X + perp.X * laneOffset, b.Y + perp.Y * laneOffset);
 
-            //reverse direction for opposite traffic
-            lane2 = new Edge(edgeweight, lane2B, lane2A, name + "_L2", angle);
-
-            FindAllPointOnEdge(this);
+            lane2 = new Edge(lane2B, lane2A, name + "_L2", angle);
         }
     }
 }

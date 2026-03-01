@@ -44,16 +44,19 @@ namespace CitySkylines0._5alphabeta
         {
             loadingForm = new LoadingForm();
             loadingForm.Show();
+            loadingForm.Refresh();
 
-            await Task.Delay(1000); // simulate load or do actual loading
-
+            // Create Form1 on UI thread (light initialization only)
             mainForm = new Form1(new AudioManager());
-
-            loadingForm.Hide();
-            loadingForm.Dispose();
-
+            
+            // Defer heavy background rendering to after the main window is visible
             mainForm.FormClosed += (s, e) => ExitThread();
             mainForm.Show();
+            
+            // Hide loading form after main window appears
+            await Task.Delay(500);
+            loadingForm.Hide();
+            loadingForm.Dispose();
         }
     }
 }

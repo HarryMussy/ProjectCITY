@@ -10,9 +10,11 @@ namespace CitySkylines0._5alphabeta
     public class Bulldozer
     {
         public Grid gridRef;
+        public CarManager carManager;
         public Form1 form1;
-        private Edge edge;
+        private Road road;
         private Building building;
+        private Car car;
         // visible semi-transparent red
         private SolidBrush redBrush = new SolidBrush(Color.FromArgb(120, 255, 0, 0));
 
@@ -20,6 +22,7 @@ namespace CitySkylines0._5alphabeta
         {
             gridRef = grid;
             this.form1 = form1;
+            carManager = form1.carManager;
         }
 
         public void RemoveBuilding(Building b)
@@ -37,47 +40,56 @@ namespace CitySkylines0._5alphabeta
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
         }
 
-        public void RemoveEdge(Edge e)
+        public void RemoveCar(Car c)
         {
-            if (e == null) return;
+            if (c.type == "car") { carManager.DespawnCar(c); }
+            else { carManager.DespawnEmergencyServiceVehicle(c); }
+        }
 
-            if (gridRef.edges.Contains(e))
-                gridRef.edges.Remove(e);
+        public void RemoveRoad(Road r)
+        {
+            if (r == null) return;
 
-            if (e.occupyingNodes != null)
+            if (gridRef.roads.Contains(r)) { gridRef.roads.Remove(r); }
+
+            if (r.occupyingNodes != null)
             {
-                foreach (Node n in e.occupyingNodes)
+                foreach (Node n in r.lane1.occupyingNodes)
                 {
-                    n.imageKey = null;
+/*                    n.imagePath = null;*/
+                    n.isRoad = false;
+                    n.isNearRoad = false;
+                    n.IsNodeBuildable();
+                }
+                foreach (Node n in r.lane2.occupyingNodes)
+                {
+/*                    n.imagePath = null;*/
                     n.isRoad = false;
                     n.isNearRoad = false;
                     n.IsNodeBuildable();
                 }
             }
 
-            /*if (e.intersections != null)
-            {
-                foreach (var inter in e.intersections.ToList())
-                {
-                    if (inter.connectedEdges != null)
-                        inter.connectedEdges.Remove(e);
-
-                    if (inter.connectedEdges == null || inter.connectedEdges.Count == 0)
-                    {
-                        gridRef.roadIntersections.Remove(inter);
-                    }
-                }
-            }*/
-
+            gridRef.RebuildEntireRoadGraph();
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
         }
 
         public void BulldozerPainter(object? sender, Graphics g)
         {
             int tileW = form1.rectSize;
-            if (edge != null)
+            if (car != null)
             {
-                foreach (Node n in edge.occupyingNodes)
+                g.FillRectangle(redBrush, car.currentPosition.X - 8, car.currentPosition.Y - 8, tileW, tileW);
+            }
+
+            if (road != null)
+            {
+                foreach (Node n in road.lane1.occupyingNodes)
+                {
+                    g.FillRectangle(redBrush, n.coords.X, n.coords.Y, tileW, tileW);
+                }
+
+                foreach (Node n in road.lane2.occupyingNodes)
                 {
                     g.FillRectangle(redBrush, n.coords.X, n.coords.Y, tileW, tileW);
                 }
@@ -94,56 +106,75 @@ namespace CitySkylines0._5alphabeta
 
         public void Bulldozing(object? sender, Point mousePos, bool click, MouseEventArgs m)
         {
-            if (!form1.selectingBulldozing)
-                return;
+            if (!form1.selectingBulldozing) { return; }
 
-            edge = null;
+            road = null;
             building = null;
+            car = null;
 
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
 
-            // find edge by checking points on the edge (tolerance matches node size)
-            foreach (Edge e in gridRef.edges)
+            foreach (Car c in carManager.cars)
             {
-                foreach (Point p in e.pointsOnTheEdge)
+                int cx = (int)c.currentPosition.X;
+                int cy = (int)c.currentPosition.Y;
+
+                if (worldMousePos.X >= cx - 8 && worldMousePos.X <= cx + 8 && worldMousePos.Y >= cy - 8 && worldMousePos.Y <= cy + 8)
                 {
-                    if (worldMousePos.X >= p.X - form1.rectSize/2 && worldMousePos.X <= p.X + form1.rectSize/2 &&
-                        worldMousePos.Y >= p.Y - form1.rectSize/2 && worldMousePos.Y <= p.Y + form1.rectSize/2)
-                    {
-                        edge = e;
-                        break;
-                    }
-                }
-                if (edge != null)
+                    car = c;
                     break;
+                }
             }
 
-            // find building (account for tile -> pixel size)
-            foreach (Building b in gridRef.buildings)
+            if (car == null)
             {
-                int bx = b.coords.X;
-                int by = b.coords.Y;
-                int bw = Math.Max(1, b.size.Width * form1.rectSize);
-                int bh = Math.Max(1, b.size.Height * form1.rectSize);
-
-                if (worldMousePos.X >= bx &&
-                    worldMousePos.X <= bx + bw &&
-                    worldMousePos.Y >= by &&
-                    worldMousePos.Y <= by + bh)
+                // find edge by checking points on the edge (tolerance matches node size)
+                foreach (Road r in gridRef.roads)
                 {
-                    building = b;
-                    break;
+                    foreach (Point p in r.lane1.pointsOnTheEdge)
+                    {
+                        if (worldMousePos.X >= p.X - form1.rectSize / 2 && worldMousePos.X <= p.X + form1.rectSize / 2 && worldMousePos.Y >= p.Y - form1.rectSize / 2 && worldMousePos.Y <= p.Y + form1.rectSize / 2)
+                        {
+                            road = r;
+                            break;
+                        }
+                    }
+                    foreach (Point p in r.lane2.pointsOnTheEdge)
+                    {
+                        if (worldMousePos.X >= p.X - form1.rectSize / 2 && worldMousePos.X <= p.X + form1.rectSize / 2 && worldMousePos.Y >= p.Y - form1.rectSize / 2 && worldMousePos.Y <= p.Y + form1.rectSize / 2)
+                        {
+                            road = r;
+                            break;
+                        }
+                    }
+                    if (road != null) { break; }
+                }
+            }
+            
+            if (car == null && road == null)
+            {
+                // find building (account for tile -> pixel size)
+                foreach (Building b in gridRef.buildings)
+                {
+                    int bx = b.coords.X;
+                    int by = b.coords.Y;
+                    int bw = Math.Max(1, b.size.Width * form1.rectSize);
+                    int bh = Math.Max(1, b.size.Height * form1.rectSize);
+
+                    if (worldMousePos.X >= bx && worldMousePos.X <= bx + bw && worldMousePos.Y >= by && worldMousePos.Y <= by + bh)
+                    {
+                        building = b;
+                        break;
+                    }
                 }
             }
 
             // now we are allowed to delete
             if (click)
             {
-                if (edge != null)
-                    RemoveEdge(edge);
-
-                if (building != null)
-                    RemoveBuilding(building);
+                if (road != null) { RemoveRoad(road); }
+                if (building != null) { RemoveBuilding(building); }
+                if (car != null) { RemoveCar(car); }
             }
         }
     }

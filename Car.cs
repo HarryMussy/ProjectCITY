@@ -7,18 +7,18 @@ namespace CitySkylines0._5alphabeta
     {
         public PointF currentPosition;
         public Image image;
-
+        public string type;
         public Node startNode;
         public Node currentNode;
         public Node destinationNode;
 
         public Queue<Node> route = new Queue<Node>();
 
-        public double Speed;
-        public float RotationAngle;
-        public Point FacingDir = new Point(0, 0); // normalized grid direction (-1,0,1)
-        public float TargetRotationAngle;
-        public float RotationSpeed = 6f; // degrees per tick
+        public double speed;
+        public float rotationAngle;
+        public Point acingDir = new Point(0, 0); // normalized grid direction (-1,0,1)
+        public float targetRotationAngle;
+        public float rotationSpeed = 6f; // degrees per tick
 
         public bool isMoving = true;
         public bool hasPriority = false;
@@ -27,30 +27,32 @@ namespace CitySkylines0._5alphabeta
         public HashSet<Node> blockedNodes = new HashSet<Node>();
 
         public Car() { }
-
         public Car(Node startNodeIn, double speed, Node destinationNodeIn)
         {
             startNode = startNodeIn;
             currentNode = startNodeIn;
             destinationNode = destinationNodeIn;
-            Speed = speed;
-
-            currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
-            startNode.OccupyingCar = this;
+            this.speed = speed;
+            type = "car";
+            if (startNodeIn != null) 
+            { 
+                currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
+                startNode.OccupyingCar = this;
+            }
         }
     }
 
     public class EmergencyServiceVehicle : Car
     {
-        public string type;
         public bool inService = false;
         public Building destBuilding;
 
-        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base()
+        public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base(startNodeIn, speed, destinationNodeIn)
         {
             image = Image.FromFile(imageFilePath);
             type = typeIn;
             destBuilding = destBuildingIn;
+            base.speed = speed;
         }
     }
 
@@ -77,7 +79,6 @@ namespace CitySkylines0._5alphabeta
         }
 
         //visuals
-
         public void AssignImage(Car car)
         {
             car.image = carImages[carRandom.Next(carImages.Count)];
@@ -90,7 +91,7 @@ namespace CitySkylines0._5alphabeta
                 var state = g.Save();
 
                 g.TranslateTransform(car.currentPosition.X, car.currentPosition.Y);
-                g.RotateTransform(car.RotationAngle + 90);
+                g.RotateTransform(car.rotationAngle + 90);
 
                 if (calendar.GetHour() >= 21 || calendar.GetHour() <= 5)
                 {
@@ -156,9 +157,9 @@ namespace CitySkylines0._5alphabeta
 
                 Point dir = new Point(Math.Sign(next.coords.X - car.currentNode.coords.X), Math.Sign(next.coords.Y - car.currentNode.coords.Y));
 
-                car.FacingDir = dir;
-                car.RotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
-                car.TargetRotationAngle = car.RotationAngle;
+                car.acingDir = dir;
+                car.rotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
+                car.targetRotationAngle = car.rotationAngle;
             }
 
             if (car.route == null || car.route.Count == 0)
@@ -168,36 +169,36 @@ namespace CitySkylines0._5alphabeta
                 return;
             }
 
-            cars.Add(car);
+            if (!cars.Contains(car)) { cars.Add(car); }
         }
 
         public void SendSpecificCarToAndFromSpecificBuilding(Car car, Building buildingA, Building buildingB)
         {
-            if (grid.buildings == null || grid.buildings.Count() == 0) return;
-            if (grid.roadNodes == null || grid.roadNodes.Count() == 0) return;
-
             // use the shared RNG
             var rng = carRandom;
 
             Node startNode = grid.roadNodes.Where(n => n.OccupyingCar == null).OrderBy(n => Distance(buildingA.coords, n.coords)).FirstOrDefault();
-            if (startNode == null || startNode.OccupyingCar != null) return;
+            if (startNode == null) return;
 
             Node destinationNode = grid.roadNodes.OrderBy(n => Distance(buildingB.coords, n.coords)).FirstOrDefault();
             if (destinationNode == null) return;
 
             car.startNode = startNode;
-            car.currentNode = startNode;
             car.destinationNode = destinationNode;
+            car.currentNode = startNode;
+            car.currentPosition = new PointF(startNode.coords.X + 8, startNode.coords.Y + 8);
+            startNode.OccupyingCar = car;
             car.route = CreateCarRoute(car);
 
             if (car.route != null && car.route.Count > 0)
             {
                 Node next = car.route.Peek();
+
                 Point dir = new Point(Math.Sign(next.coords.X - car.currentNode.coords.X), Math.Sign(next.coords.Y - car.currentNode.coords.Y));
 
-                car.FacingDir = dir;
-                car.RotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
-                car.TargetRotationAngle = car.RotationAngle;
+                car.acingDir = dir;
+                car.rotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
+                car.targetRotationAngle = car.rotationAngle;
             }
 
             if (car.route == null || car.route.Count == 0)
@@ -207,7 +208,7 @@ namespace CitySkylines0._5alphabeta
                 return;
             }
 
-            cars.Add(car);
+            if (!cars.Contains(car)) { cars.Add(car); }
         }
 
         public bool MoveCar(Car car)
@@ -236,8 +237,8 @@ namespace CitySkylines0._5alphabeta
                 //determine grid direction to next node
                 Point desiredDir = new Point(Math.Sign(nextNode.coords.X - car.currentNode.coords.X), Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y));
 
-                car.FacingDir = desiredDir;
-                car.TargetRotationAngle = MathF.Atan2(desiredDir.Y, desiredDir.X) * 180f / MathF.PI;
+                car.acingDir = desiredDir;
+                car.targetRotationAngle = MathF.Atan2(desiredDir.Y, desiredDir.X) * 180f / MathF.PI;
 
                 RotateTowardsTarget(car);
 
@@ -248,24 +249,25 @@ namespace CitySkylines0._5alphabeta
 
             if (car.route != null && car.route.Count == 0 && car.currentNode == car.destinationNode)
             {
-                DespawnCar(car);
+                if (car.type == "car") { DespawnCar(car); }
+                else {car.isMoving = false; } // emergency vehicle arrived
+
                 return true;
             }
-
             return false;
         }
 
         private void RotateTowardsTarget(Car car)
         {
-            float diff = NormalizeAngle(car.TargetRotationAngle - car.RotationAngle);
+            float diff = NormalizeAngle(car.targetRotationAngle - car.rotationAngle);
 
-            if (Math.Abs(diff) < car.RotationSpeed)
+            if (Math.Abs(diff) < car.rotationSpeed)
             {
-                car.RotationAngle = car.TargetRotationAngle;
+                car.rotationAngle = car.targetRotationAngle;
                 return;
             }
 
-            car.RotationAngle += Math.Sign(diff) * car.RotationSpeed;
+            car.rotationAngle += Math.Sign(diff) * car.rotationSpeed;
         }
 
         private float NormalizeAngle(float angle)
@@ -283,13 +285,13 @@ namespace CitySkylines0._5alphabeta
             {
                 car.stuckTimeSeconds += tickDelta;
 
-                if (car.stuckTimeSeconds >= 10)
+                if (car.stuckTimeSeconds >= 3f)
                 {
                     car.blockedNodes.Add(nextNode);
                     TryRerouteCar(car);
-                    car.stuckTimeSeconds = 0f;
                 }
 
+                if (car.blockedNodes.Count > 20) { car.blockedNodes.Clear(); }
                 return true;
             }
         }
@@ -316,9 +318,9 @@ namespace CitySkylines0._5alphabeta
 
             if (dist < 0.01f) { return; }
 
-            car.RotationAngle = MathF.Atan2(dy, dx) * 180f / MathF.PI;
+            car.rotationAngle = MathF.Atan2(dy, dx) * 180f / MathF.PI;
 
-            float step = (float)(car.Speed);
+            float step = (float)(car.speed);
 
             if (dist <= step)
             {
@@ -328,29 +330,42 @@ namespace CitySkylines0._5alphabeta
                 car.currentNode = nextNode;
                 nextNode.OccupyingCar = car;
                 car.currentPosition = target;
-                
+
                 car.route.Dequeue();
                 car.hasPriority = false;
             }
             else
             {
-                car.currentPosition = new PointF(car.currentPosition.X + dx / dist * step,car.currentPosition.Y + dy / dist * step);
+                car.currentPosition = new PointF(car.currentPosition.X + dx / dist * step, car.currentPosition.Y + dy / dist * step);
             }
         }
 
         public void DespawnCar(Car car)
         {
+            if (car.type == "car")
+            {
+                if (car.currentNode != null)
+                {
+                    car.currentNode.OccupyingCar = null;
+                    car.currentNode = null;
+                }
+
+                cars.Remove(car);
+                car.isMoving = false;
+            }
+        }
+        public void DespawnEmergencyServiceVehicle(Car e)
+        {
             foreach (Node n in grid.nodes)
             {
-                if (n.OccupyingCar == car)
+                if (n.OccupyingCar == e)
                 {
                     n.OccupyingCar = null;
                 }
             }
-
-            cars.Remove(car);
-            car.isMoving = false;
+            cars.Remove(e);
         }
+        
 
         //deadlocks and rerouting
         private void TryRerouteCar(Car car)
@@ -378,12 +393,6 @@ namespace CitySkylines0._5alphabeta
             Node destination = car.destinationNode;
 
             List<Node> availableRoadNodes = grid.roadNodes.Where(n => !car.blockedNodes.Contains(n)).ToList();
-
-            /*if (!availableRoadNodes.Contains(destination))
-            {
-                Debug.WriteLine("DO NOT CONTAIN DESTINATION!!!");
-                return null;
-            }*/
 
             foreach (Node n in availableRoadNodes)
             {
@@ -423,8 +432,8 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (closed.Contains(neighbor)) { continue; }
 
-                    /*float trafficPenalty = neighbor.OccupyingCar != null ? 1000f : 0f;*/
-                    float tentativeG = current.gCost + Distance(current.coords, neighbor.coords) /*+ trafficPenalty*/;
+                    float trafficPenalty = neighbor.OccupyingCar != null ? 1000f : 0f;
+                    float tentativeG = current.gCost + Distance(current.coords, neighbor.coords) + trafficPenalty;
 
                     if (!open.Contains(neighbor) || tentativeG < neighbor.gCost)
                     {

@@ -176,26 +176,33 @@ namespace CitySkylines0._5alphabeta
 
         public Form1(SaveManager.SaveData save, AudioManager audioManagerIn)
         {
-            loadingForm = new LoadingForm();
-            loadingForm.Show();
-            g = CreateGraphics();
+            // Initialize component FIRST, before any game logic
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
             audioManager = audioManagerIn;
             rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
+            
+            // Now create graphics AFTER form is initialized
+            g = CreateGraphics();
+            
+            // Attach event handlers
             this.MouseWheel += Form1_MouseWheel;
             this.MouseDown += Form1_MouseDown;
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
+            this.ClientSizeChanged += Form1_Resize;
+
+            // Setup timer
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
             tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
-            loadingForm.Close();
-            this.ClientSizeChanged += Form1_Resize;
 
-            // If the save contains a Grid/Calendar, use them; otherwise fall back to defaults.
+            // NOW load the game data and managers
+            loadingForm = new LoadingForm();
+            loadingForm.Show();
+    
             if (save != null && save.background != null)
             {
                 background = save.background;
@@ -204,6 +211,7 @@ namespace CitySkylines0._5alphabeta
             {
                 background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
             }
+    
             if (save != null && save.grid != null)
             {
                 grid = save.grid;
@@ -223,7 +231,8 @@ namespace CitySkylines0._5alphabeta
                 DateTime now = DateTime.Now;
                 calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             }
-            // re-create managers that depend on grid/background/calendar
+
+            // Create managers with initialized graphics and form
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
@@ -233,6 +242,14 @@ namespace CitySkylines0._5alphabeta
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
             bulldozer = new Bulldozer(grid, this);
+
+            foreach (Building b in grid.buildings)
+            {
+                if (b is Hospital hospital)
+                {
+                    hospital.Reconnect(grid, carManager);
+                }
+            }
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);
@@ -244,6 +261,8 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
+    
+            loadingForm.Close();
             lastTickTime = DateTime.Now;
         }
 
