@@ -50,9 +50,32 @@ namespace CitySkylines0._5alphabeta
         public EmergencyServiceVehicle(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base(startNodeIn, speed, destinationNodeIn)
         {
             image = Image.FromFile(imageFilePath);
-            type = typeIn;
             destBuilding = destBuildingIn;
             base.speed = speed;
+        }
+    }
+
+    public class Ambulance : EmergencyServiceVehicle
+    {
+        public Ambulance(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base(startNodeIn, speed, destinationNodeIn, imageFilePath, typeIn, destBuildingIn)
+        {
+            type = "ambulance";
+        }
+    }
+
+    public class PoliceCar : EmergencyServiceVehicle
+    {
+        public PoliceCar(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base(startNodeIn, speed, destinationNodeIn, imageFilePath, typeIn, destBuildingIn)
+        {
+            type = "policecar";
+        }
+    }
+
+    public class FireTruck : EmergencyServiceVehicle
+    {
+        public FireTruck(Node startNodeIn, double speed, Node destinationNodeIn, string imageFilePath, string typeIn, Building destBuildingIn) : base(startNodeIn, speed, destinationNodeIn, imageFilePath, typeIn, destBuildingIn)
+        {
+            type = "firetruck";
         }
     }
 
@@ -356,16 +379,18 @@ namespace CitySkylines0._5alphabeta
         }
         public void DespawnEmergencyServiceVehicle(Car e)
         {
-            foreach (Node n in grid.nodes)
+            if (e.currentNode != null && e.currentNode.OccupyingCar == e)
             {
-                if (n.OccupyingCar == e)
-                {
-                    n.OccupyingCar = null;
-                }
+                e.currentNode.OccupyingCar = null;
             }
+
+            e.currentNode = null;
+            e.route?.Clear();
+            e.isMoving = false;
+
             cars.Remove(e);
         }
-        
+
 
         //deadlocks and rerouting
         private void TryRerouteCar(Car car)

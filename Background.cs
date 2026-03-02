@@ -213,11 +213,11 @@ public class Background
 
     private void DrawEdge(string key, Graphics g, Rectangle destRect, string season)
     {
+        g.DrawImage(Image.FromFile(waterImages[0]), destRect);
         if (seasonalGrassEdgeImages.TryGetValue(season, out var dict) && dict.TryGetValue(key, out var path))
         {
             var img = GetCachedImage(path);
-            if (img != null)
-                g.DrawImage(img, destRect);
+            if (img != null) { g.DrawImage(img, destRect); }
         }
     }
 

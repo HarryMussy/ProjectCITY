@@ -150,7 +150,7 @@ public class UIManager
             interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 380, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Houses", "house1.png");
+            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Houses", "house1.png");
             Image i = Image.FromFile(pathToHouseImage);
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 310, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
@@ -166,7 +166,7 @@ public class UIManager
             };
 
             string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 550, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 790, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
                 .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
             string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
@@ -176,6 +176,22 @@ public class UIManager
             string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
             interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 490, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHospitalImage))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "hospital");
+
+            string pathToShopImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Shops", "shop2.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 550, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToShopImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "shop");
+
+            string pathToFactoryImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Factories", "factory1.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 610, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToFactoryImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "factory");
+
+            string pathToPoliceImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "police.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 670, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToPoliceImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "policebuilding");
+
+            string pathToFireImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "fireservicebuilding.png");
+            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 730, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToFireImage))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "fireservice");
 
             interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 450, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
             interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 520, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;

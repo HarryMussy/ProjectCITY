@@ -42,6 +42,8 @@ namespace CitySkylines0._5alphabeta
                 "powerplant" => JsonSerializer.Deserialize<PowerPlant>(root.GetRawText(), options),
                 "waterpump" => JsonSerializer.Deserialize<WaterPump>(root.GetRawText(), options),
                 "hospital" => JsonSerializer.Deserialize<Hospital>(root.GetRawText(), options),
+                "shop" => JsonSerializer.Deserialize<Shop>(root.GetRawText(), options),
+                "factory" => JsonSerializer.Deserialize<Factory>(root.GetRawText(), options),
 
                 _ => throw new JsonException($"Unknown building type: {type}")
             };
@@ -65,6 +67,14 @@ namespace CitySkylines0._5alphabeta
 
                 case Hospital hs:
                     JsonSerializer.Serialize(writer, hs, options);
+                    break;
+
+                case Shop s:
+                    JsonSerializer.Serialize(writer, s, options);
+                    break;
+
+                case Factory f:
+                    JsonSerializer.Serialize(writer, f, options);
                     break;
 
                 default:

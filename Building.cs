@@ -1,7 +1,5 @@
-﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+﻿using System.IO;
 using System.Text.Json.Serialization;
-using System.Diagnostics;
-using System.IO;
 
 
 namespace CitySkylines0._5alphabeta
@@ -22,6 +20,10 @@ namespace CitySkylines0._5alphabeta
         public virtual int cost { get; set; }
         public virtual int tax { get; set; }
 
+        public bool isInCrime { get; set; }
+
+        public bool isOnFire { get; set; }
+
         public Building() { } // required for JSON
 
         public Building(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants)
@@ -35,6 +37,7 @@ namespace CitySkylines0._5alphabeta
             this.MaxOccupants = MaxOccupants;
             Occupants = new Person[MaxOccupants];
             efficiency = 0;
+            isInCrime = false;
         }
 
         public Building(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants, bool b) //end bool dictates if the building needs a workforce
@@ -72,7 +75,7 @@ namespace CitySkylines0._5alphabeta
         float energyDemand { get; set; }
         float waterDemand { get; set; }
         public PowerPlant() { } //required
-        public PowerPlant(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 75, true)
+        public PowerPlant(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 35, true)
         {
             type = "powerplant";
             cost = 50000;
@@ -99,9 +102,42 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
+    public class Shop : Building
+    {
+        float powerDemand { get; set; }
+        float waterDemand { get; set; }
+        public Shop() { } //required
+        public Shop(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 5, true)
+        {
+            type = "shop";
+            cost = 30000;
+            tax = 50;
+            this.powerDemand = powerDemand;
+            this.waterDemand = waterDemand;
+            necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+        }
+    }
+
+    public class Factory : Building
+    {
+        float powerDemand { get; set; }
+        float waterDemand { get; set; }
+        public Factory() { } //required
+        public Factory(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 30, true)
+        {
+            type = "shop";
+            cost = 50000;
+            tax = 50;
+            this.powerDemand = powerDemand;
+            this.waterDemand = waterDemand;
+            necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+        }
+    }
+
+    //hospital
     public class Hospital : Building
     {
-        EmergencyServiceVehicle[] ambulances;
+        Ambulance[] ambulances;
 
         [JsonIgnore] Grid grid;
         [JsonIgnore] CarManager carManager;
@@ -121,11 +157,11 @@ namespace CitySkylines0._5alphabeta
             carManager = carManagerIn;
             string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
-            ambulances = 
+            ambulances =
             [
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null)
+                new Ambulance(null, 6f, null, path, "ambulance", null),
+                new Ambulance(null, 6f, null, path, "ambulance", null),
+                new Ambulance(null, 6f, null, path, "ambulance", null)
             ];
             ambulances[0].hasPriority = true;
             ambulances[1].hasPriority = true;
@@ -139,11 +175,11 @@ namespace CitySkylines0._5alphabeta
 
             string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
-            ambulances = 
+            ambulances =
             [
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null), 
-                new EmergencyServiceVehicle(null, 6f, null, path, "ambulance", null)
+                new Ambulance(null, 6f, null, path, "ambulance", null),
+                new Ambulance(null, 6f, null, path, "ambulance", null),
+                new Ambulance(null, 6f, null, path, "ambulance", null)
             ];
             ambulances[0].hasPriority = true;
             ambulances[1].hasPriority = true;
@@ -200,6 +236,214 @@ namespace CitySkylines0._5alphabeta
         public void BringAmbulanceFromBuilding(EmergencyServiceVehicle ambulance, Building building)
         {
             carManager.SendSpecificCarToAndFromSpecificBuilding(ambulance, building, this);
+        }
+    }
+
+    //police
+    public class PoliceBuilding : Building
+    {
+        PoliceCar[] PoliceCars;
+
+        [JsonIgnore] Grid grid;
+        [JsonIgnore] CarManager carManager;
+        float powerDemand { get; set; }
+        float waterDemand { get; set; }
+
+        [JsonIgnore] Random random = new Random();
+
+        public PoliceBuilding() { }
+        public PoliceBuilding(Size size, Point coords, string type, float powerDemand, float waterDemand, Grid gridIn, CarManager carManagerIn) : base(size, coords, type, powerDemand, waterDemand, 50, true)
+        {
+            type = "policebuilding";
+            cost = 100000;
+            tax = -10;
+            this.powerDemand = powerDemand;
+            this.waterDemand = waterDemand;
+            necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+            grid = gridIn;
+            carManager = carManagerIn;
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
+            PoliceCars =
+            [
+                new PoliceCar(null, 6f, null, path, "policecar", null),
+                new PoliceCar(null, 6f, null, path, "policecar", null)
+            ];
+            PoliceCars[0].hasPriority = true;
+            PoliceCars[1].hasPriority = true;
+        }
+
+        public void Reconnect(Grid gridIn, CarManager carManagerIn)
+        {
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
+            PoliceCars =
+            [
+                new PoliceCar(null, 6f, null, path, "policecar", null),
+                new PoliceCar(null, 6f, null, path, "policecar", null)
+            ];
+            PoliceCars[0].hasPriority = true;
+            PoliceCars[1].hasPriority = true;
+        }
+
+        public void UpdateGlobalCrime()
+        {
+            foreach (Building b in grid.buildings.Where(b => b.type != "policebuilding" && b.type != "hospital" && b.type != "fireservice"))
+            {
+                b.isInCrime = random.Next(12500) == 67;
+            }
+        }
+
+        public void UpdatePoliceBuilding()
+        {
+            UpdateGlobalCrime();
+
+            foreach (Building h in grid.buildings.Where(b => b.type == "house"))
+            {
+                if (h.isInCrime == true)
+                {
+                    for (int i = 0; i < PoliceCars.Length; i++)
+                    {
+                        if (!PoliceCars[i].inService && PoliceCars.Where(e => e.destBuilding == h).Count() == 0)
+                        {
+                            PoliceCars[i].speed = 6f;
+                            SendPoliceCarToBuilding(PoliceCars[i], h);
+                            PoliceCars[i].inService = true;
+                            PoliceCars[i].destBuilding = h;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach (PoliceCar pc in PoliceCars)
+            {
+                if (pc.inService && !pc.isMoving)
+                {
+                    SendPoliceCarToBuilding(pc, this);
+                    pc.destBuilding.isInCrime = false;
+                    pc.inService = false;
+                }
+                if (!pc.inService && !pc.isMoving)
+                {
+                    pc.speed = 3f;
+                    pc.isMoving = true;
+                    BringPoliceCarFromBuilding(pc, pc.destBuilding);
+                }
+            }
+        }
+        public void SendPoliceCarToBuilding(EmergencyServiceVehicle policeCar, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(policeCar, this, building);
+        }
+
+        public void BringPoliceCarFromBuilding(EmergencyServiceVehicle policeCar, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(policeCar, building, this);
+        }
+    }
+
+    //fire service
+    public class FireService : Building
+    {
+        FireTruck[] fireTrucks;
+        [JsonIgnore] Random random = new Random();
+        [JsonIgnore] Grid grid;
+        [JsonIgnore] CarManager carManager;
+        float powerDemand { get; set; }
+        float waterDemand { get; set; }
+
+        public FireService() { }
+        public FireService(Size size, Point coords, string type, float powerDemand, float waterDemand, Grid gridIn, CarManager carManagerIn) : base(size, coords, type, powerDemand, waterDemand, 50, true)
+        {
+            type = "fireservice";
+            cost = 75000;
+            tax = -15;
+            this.powerDemand = powerDemand;
+            this.waterDemand = waterDemand;
+            necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
+            grid = gridIn;
+            carManager = carManagerIn;
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
+            fireTrucks =
+            [
+                new FireTruck(null, 6f, null, path, "firetruck", null),
+                new FireTruck(null, 6f, null, path, "firetruck", null)
+            ];
+            fireTrucks[0].hasPriority = true;
+            fireTrucks[1].hasPriority = true;
+        }
+
+        public void Reconnect(Grid gridIn, CarManager carManagerIn)
+        {
+            grid = gridIn;
+            carManager = carManagerIn;
+            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
+            fireTrucks =
+            [
+                new FireTruck(null, 6f, null, path, "firetruck", null),
+                new FireTruck(null, 6f, null, path, "firetruck", null)
+            ];
+            fireTrucks[0].hasPriority = true;
+            fireTrucks[1].hasPriority = true;
+        }
+
+        public void UpdateGlobalFire()
+        {
+            foreach (Building b in grid.buildings.Where(b => b.type != "fireservice"))
+            {
+                b.isOnFire = random.Next(25000) <= 25000;
+            }
+        }
+
+        public void UpdateFireService()
+        {
+            UpdateGlobalFire();
+
+            foreach (Building h in grid.buildings.Where(b => b.type == "house"))
+            {
+                if (h.isOnFire)
+                {
+                    for (int i = 0; i < fireTrucks.Length; i++)
+                    {
+                        if (!fireTrucks[i].inService && fireTrucks.Where(e => e.destBuilding == h).Count() == 0)
+                        {
+                            fireTrucks[i].speed = 6f;
+                            SendFireTruckToBuilding(fireTrucks[i], h);
+                            fireTrucks[i].inService = true;
+                            fireTrucks[i].destBuilding = h;
+                            break;
+                        }
+                    }
+                } 
+            }
+
+            foreach (FireTruck ft in fireTrucks)
+            {
+                if (ft.inService && !ft.isMoving)
+                {
+                    SendFireTruckToBuilding(ft, this);
+                    ft.destBuilding.isOnFire = false;
+                    ft.inService = false;
+                }
+                if (!ft.inService && !ft.isMoving)
+                {
+                    ft.speed = 3f;
+                    ft.isMoving = true;
+                    BringFireTruckFromBuilding(ft, ft.destBuilding);
+                }
+            }
+        }
+        public void SendFireTruckToBuilding(EmergencyServiceVehicle fireTruck, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(fireTruck, this, building);
+        }
+
+        public void BringFireTruckFromBuilding(EmergencyServiceVehicle fireTruck, Building building)
+        {
+            carManager.SendSpecificCarToAndFromSpecificBuilding(fireTruck, building, this);
         }
     }
 

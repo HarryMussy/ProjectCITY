@@ -164,7 +164,7 @@ namespace CitySkylines0._5alphabeta
                         }
 
                         //near-road check
-                        else if (IsNodeNear(node, p, 4))
+                        else if (IsNodeNear(node, p, 1))
                         {
                             node.isNearRoad = true;
                             node.IsNodeBuildable();
@@ -188,7 +188,7 @@ namespace CitySkylines0._5alphabeta
                         }
 
                         //near-road check
-                        else if (IsNodeNear(node, p, 4))
+                        else if (IsNodeNear(node, p, 1))
                         {
                             node.isNearRoad = true;
                             node.IsNodeBuildable();
