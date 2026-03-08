@@ -9,8 +9,9 @@ namespace CitySkylines0._5alphabeta
         public Point a { get; set; }
         public Point b { get; set; }
         public int angle { get; set; } //anywhere from 0 to 360
-        /*public List<IntersectionNode> intersections { get; set; } = new();*/
-        public List<Node> occupyingNodes { get; set; } = new();
+
+        [JsonIgnore] public List<Node> occupyingNodes { get; set; } = new();
+
         public List<Point> pointsOnTheEdge { get; set; } = new();
 
         public Edge() { }

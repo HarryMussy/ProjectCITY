@@ -38,6 +38,7 @@ namespace CitySkylines0._5alphabeta
 
             gridRef.buildings.Remove(b);
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
+            gridRef.cash += b.cost / 2;
         }
 
         public void RemoveCar(Car c)
@@ -52,18 +53,20 @@ namespace CitySkylines0._5alphabeta
 
             if (gridRef.roads.Contains(r)) { gridRef.roads.Remove(r); }
 
-            if (r.occupyingNodes != null)
+            if (r.lane1.occupyingNodes != null)
             {
                 foreach (Node n in r.lane1.occupyingNodes)
                 {
-/*                    n.imagePath = null;*/
                     n.isRoad = false;
                     n.isNearRoad = false;
                     n.IsNodeBuildable();
                 }
+            }
+
+            if (r.lane2.occupyingNodes != null)
+            {
                 foreach (Node n in r.lane2.occupyingNodes)
                 {
-/*                    n.imagePath = null;*/
                     n.isRoad = false;
                     n.isNearRoad = false;
                     n.IsNodeBuildable();

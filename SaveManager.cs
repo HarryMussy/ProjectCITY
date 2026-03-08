@@ -16,10 +16,7 @@ namespace CitySkylines0._5alphabeta
             public List<Person> population { get; set; }
             public float averageWellBeing { get; set; }
             public Dictionary<string, int> globalDesires { get; set; }
-            public float globalPowerDemand { get; set; }
-            public float globalPowerSupply { get; set; }
-            public float globalWaterDemand { get; set; }
-            public float globalWaterSupply { get; set; }
+            public NecessitiesManager necessitiesManager { get; set; }
         }
 
         public static void Save(string filePath, Grid grid, Calendar calendar, Background background, PopulationManager populationManager, NecessitiesManager necessitiesManager)
@@ -32,10 +29,7 @@ namespace CitySkylines0._5alphabeta
                 background = background,
                 averageWellBeing = populationManager.AverageWellBeing,
                 globalDesires = populationManager.GlobalDesires,
-                globalPowerDemand = necessitiesManager.globalPowerDemand,
-                globalPowerSupply = necessitiesManager.globalPowerSupply,
-                globalWaterDemand = necessitiesManager.globalWaterDemand,
-                globalWaterSupply = necessitiesManager.globalWaterSupply
+                necessitiesManager = necessitiesManager
             };
 
             var json = JsonSerializer.Serialize(data, JsonSettings.Options);

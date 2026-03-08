@@ -1,5 +1,4 @@
-﻿using NAudio.CoreAudioApi;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,19 +13,21 @@ namespace CitySkylines0._5alphabeta
 {
     public class NecessitiesManager
     {
-        public float globalPowerSupply;
-        public float globalWaterSupply;
+        public float globalPowerSupply { get; set; }
+        public float globalWaterSupply { get; set; }
 
-        public float globalPowerDemand;
-        public float globalWaterDemand;
+        public float globalPowerDemand { get; set; }
+        public float globalWaterDemand { get; set; }
 
-        public string globalPowerStatus;
-        public string globalWaterStatus;
+        [JsonIgnore] public string globalPowerStatus;
+        [JsonIgnore] public string globalWaterStatus;
 
-        public Grid grid;
+        [JsonIgnore] public Grid grid;
 
-        public Dictionary<string, Image> NecessityImages = new Dictionary<string, Image>();
-        public NecessitiesManager(Grid grid)
+        [JsonIgnore] public Dictionary<string, Image> NecessityImages = new Dictionary<string, Image>();
+
+        public NecessitiesManager() { }
+        public NecessitiesManager(Grid g)
         {
             globalPowerDemand = 0;
             globalWaterDemand = 0;
@@ -36,7 +37,15 @@ namespace CitySkylines0._5alphabeta
             globalPowerStatus = $"{globalPowerDemand} / {globalPowerSupply}MW";
             globalWaterStatus = $"{globalWaterDemand} / {globalWaterSupply}L";
 
-            this.grid = grid;
+            grid = g;
+            LoadNecessityImages();
+        }
+
+        public void InitialiseAfterBoot(Grid g)
+        {
+            grid = g;
+            globalPowerStatus = $"{globalPowerDemand} / {globalPowerSupply}MW"; 
+            globalWaterStatus = $"{globalWaterDemand} / {globalWaterSupply}L"; 
             LoadNecessityImages();
         }
 
@@ -116,7 +125,7 @@ namespace CitySkylines0._5alphabeta
                         if (b.type == "powerplant")
                         {
                             necessity.fulFilled = true;
-                            continue; // DO NOT subtract
+                            continue;
                         }
 
                         if (availablePower >= necessity.demand)
@@ -159,14 +168,14 @@ namespace CitySkylines0._5alphabeta
             globalPowerStatus = $"{globalPowerDemand} / {globalPowerSupply}MW";
             globalWaterStatus = $"{globalWaterDemand} / {globalWaterSupply}L";
         }
-            
     }
 
     public class Necessity
     {
         public string type { get; set; }
-        public float demand { get; private set; }
-        public float decayRate { get; private set; } //the time it takes (in seconds) for the building to be abandoned
+        // CHANGED: public set so JSON can deserialize
+        public float demand { get; set; }
+        public float decayRate { get; set; }
 
         [JsonIgnore] public Image image { get; set; }
 
@@ -174,7 +183,8 @@ namespace CitySkylines0._5alphabeta
         static Brush brush = new SolidBrush(Color.White);
         static Brush brushOutline = new SolidBrush(Color.FromArgb(60, 60, 60));
         public bool fulFilled { get; set; }
-        public Necessity() { }
+        
+        public Necessity() { } // Required for JSON deserialization
 
         public Necessity(string typeIn, float initialValueIN, float decayRateIN, float demandIN)
         {
@@ -254,37 +264,37 @@ namespace CitySkylines0._5alphabeta
 
     public class Power : Necessity
     {
-        public Power() { }
+        public Power() { type = "Power"; } // Ensure type is set
         public Power(float demandIN) : base("Power", 0, 0, demandIN) { }
     }
 
     public class Water : Necessity
     {
-        public Water() { }
+        public Water() { type = "Water"; }
         public Water(float demandIN) : base("Water", 0, 0, demandIN) { }
     }
 
     public class Workers : Necessity
     {
-        public Workers() { }
+        public Workers() { type = "Workers"; }
         public Workers(float demandIN) : base("Workers", 0, 0, demandIN) { }
     }
 
     public class Unhealthy : Necessity
     {
-        public Unhealthy() { }
+        public Unhealthy() { type = "Ill"; }
         public Unhealthy(float demandIN) : base("Ill", 0, 0, demandIN) { }
     }
 
     public class Crime : Necessity
     {
-        public Crime() { }
+        public Crime() { type = "Crime"; }
         public Crime(float demandIN) : base("Crime", 0, 0, demandIN) { }
     }
 
     public class Fire : Necessity
     {
-        public Fire() { }
+        public Fire() { type = "Fire"; }
         public Fire(float demandIN) : base("Fire", 0, 0, demandIN) { }
     }
 }

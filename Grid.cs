@@ -30,6 +30,71 @@ namespace CitySkylines0._5alphabeta
             CreateNodes();
             InitializeWithBackground(background);
         }
+
+        public void RebuildRoadSystem()
+        {
+            //reset node state
+            roadNodes.Clear();
+            buildableNodes.Clear();
+
+            foreach (Node n in nodes)
+            {
+                n.isRoad = false;
+                n.isNearRoad = false;
+                n.isBuildable = false;
+            }
+
+            //rebuild edge geometry
+            foreach (Road road in roads)
+            {
+                road.lane1.pointsOnTheEdge.Clear();
+                road.lane1.FindAllPointOnEdge(road.lane1);
+
+                road.lane2.pointsOnTheEdge.Clear();
+                road.lane2.FindAllPointOnEdge(road.lane2);
+            }
+
+            //recalculate road tiles
+            FindRoadTilesAndAdjacentRoadTiles();
+
+            //rebuild lane node references
+            foreach (Road road in roads)
+            {
+                road.lane1.occupyingNodes = FindRoadTilesForSpecificEdge(road.lane1, 0);
+                road.lane2.occupyingNodes = FindRoadTilesForSpecificEdge(road.lane2, 1);
+            }
+
+            //rebuild pathfinding graph
+            RebuildEntireRoadGraph();
+
+            Random rng = new Random();
+
+            foreach (Road road in roads)
+            {
+                foreach (Node n in road.lane1.occupyingNodes)
+                {
+                    int num = rng.Next(100);
+                    n.imagePath = "road_000.png";
+                    if (num > 95) n.imagePath = "road_001.png";
+                    if (num > 96) n.imagePath = "road_002.png";
+                    if (num > 97) n.imagePath = "road_003.png";
+                    if (num > 98) n.imagePath = "road_004.png";
+                    if (num > 99) n.imagePath = "road_005.png";
+                }
+
+                foreach (Node n in road.lane2.occupyingNodes)
+                {
+                    int num = rng.Next(100);
+                    n.imagePath = "road_000.png";
+                    if (num > 95) n.imagePath = "road_001.png";
+                    if (num > 96) n.imagePath = "road_002.png";
+                    if (num > 97) n.imagePath = "road_003.png";
+                    if (num > 98) n.imagePath = "road_004.png";
+                    if (num > 99) n.imagePath = "road_005.png";
+                }
+            }
+        }
+
         public void CreateNodes()
         {
             int tempNum = 0;

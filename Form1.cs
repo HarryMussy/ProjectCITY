@@ -232,8 +232,16 @@ namespace CitySkylines0._5alphabeta
                 population = new List<Person>();
             }
 
+            if (save != null && save.necessitiesManager != null)
+            {
+                necessitiesManager = save.necessitiesManager;
+            }
+            else
+            {
+                necessitiesManager = new NecessitiesManager(grid);
+            }
+
             //create managers with initialized graphics and form
-            necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
@@ -252,17 +260,7 @@ namespace CitySkylines0._5alphabeta
             {
                 populationManager.GlobalDesires = save.globalDesires;
             }
-            
-            // Restore power/water state
-            if (save != null)
-            {
-                necessitiesManager.globalPowerDemand = save.globalPowerDemand;
-                necessitiesManager.globalPowerSupply = save.globalPowerSupply;
-                necessitiesManager.globalWaterDemand = save.globalWaterDemand;
-                necessitiesManager.globalWaterSupply = save.globalWaterSupply;
-                necessitiesManager.globalPowerStatus = $"{necessitiesManager.globalPowerDemand} / {necessitiesManager.globalPowerSupply}MW";
-                necessitiesManager.globalWaterStatus = $"{necessitiesManager.globalWaterDemand} / {necessitiesManager.globalWaterSupply}L";
-            }
+
             
             bulldozer = new Bulldozer(grid, this);
 
@@ -284,6 +282,9 @@ namespace CitySkylines0._5alphabeta
             }
 
             background.InitializeAfterLoad(this);
+            necessitiesManager.InitialiseAfterBoot(grid);
+
+            grid.RebuildRoadSystem();
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);
