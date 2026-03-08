@@ -1,16 +1,6 @@
-/* ----------GAME PLAN----------
- * Cash system, building roads of certain lengths uses cash DONE
- * House buildings DONE
- * Electricity DONE
- * Water DONE
- * Necessities (e.g. hospitals, police, fire etc)
- * Background map to build only in certain places DONE
- * Cars on the roads DONE
- * Other industries e.g. farming logging
- */
-
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Controls;
 
 
 
@@ -232,7 +222,17 @@ namespace CitySkylines0._5alphabeta
                 calendar = new Calendar(now.Day, now.Month, now.Year, now.Hour, now.Minute, this);
             }
 
-            // Create managers with initialized graphics and form
+            List<Person> population;
+            if (save != null && save.calendar != null)
+            {
+                population = save.population;
+            }
+            else
+            {
+                population = new List<Person>();
+            }
+
+            //create managers with initialized graphics and form
             necessitiesManager = new NecessitiesManager(grid);
             smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
@@ -241,15 +241,49 @@ namespace CitySkylines0._5alphabeta
             carManager = new CarManager(grid, calendar);
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
+            populationManager.Population = population;
+            
+            // Restore population wellbeing and desires
+            if (save != null && save.averageWellBeing > 0)
+            {
+                populationManager.AverageWellBeing = save.averageWellBeing;
+            }
+            if (save != null && save.globalDesires != null)
+            {
+                populationManager.GlobalDesires = save.globalDesires;
+            }
+            
+            // Restore power/water state
+            if (save != null)
+            {
+                necessitiesManager.globalPowerDemand = save.globalPowerDemand;
+                necessitiesManager.globalPowerSupply = save.globalPowerSupply;
+                necessitiesManager.globalWaterDemand = save.globalWaterDemand;
+                necessitiesManager.globalWaterSupply = save.globalWaterSupply;
+                necessitiesManager.globalPowerStatus = $"{necessitiesManager.globalPowerDemand} / {necessitiesManager.globalPowerSupply}MW";
+                necessitiesManager.globalWaterStatus = $"{necessitiesManager.globalWaterDemand} / {necessitiesManager.globalWaterSupply}L";
+            }
+            
             bulldozer = new Bulldozer(grid, this);
 
             foreach (Building b in grid.buildings)
             {
+                b.InitializeAfterLoad();
                 if (b is Hospital hospital)
                 {
                     hospital.Reconnect(grid, carManager);
                 }
+                if (b is PoliceBuilding police)
+                {
+                    police.Reconnect(grid, carManager);
+                }
+                if (b is FireService fire)
+                {
+                    fire.Reconnect(grid, carManager);
+                }
             }
+
+            background.InitializeAfterLoad(this);
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);
@@ -327,9 +361,9 @@ namespace CitySkylines0._5alphabeta
             
 
             var now = DateTime.Now;
-            double elapseds = (now - lastTickTime).TotalMilliseconds;
+            double elapsedms = (now - lastTickTime).TotalMilliseconds;
             lastTickTime = now;
-            calendar.AdvanceTime(elapseds);
+            calendar.AdvanceTime(elapsedms);
 
             // Reset both demand and supply at the start of each tick
             necessitiesManager.globalPowerDemand = 0;
@@ -340,6 +374,7 @@ namespace CitySkylines0._5alphabeta
 
             foreach (Building b in grid.buildings)
             {
+                b.UpdateBuilding(elapsedms / 1000); //pass in seconds not milliseconds
                 bool necessitiesFilled = true;
                 foreach (Necessity n in b.necessities)
                 {

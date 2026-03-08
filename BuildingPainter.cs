@@ -16,6 +16,9 @@ namespace CitySkylines0._5alphabeta
         private string policeBuildingImagePath;
         private string fireServiceBuildingImagePath;
         private string fireImagePath;
+        private Image fireImg;
+        private Image crimeImg;
+        private Image abandonedTileImage;
         private string hospitalImagePath;
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
@@ -210,7 +213,7 @@ namespace CitySkylines0._5alphabeta
 
             foreach (Building building in grid.buildings)
             {
-                if (calendar.GetHour() >= 21 || calendar.GetHour() <= 5)
+                if (building.isAbandoned == false && (calendar.GetHour() >= 21 || calendar.GetHour() <= 5))
                 {
                     using Brush glow1 = new SolidBrush(Color.FromArgb(90, 255, 255, 200));  // bright center
                     using Brush glow2 = new SolidBrush(Color.FromArgb(40, 255, 255, 200));   // mid glow
@@ -260,12 +263,13 @@ namespace CitySkylines0._5alphabeta
                 if (building.isInCrime)
                 {
                     Crime crime = new Crime();
+                    crime.image = crimeImg;
+                    crime.type = "Crime";
                     crime.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + 16, building.coords.Y + 8));
                 }
 
                 if (building.isOnFire)
                 {
-                    Image fireImg = GetImage(fireImagePath);
 
                     for (int x = 0; x < building.size.Width; x++)
                     {
@@ -280,6 +284,22 @@ namespace CitySkylines0._5alphabeta
                             }
                         }
                     }
+                }
+
+                if (building.isAbandoned)
+                {
+                    if (building.Occupants != null)
+                    {
+                        for (int i = 0; i < building.Occupants.Length; i++)
+                        {
+                            if (building.Occupants[i] != null)
+                            {
+                                building.Occupants[i].KillPerson();
+                            }
+                        }
+                    }
+
+                    g.DrawImage(abandonedTileImage, building.coords.X, building.coords.Y, building.size.Width * 16, building.size.Height * 16);
                 }
             }
 
@@ -340,6 +360,13 @@ namespace CitySkylines0._5alphabeta
             fireServiceBuildingImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "fireservicebuilding.png");
 
             fireImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons", "fire.png");
+            fireImg = GetImage(fireImagePath);
+
+            string crimeImgPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons", "Crime.png");
+            crimeImg = GetImage(crimeImgPath);
+
+            string abandonedTileImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Abandoned.png");
+            abandonedTileImage = GetImage(abandonedTileImagePath);
         }
 
 
@@ -476,7 +503,7 @@ namespace CitySkylines0._5alphabeta
                 smokeParticleManager.SpawnParticlesOnBuilding(newHospital);
             }
 
-            if(grid.cash >= 30000 && buildingType == "shop")
+            if (grid.cash >= 30000 && buildingType == "shop")
             {
                 if (!CanPlaceBuilding(grid, clickedPoint, shopSize.Width, shopSize.Height)) { return; }
 

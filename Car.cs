@@ -273,7 +273,7 @@ namespace CitySkylines0._5alphabeta
             if (car.route != null && car.route.Count == 0 && car.currentNode == car.destinationNode)
             {
                 if (car.type == "car") { DespawnCar(car); }
-                else {car.isMoving = false; } // emergency vehicle arrived
+                else {car.isMoving = false; DespawnEmergencyServiceVehicle(car); } // emergency vehicle arrived
 
                 return true;
             }

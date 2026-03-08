@@ -19,12 +19,14 @@ namespace CitySkylines0._5alphabeta
         public List<string> UnmetDesires { get; set; } = new(); // NEW
         [JsonIgnore] public Building Residence {  get; set; }
         [JsonIgnore] public Building WorkPlace { get; set; }
+
+        [JsonIgnore] static Random rng = new Random();
         public Person() { }
 
         public Person(Building b)
         {
-            Age = new Random().Next(1, 100);
-            IsMale = new Random().Next(2) == 1;
+            Age = rng.Next(1, 100);
+            IsMale = rng.Next(2) == 1;
             Residence = b;
             WorkPlace = null;
             IsHealthy = true;
@@ -41,6 +43,15 @@ namespace CitySkylines0._5alphabeta
             IsHealthy = true;
             IsPregnant = false;
             IsAlive = true;
+        }
+
+        public void KillPerson()
+        {
+            IsAlive = false;
+            Residence = null;
+            WorkPlace = null;
+            IsHealthy = false;
+            IsPregnant = false;
         }
     }
 
@@ -70,6 +81,11 @@ namespace CitySkylines0._5alphabeta
             float total = 0f;
 
             bool hospitalExists = grid.buildings.Any(b => b.type == "hospital");
+            bool policeBuildingExists = grid.buildings.Any(b => b.type == "policebuilding");
+            bool fireServiceExists = grid.buildings.Any(b => b.type == "fireservice");
+            bool jobExists = grid.buildings.Any(b => b.type != "house");
+
+            int numOfShops = grid.buildings.Where(b => b.type == "shop").Count();
 
             foreach (Person p in Population)
             {
@@ -91,23 +107,51 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
+                //health
                 if (!p.IsHealthy)
                 {
                     well -= 15f;
                     p.UnmetDesires.Add("Health");
                 }
 
+                //job
                 if (p.WorkPlace == null && p.Age >= 18)
                 {
                     well -= 10f;
                     p.UnmetDesires.Add("Job");
                 }
 
+                //essential services
+                if (!hospitalExists)
+                {
+                    well -= 10f;
+                    p.UnmetDesires.Add("Hospital");
+                }
+                if (!fireServiceExists)
+                {
+                    well -= 10f;
+                    p.UnmetDesires.Add("Fire Service");
+                }
+                if (!policeBuildingExists)
+                {
+                    well -= 10f;
+                    p.UnmetDesires.Add("Police");
+                }
+
+                //other buildings
+                if (numOfShops > 0) 
+                {
+                    if (Population.Count / numOfShops > 50) //if there is less than 1 shop for 50 people then wellbeing decreases
+                    {
+                        well -= 5;
+                        p.UnmetDesires.Add("Shops");
+                    }
+                }
+
                 well = Math.Clamp(well, 0f, 100f);
                 p.WellBeing = well;
                 total += well;
 
-                //track global desires
                 foreach (string desire in p.UnmetDesires)
                 {
                     if (!GlobalDesires.ContainsKey(desire))
@@ -130,25 +174,28 @@ namespace CitySkylines0._5alphabeta
         {
             foreach (Person person in Population.Where(p => p.Age > 65 || !p.IsHealthy)) //anyone over the age of 65 or is ill has a 1% chance of dying
             {
-                person.IsAlive = rng.Next(100) == 67;
+                if (rng.Next(100) == 67)
+                {
+                    person.KillPerson();
+                }
             }
 
-            Person male = new();
-            Person female = new();
             foreach (Building b in grid.buildings.Where(h => h.type == "house"))
             {
-                if (b.Occupants.Count() > 0)
+                Person male = null;
+                Person female = null;
+                if (b.Occupants.Count() > 0 && b.Occupants.Count() < b.MaxOccupants) //if a building has enough occupants but the house isnt full
                 {
                     foreach (Person p in b.Occupants)//all houses with a male and a female over 18 have a chance of the female becoming pregnant
                     {
-                        if (p == null) { return; }
+                        if (p == null) { continue; }
                         if (p.Age >= 18 && p.IsMale && male == null) { male = p; }
                         if (p.Age >= 18 && !p.IsMale && female == null) { female = p; }
                     }
 
                     if (male != null && female != null)
                     {
-                        if (rng.Next(10) <= 7)
+                        if (rng.Next(100) <= 5)
                         {
                             MakePregnant(female);
                         }
@@ -156,13 +203,26 @@ namespace CitySkylines0._5alphabeta
                 } 
             }
 
+            foreach (Person p in Population.Where(p => p.IsPregnant))
+            {
+                p.MonthTimer++;
+            }
+
             foreach (Person pregnantWoman in Population.Where(p => p.IsPregnant && p.MonthTimer == 9)) //make all pregnant women at 9 months give birth
             {
-                pregnantWoman.IsPregnant = false;
-                pregnantWoman.MonthTimer = 0;
-
                 Person baby = new Person(pregnantWoman.Residence, 0);
                 Population.Add(baby);
+
+                Building house = pregnantWoman.Residence;
+
+                for (int i = 0; i < house.Occupants.Length; i++)
+                {
+                    if (house.Occupants[i] == null)
+                    {
+                        house.Occupants[i] = baby;
+                        break;
+                    }
+                }
             }
         }
 
@@ -177,27 +237,50 @@ namespace CitySkylines0._5alphabeta
         public void UpdatePopulation()
         {
             possibleWorkplaces.Clear();
-            Random rng = new Random();
 
-            //populate houses with people
             foreach (Building b in grid.buildings)
             {
-                if (b.type is "house" && b.Occupants.Count(p => p != null) == 0)
+                if (b.type is "house" && b.Occupants.Count(p => p != null) == 0) //populate empty houses with people
                 {
                     int addToPop = rng.Next(1, b.MaxOccupants);
                     for (int i = 0; i < addToPop; i++)
                     {
-                        Person newPerson = new Person(b);
-                        b.Occupants[i] = newPerson;
-                        Population.Add(newPerson);
+                        float moveChance = AverageWellBeing;
+
+                        if (AverageWellBeing < 50)
+                        {
+                            moveChance *= 0.5f;
+                        }
+                        else if (AverageWellBeing > 75)
+                        {
+                            moveChance *= 1.2f;
+                        }
+
+                        if (moveChance >= rng.Next(100))
+                        {
+                            Person newPerson = new Person(b);
+                            b.Occupants[i] = newPerson;
+                            Population.Add(newPerson);
+                        }
                     }
                 }
 
-                foreach (Person p in b.Occupants) //1 in a hundred thou chance of being unhealthy
+                foreach (Person p in b.Occupants) //1 in a hundred thou chance of being unhealthy each tick
                 {
                     if (p != null && p.IsHealthy)
                     {
-                        p.IsHealthy = !(rng.Next(100000) == 1);
+                        int illnessChance = 100000;
+
+                        if (p.WellBeing < 50)
+                        {
+                            illnessChance = (int)(illnessChance * 0.85); //15% worse
+                        }
+                        else if (p.WellBeing > 75)
+                        {
+                            illnessChance = (int)(illnessChance * 1.15); //15% better
+                        }
+
+                        p.IsHealthy = !(rng.Next(illnessChance) == 1);
                     }
                 }
             }

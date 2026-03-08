@@ -71,6 +71,22 @@ public class Background
         GenerateDetails();
     }
 
+    public void InitializeAfterLoad(Form1 form)
+    {
+        Form1 = form;
+
+        random = new Random();
+        perlinNoise = new PerlinNoise();
+
+        nodeLookup = new Dictionary<Point, Node>();
+
+        foreach (Node node in tiles)
+        {
+            nodeLookup[node.coords] = node;
+        }
+
+        LoadImages();
+    }
     private void DrawEdgesForTile(Graphics g, Rectangle destRect, string season, bool hasWaterN, bool hasWaterS, bool hasWaterE, bool hasWaterW, bool hasWaterNW, bool hasWaterNE, bool hasWaterSW, bool hasWaterSE)
     {
         if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", g, destRect, season);

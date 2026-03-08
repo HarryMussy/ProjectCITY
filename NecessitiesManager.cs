@@ -210,22 +210,8 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4 && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
                     {
-                        AddStrokeToText(sender, g, "Is experiencing crime" + this.type, 1, font, brushOutline, new Point(pos.X, pos.Y - 11));
-                        g.DrawString("Is experiencing crime" + this.type, font, brush, pos.X, pos.Y - 11);
-                        g.DrawImage(image, pos.X, pos.Y, 16, 16);
-                    }
-
-                    else if (image != null)
-                    {
-                        g.DrawImage(image, pos.X, pos.Y, 8, 8);
-                    }
-                }
-                else if (this.type == "Crime")
-                {
-                    if (mousePos.X >= pos.X - 4 && mousePos.X <= pos.X + 4 && mousePos.Y >= pos.Y - 4 && mousePos.Y <= pos.Y + 4 && image != null)
-                    {
-                        AddStrokeToText(sender, g, "Is on fire" + this.type, 1, font, brushOutline, new Point(pos.X, pos.Y - 11));
-                        g.DrawString("Is on fire" + this.type, font, brush, pos.X, pos.Y - 11);
+                        AddStrokeToText(sender, g, "Is experiencing " + this.type, 1, font, brushOutline, new Point(pos.X, pos.Y - 11));
+                        g.DrawString("Is experiencing " + this.type, font, brush, pos.X, pos.Y - 11);
                         g.DrawImage(image, pos.X, pos.Y, 16, 16);
                     }
 

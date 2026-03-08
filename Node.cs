@@ -26,7 +26,7 @@ namespace CitySkylines0._5alphabeta
         public float gCost { get; set; }
         public float hCost { get; set; }
         public float fCost => gCost + hCost;
-        public Node parent { get; set; }
+        [JsonIgnore] public Node parent { get; set; }
         public Dictionary<string, string> seasonalImagePaths { get; set; } = new();
 
         public string imagePath { get; set; }

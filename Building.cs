@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text.Json.Serialization;
+using System.Windows.Controls;
 
 
 namespace CitySkylines0._5alphabeta
@@ -19,10 +21,11 @@ namespace CitySkylines0._5alphabeta
 
         public virtual int cost { get; set; }
         public virtual int tax { get; set; }
-
         public bool isInCrime { get; set; }
-
         public bool isOnFire { get; set; }
+        public double timeUntilAbandoned { get; set; }
+        public bool isAbandoned { get; set; }
+        private static Random random = new Random();
 
         public Building() { } // required for JSON
 
@@ -38,6 +41,8 @@ namespace CitySkylines0._5alphabeta
             Occupants = new Person[MaxOccupants];
             efficiency = 0;
             isInCrime = false;
+            isAbandoned = false;
+            timeUntilAbandoned = 0;
         }
 
         public Building(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants, bool b) //end bool dictates if the building needs a workforce
@@ -51,6 +56,51 @@ namespace CitySkylines0._5alphabeta
             this.MaxOccupants = MaxOccupants;
             Occupants = new Person[MaxOccupants];
             efficiency = 0;
+        }
+
+        public void InitializeAfterLoad()
+        {
+            if (Occupants == null)
+            {
+                Occupants = new Person[MaxOccupants];
+            }
+        }
+
+        public void UpdateBuilding(double timeElapsed)
+        {
+            if (this.type != "fireservice") //fireservice stations cannot be set on fire
+            {
+                isOnFire = random.Next(25000) == 67; //chance of being on fire
+            }
+
+            if (this.type != "policebuilding" && this.type != "hospital" && this.type != "fireservice") //essential buildings cannot be robbed
+            {
+                isInCrime = random.Next(12500) == 67; //chance of being robbed
+            }
+
+            bool isNecessityUnfulfilled = false;
+            foreach (Necessity n in necessities)
+            {
+                if (n.type != "Health" && (!n.fulFilled || isInCrime))
+                {
+                    isNecessityUnfulfilled = true;
+                    break;
+                }
+            }
+
+            if (isNecessityUnfulfilled)
+            {
+                timeUntilAbandoned += timeElapsed;
+            }
+            if (isOnFire)
+            {
+                timeUntilAbandoned += timeElapsed * 2;
+            }
+
+            if (timeUntilAbandoned >= 100f)
+            {
+                isAbandoned = true;
+            }
         }
     }
 
@@ -275,6 +325,9 @@ namespace CitySkylines0._5alphabeta
 
         public void Reconnect(Grid gridIn, CarManager carManagerIn)
         {
+            grid = gridIn;
+            carManager = carManagerIn;
+
             string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
             PoliceCars =
@@ -286,18 +339,8 @@ namespace CitySkylines0._5alphabeta
             PoliceCars[1].hasPriority = true;
         }
 
-        public void UpdateGlobalCrime()
-        {
-            foreach (Building b in grid.buildings.Where(b => b.type != "policebuilding" && b.type != "hospital" && b.type != "fireservice"))
-            {
-                b.isInCrime = random.Next(12500) == 67;
-            }
-        }
-
         public void UpdatePoliceBuilding()
         {
-            UpdateGlobalCrime();
-
             foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 if (h.isInCrime == true)
@@ -379,6 +422,7 @@ namespace CitySkylines0._5alphabeta
         {
             grid = gridIn;
             carManager = carManagerIn;
+
             string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
             fireTrucks =
@@ -390,18 +434,8 @@ namespace CitySkylines0._5alphabeta
             fireTrucks[1].hasPriority = true;
         }
 
-        public void UpdateGlobalFire()
-        {
-            foreach (Building b in grid.buildings.Where(b => b.type != "fireservice"))
-            {
-                b.isOnFire = random.Next(25000) <= 25000;
-            }
-        }
-
         public void UpdateFireService()
         {
-            UpdateGlobalFire();
-
             foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 if (h.isOnFire)

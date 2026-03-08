@@ -235,7 +235,7 @@ namespace CitySkylines0._5alphabeta
                     // call Save manager with game form's state
                     try
                     {
-                        SaveManager.SaveGameToFile(dlg.SelectedPath, gameFormReference.grid, gameFormReference.calendar, gameFormReference.background);
+                        SaveManager.SaveGameToFile(dlg.SelectedPath, gameFormReference.grid, gameFormReference.calendar, gameFormReference.background, gameFormReference.populationManager, gameFormReference.necessitiesManager);
                         //MessageBox.Show("Game saved to: " + dlg.SelectedPath, "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)

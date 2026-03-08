@@ -14,6 +14,7 @@ namespace CitySkylines0._5alphabeta
         public float cash { get; set; }
         public int width { get; set; }
         public int height { get; set; }
+
         [JsonIgnore] public int rectSize;
         [JsonIgnore] public Background background { get; set; }
 

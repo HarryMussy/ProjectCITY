@@ -13,15 +13,29 @@ namespace CitySkylines0._5alphabeta
             public Grid grid { get; set; }
             public Calendar calendar { get; set; }
             public Background background { get; set; }
+            public List<Person> population { get; set; }
+            public float averageWellBeing { get; set; }
+            public Dictionary<string, int> globalDesires { get; set; }
+            public float globalPowerDemand { get; set; }
+            public float globalPowerSupply { get; set; }
+            public float globalWaterDemand { get; set; }
+            public float globalWaterSupply { get; set; }
         }
 
-        public static void Save(string filePath, Grid grid, Calendar calendar, Background background)
+        public static void Save(string filePath, Grid grid, Calendar calendar, Background background, PopulationManager populationManager, NecessitiesManager necessitiesManager)
         {
             var data = new SaveData
             {
                 grid = grid,
                 calendar = calendar,
-                background = background
+                population = populationManager.Population,
+                background = background,
+                averageWellBeing = populationManager.AverageWellBeing,
+                globalDesires = populationManager.GlobalDesires,
+                globalPowerDemand = necessitiesManager.globalPowerDemand,
+                globalPowerSupply = necessitiesManager.globalPowerSupply,
+                globalWaterDemand = necessitiesManager.globalWaterDemand,
+                globalWaterSupply = necessitiesManager.globalWaterSupply
             };
 
             var json = JsonSerializer.Serialize(data, JsonSettings.Options);
@@ -65,7 +79,7 @@ namespace CitySkylines0._5alphabeta
         }
 
         // Prompts SaveFileDialog for a .citysave file and saves
-        public static void SaveGameToFile(Grid grid, Calendar calendar, Background background)
+        public static void SaveGameToFile(Grid grid, Calendar calendar, Background background, PopulationManager populationManager, NecessitiesManager necessitiesManager)
         {
             using SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "City Save (*.citysave)|*.citysave";
@@ -78,7 +92,7 @@ namespace CitySkylines0._5alphabeta
                 string filePath = dialog.FileName;
                 try
                 {
-                    Save(filePath, grid, calendar, background);
+                    Save(filePath, grid, calendar, background, populationManager, necessitiesManager);
                     MessageBox.Show("Saved: " + filePath);
                 }
                 catch (Exception ex)
@@ -89,12 +103,12 @@ namespace CitySkylines0._5alphabeta
         }
 
         // Save to a provided path; ensures .citysave extension if missing
-        public static void SaveGameToFile(string path, Grid grid, Calendar calendar, Background background)
+        public static void SaveGameToFile(string path, Grid grid, Calendar calendar, Background background, PopulationManager populationManager, NecessitiesManager necessitiesManager)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 // fallback to interactive save
-                SaveGameToFile(grid, calendar, background);
+                SaveGameToFile(grid, calendar, background, populationManager, necessitiesManager);
                 return;
             }
 
@@ -106,7 +120,7 @@ namespace CitySkylines0._5alphabeta
                     filePath = Path.ChangeExtension(filePath, ".citysave");
                 }
 
-                Save(filePath, grid, calendar, background);
+                Save(filePath, grid, calendar, background, populationManager, necessitiesManager);
                 MessageBox.Show("Saved: " + filePath);
             }
             catch (Exception ex)
