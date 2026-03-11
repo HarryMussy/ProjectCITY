@@ -11,7 +11,7 @@ namespace CitySkylines0._5alphabeta
         public Point coords { get; set; }
         public Size size { get; set; }
         public string type { get; set; }
-        public List<Node> occupyingNodes { get; set; } = new();
+        public List<int> occupyingNodesIndex { get; set; } = new();
         public List<Necessity> necessities { get; set; } = new();
         public int MaxOccupants { get; set; }
         public Person[] Occupants { get; set; }
@@ -34,7 +34,7 @@ namespace CitySkylines0._5alphabeta
             this.size = size;
             this.coords = coords;
             this.type = type;
-            occupyingNodes = new List<Node>();
+            occupyingNodesIndex = new List<int>();
             this.cost = 0;
             necessities = [new Power(powerDemand), new Water(waterDemand)];
             this.MaxOccupants = MaxOccupants;
@@ -50,7 +50,7 @@ namespace CitySkylines0._5alphabeta
             this.size = size;
             this.coords = coords;
             this.type = type;
-            occupyingNodes = new List<Node>();
+            occupyingNodesIndex = new List<int>();
             this.cost = 0;
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             this.MaxOccupants = MaxOccupants;

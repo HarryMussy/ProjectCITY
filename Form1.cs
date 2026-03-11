@@ -284,7 +284,21 @@ namespace CitySkylines0._5alphabeta
             background.InitializeAfterLoad(this);
             necessitiesManager.InitialiseAfterBoot(grid);
 
-            grid.RebuildRoadSystem();
+            //reload road placement and logic
+            foreach (Road road in grid.roads)
+            {
+                road.RebuildAfterLoad();
+            }
+
+            grid.FindRoadTilesAndAdjacentRoadTiles();
+
+            foreach (Road road in grid.roads)
+            {
+                road.lane1.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(road.lane1, 0);
+                road.lane2.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(road.lane2, 1);
+            }
+
+            grid.RebuildEntireRoadGraph();
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
             allEventHandlers.Add(Form1_RoadButton);

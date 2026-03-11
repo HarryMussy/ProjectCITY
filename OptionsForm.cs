@@ -11,8 +11,6 @@ namespace CitySkylines0._5alphabeta
         private TrackBar musicVolume;
         private TrackBar effectsVolume;
 
-        private CheckBox chkResizable;
-        private CheckBox chkMaximize;
         private CheckBox chkFullscreen;
 
         private bool openedInGame;
@@ -77,32 +75,22 @@ namespace CitySkylines0._5alphabeta
             };
             Controls.Add(lblWindow);
 
-            chkResizable = CreateCheckbox("Allow Resizing", 280);
-            chkMaximize = CreateCheckbox("Enable Maximize Button", 310);
-            chkFullscreen = CreateCheckbox("Fullscreen Mode (borderless)", 340);
+            chkFullscreen = CreateCheckbox("Fullscreen Mode (borderless)", 280);
 
-            chkResizable.CheckedChanged += (s, e) =>
-            {
-                if (gameFormReference != null)
-                    gameFormReference.FormBorderStyle = chkResizable.Checked ? FormBorderStyle.Sizable : FormBorderStyle.FixedSingle;
-            };
-            chkMaximize.CheckedChanged += (s, e) =>
-            {
-                if (gameFormReference != null)
-                    gameFormReference.MaximizeBox = chkMaximize.Checked;
-            };
             chkFullscreen.CheckedChanged += (s, e) =>
             {
                 if (gameFormReference == null) return;
+
                 if (chkFullscreen.Checked)
                 {
-                    gameFormReference.WindowState = FormWindowState.Maximized;
                     gameFormReference.FormBorderStyle = FormBorderStyle.None;
+                    gameFormReference.WindowState = FormWindowState.Normal;
+                    gameFormReference.Bounds = Screen.PrimaryScreen.Bounds;
                 }
                 else
                 {
-                    gameFormReference.FormBorderStyle = chkResizable.Checked ? FormBorderStyle.Sizable : FormBorderStyle.FixedSingle;
-                    gameFormReference.WindowState = FormWindowState.Normal;
+                    gameFormReference.FormBorderStyle = FormBorderStyle.Sizable;
+                    gameFormReference.WindowState = FormWindowState.Maximized;
                 }
             };
 

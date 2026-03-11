@@ -117,7 +117,7 @@ public class Background
                 float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
                 bool isLand = noiseValue < landThreshold;
                 Point coords = new Point(x * rectSize, y * rectSize);
-                Node node = new Node(new Point(coords.X, coords.Y), false, false, nodeNumber++, false, isLand);
+                Node node = new Node(new Point(coords.X, coords.Y), false, false, false, isLand, nodeNumber++);
                 tiles.Add(node);
                 nodeLookup[coords] = node;
             }

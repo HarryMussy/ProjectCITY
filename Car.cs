@@ -153,7 +153,7 @@ namespace CitySkylines0._5alphabeta
         public void SpawnCarNearBuilding()
         {
             if (grid.buildings == null || grid.buildings.Count() <= 1) return;
-            if (grid.roadNodes == null || grid.roadNodes.Count() == 0) return;
+            if (grid.nodes == null || grid.nodes.Where(node => node.isRoad).Count() == 0) return;
 
             // use the shared RNG
             var rng = carRandom;
@@ -161,13 +161,13 @@ namespace CitySkylines0._5alphabeta
             var startBuilding = grid.buildings[rng.Next(grid.buildings.Count)];
             if (startBuilding == null) return;
 
-            Node startNode = grid.roadNodes.Where(n => n.OccupyingCar == null).OrderBy(n => Distance(startBuilding.coords, n.coords)).FirstOrDefault();
+            Node startNode = grid.nodes.Where(n => n.OccupyingCar == null && n.isRoad).OrderBy(n => Distance(startBuilding.coords, n.coords)).FirstOrDefault();
             if (startNode == null) return;
 
             var endBuilding = grid.buildings[rng.Next(grid.buildings.Count)];
             if (endBuilding == null || endBuilding == startBuilding) return;
 
-            Node destinationNode = grid.roadNodes.OrderBy(n => Distance(endBuilding.coords, n.coords)).FirstOrDefault();
+            Node destinationNode = grid.nodes.Where(node => node.isRoad).OrderBy(n => Distance(endBuilding.coords, n.coords)).FirstOrDefault();
             if (destinationNode == null) return;
 
             Car car = new Car(startNode, 3f, destinationNode);
@@ -200,10 +200,10 @@ namespace CitySkylines0._5alphabeta
             // use the shared RNG
             var rng = carRandom;
 
-            Node startNode = grid.roadNodes.Where(n => n.OccupyingCar == null).OrderBy(n => Distance(buildingA.coords, n.coords)).FirstOrDefault();
+            Node startNode = grid.nodes.Where(n => n.isRoad && n.OccupyingCar == null).OrderBy(n => Distance(buildingA.coords, n.coords)).FirstOrDefault();
             if (startNode == null) return;
 
-            Node destinationNode = grid.roadNodes.OrderBy(n => Distance(buildingB.coords, n.coords)).FirstOrDefault();
+            Node destinationNode = grid.nodes.Where(n => n.isRoad).OrderBy(n => Distance(buildingB.coords, n.coords)).FirstOrDefault();
             if (destinationNode == null) return;
 
             car.startNode = startNode;
@@ -417,7 +417,7 @@ namespace CitySkylines0._5alphabeta
             Node start = car.currentNode ?? car.startNode;
             Node destination = car.destinationNode;
 
-            List<Node> availableRoadNodes = grid.roadNodes.Where(n => !car.blockedNodes.Contains(n)).ToList();
+            List<Node> availableRoadNodes = grid.nodes.Where(node => node.isRoad).Where(n => !car.blockedNodes.Contains(n)).ToList();
 
             foreach (Node n in availableRoadNodes)
             {

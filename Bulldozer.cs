@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Media.Media3D;
 
 namespace CitySkylines0._5alphabeta
@@ -15,6 +16,8 @@ namespace CitySkylines0._5alphabeta
         private Road road;
         private Building building;
         private Car car;
+
+
         // visible semi-transparent red
         private SolidBrush redBrush = new SolidBrush(Color.FromArgb(120, 255, 0, 0));
 
@@ -29,8 +32,9 @@ namespace CitySkylines0._5alphabeta
         {
             if (b == null) return;
 
-            foreach (Node n in b.occupyingNodes)
+            foreach (int index in b.occupyingNodesIndex)
             {
+                Node n = gridRef.nodes.FirstOrDefault(node => node.nodeNumber == index);
                 n.hasTileData = false;
                 n.isBuildable = true;
                 n.IsNodeBuildable();
@@ -53,9 +57,9 @@ namespace CitySkylines0._5alphabeta
 
             if (gridRef.roads.Contains(r)) { gridRef.roads.Remove(r); }
 
-            if (r.lane1.occupyingNodes != null)
+            /*if (r.lane1.occupyingNodesIndex != null)
             {
-                foreach (Node n in r.lane1.occupyingNodes)
+                foreach (Node n in gridRef.nodes.Where(node => r.lane1.occupyingNodesIndex.Contains(node.nodeNumber)))
                 {
                     n.isRoad = false;
                     n.isNearRoad = false;
@@ -63,18 +67,30 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (r.lane2.occupyingNodes != null)
+            foreach (Node n in gridRef.nodes.Where(node => r.lane2.occupyingNodesIndex.Contains(node.nodeNumber)))
             {
-                foreach (Node n in r.lane2.occupyingNodes)
-                {
-                    n.isRoad = false;
-                    n.isNearRoad = false;
-                    n.IsNodeBuildable();
-                }
+                n.isRoad = false;
+                n.isNearRoad = false;
+                n.IsNodeBuildable();
+            }*/
+
+            foreach (Node n in gridRef.nodes)
+            {
+                n.isBuildable = false;
+                n.isRoad = false;
+                n.isNearRoad = false;
+            }
+
+            
+            gridRef.FindRoadTilesAndAdjacentRoadTiles();
+
+            foreach (Road road in gridRef.roads)
+            {
+                road.lane1.occupyingNodesIndex = gridRef.FindRoadTilesForSpecificEdge(road.lane1, 0);
+                road.lane2.occupyingNodesIndex = gridRef.FindRoadTilesForSpecificEdge(road.lane2, 1);
             }
 
             gridRef.RebuildEntireRoadGraph();
-            gridRef.FindRoadTilesAndAdjacentRoadTiles();
         }
 
         public void BulldozerPainter(object? sender, Graphics g)
@@ -87,21 +103,24 @@ namespace CitySkylines0._5alphabeta
 
             if (road != null)
             {
-                foreach (Node n in road.lane1.occupyingNodes)
+                foreach (int index in road.lane1.occupyingNodesIndex)
                 {
+                    Node n = gridRef.nodes.Where(node => node.nodeNumber == index).FirstOrDefault();
                     g.FillRectangle(redBrush, n.coords.X, n.coords.Y, tileW, tileW);
                 }
 
-                foreach (Node n in road.lane2.occupyingNodes)
+                foreach (int index in road.lane2.occupyingNodesIndex)
                 {
+                    Node n = gridRef.nodes.Where(node => node.nodeNumber == index).FirstOrDefault();
                     g.FillRectangle(redBrush, n.coords.X, n.coords.Y, tileW, tileW);
                 }
             }
 
             if (building != null)
             {
-                foreach (Node n in building.occupyingNodes)
+                foreach (int index in building.occupyingNodesIndex)
                 {
+                    Node n = gridRef.nodes.FirstOrDefault(n => n.nodeNumber == index);
                     g.FillRectangle(redBrush, n.coords.X, n.coords.Y, tileW, tileW);
                 }
             }

@@ -400,7 +400,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newHouse.occupyingNodes.Add(node);
+                    newHouse.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -424,7 +424,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newPowerPlant.occupyingNodes.Add(node);
+                    newPowerPlant.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -448,7 +448,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newFactory.occupyingNodes.Add(node);
+                    newFactory.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -472,7 +472,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newWaterPump.occupyingNodes.Add(node);
+                    newWaterPump.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -496,7 +496,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newHospital.occupyingNodes.Add(node);
+                    newHospital.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -520,7 +520,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newShop.occupyingNodes.Add(node);
+                    newShop.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -544,7 +544,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newPoliceBuilding.occupyingNodes.Add(node);
+                    newPoliceBuilding.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -568,7 +568,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Node node in footprintNodes)
                 {
-                    newFireService.occupyingNodes.Add(node);
+                    newFireService.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
 
@@ -626,7 +626,7 @@ namespace CitySkylines0._5alphabeta
         {
             List<Node> footprintNodes = new List<Node>();
 
-            // 1️⃣ Gather footprint nodes
+            //gather footprint nodes
             foreach (Node node in grid.nodes)
             {
                 if (node.coords.X + 8 <= mousePos.X + (8 * width) &&
@@ -634,7 +634,7 @@ namespace CitySkylines0._5alphabeta
                     node.coords.Y + 8 <= mousePos.Y + (8 * height) &&
                     node.coords.Y + 8 >= mousePos.Y - (8 * height))
                 {
-                    // Tile must be buildable grass
+                    //tile must be buildable grass
                     if (!node.isGrass || node.hasTileData || node.isRoad)
                         return false;
 
@@ -645,21 +645,21 @@ namespace CitySkylines0._5alphabeta
             if (footprintNodes.Count == 0)
                 return false;
 
-            // 2️⃣ Check road adjacency
+            //check road adjacency
             bool hasRoadAccess = footprintNodes.Any(n => IsDirectlyAdjacentToRoad(n));
             if (!hasRoadAccess)
                 return false;
 
-            // 3️⃣ Check water adjacency
+            //check water adjacency
             bool hasWaterAccess = footprintNodes.Any(n =>
             {
                 Point[] checks =
                 {
-            new Point(n.coords.X - rectSize, n.coords.Y),
-            new Point(n.coords.X + rectSize, n.coords.Y),
-            new Point(n.coords.X, n.coords.Y - rectSize),
-            new Point(n.coords.X, n.coords.Y + rectSize)
-        };
+                    new Point(n.coords.X - rectSize, n.coords.Y),
+                    new Point(n.coords.X + rectSize, n.coords.Y),
+                    new Point(n.coords.X, n.coords.Y - rectSize),
+                    new Point(n.coords.X, n.coords.Y + rectSize)
+                };
 
                 foreach (Point p in checks)
                 {
@@ -671,9 +671,7 @@ namespace CitySkylines0._5alphabeta
                 return false;
             });
 
-            if (!hasWaterAccess)
-                return false;
-
+            if (!hasWaterAccess) { return false; }
             return true;
         }
 

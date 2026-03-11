@@ -90,7 +90,7 @@ namespace CitySkylines0._5alphabeta
 
         public string GetCurrentSeason(int month)
         {
-            if (month == 12 || month == 1 || month == 2)
+            if (month == 12 || month == 1 || month == 2 || month == 13) //13th month used to prevent getting Autumn when transitioning from 12th month the 13th/ 1st month
             {
                 return "Winter";
             }

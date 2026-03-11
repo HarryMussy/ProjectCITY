@@ -15,16 +15,18 @@ namespace CitySkylines0._5alphabeta
         [JsonIgnore] public Car OccupyingCar { get; set; } = null;
         public int laneIndex { get; set; } = 0; //0 is one way 1 is the other
 /*        [JsonIgnore] public Edge parentEdge { get; set; }*/
-        public HashSet<Point> allowedDirs { get; set; } = new();
         [JsonIgnore] public HashSet<Node> neighbors { get; set; } = new();
         public bool hasTileData { get; set; }
-        public bool isNearRoad { get; set; }
         public int nodeNumber { get; set; }
-        public bool isRoad { get; set; }
         public bool isGrass { get; set; }
+
+        public List<Point> allowedDirs = new();
+        public bool isNearRoad { get; set; }
+        public bool isRoad { get; set; }
         public bool isBuildable { get; set; }
-        public float gCost { get; set; }
-        public float hCost { get; set; }
+
+        public float gCost;
+        public float hCost;
         public float fCost => gCost + hCost;
         [JsonIgnore] public Node parent { get; set; }
         public Dictionary<string, string> seasonalImagePaths { get; set; } = new();
@@ -32,14 +34,14 @@ namespace CitySkylines0._5alphabeta
         public string imagePath { get; set; }
 
         public Node() { } // required
-        public Node(Point coords, bool isTileData, bool near, int number, bool isRoad, bool isGrass)
+        public Node(Point coords, bool isTileData, bool near, bool isRoad, bool isGrass, int nodeNumberIn)
         {
             this.coords = coords;
             this.hasTileData = isTileData;
             isNearRoad = near;
-            nodeNumber = number;
             this.isRoad = isRoad;
             this.isGrass = isGrass;
+            nodeNumber = nodeNumberIn;
             IsNodeBuildable();
         }
 

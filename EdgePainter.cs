@@ -31,6 +31,7 @@ namespace CitySkylines0._5alphabeta
         private Random rng = new Random();
         private List<string> roadImagePaths = new();
         private int rectSize;
+        private bool doesNewRoadContainTileWithTileData;
 
         public EdgePainter(Grid gridPassIn, Form1 Form1PassIn, NameProvider nameProviderPassIn, Background backgroundMap, Graphics g, int rectSize)
         {
@@ -65,7 +66,7 @@ namespace CitySkylines0._5alphabeta
 
         public void RoadPaint(object? sender, Graphics g, Point mousePos)
         {
-            foreach (Node node in grid.buildableNodes)
+            foreach (Node node in grid.nodes.Where(node => node.isBuildable))
             {
                 if (viewBuildingSpaces == true)
                 {
@@ -74,11 +75,11 @@ namespace CitySkylines0._5alphabeta
             }
 
             Image img = null;
-            foreach (Node node in grid.roadNodes)
+            foreach (Node node in grid.nodes.Where(node => node.isRoad))
             {
                 if (!string.IsNullOrEmpty(node.imagePath))
                 {
-                    // try exact key, then filename fallback
+                    //try exact key, then filename fallback
                     if (!roadImages.TryGetValue(node.imagePath, out img))
                     {
                         string filename = Path.GetFileName(node.imagePath);
@@ -119,15 +120,21 @@ namespace CitySkylines0._5alphabeta
 
                 List<Node> nodes = grid.FindAdjacentTilesToARoad(tempRoad);
 
-                if (cost > grid.cash)
+                if (nodes.Contains(nodes.FirstOrDefault(n => n.hasTileData)))
+                {
+                    doesNewRoadContainTileWithTileData = true;
+                }
+                else { doesNewRoadContainTileWithTileData = false; }
+
+                if (cost > grid.cash || doesNewRoadContainTileWithTileData)
                 {
                     using var invalidroad = new SolidBrush(Color.Red);
-                    foreach (Node n in nodes) g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16);
+                    foreach (Node n in nodes) { g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16); }
                 }
                 else
                 {
                     using var lightGrayBrush = new SolidBrush(Color.LightGray);
-                    foreach (Node n in nodes) g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16);
+                    foreach (Node n in nodes) { g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16); }
                 }
 
                 // cost label
@@ -292,11 +299,22 @@ namespace CitySkylines0._5alphabeta
                 bool isOverlapping = false;
                 Point endPoint = clickedPoint;
                 endPoint = SnapTo4Directions(startPoint.Value, endPoint);
+
+                // snap final result to node centre
+                foreach (Node n in grid.nodes)
+                {
+                    if (grid.IsNodeAt(n, endPoint))
+                    {
+                        endPoint = n.Center(rectSize);
+                        break;
+                    }
+                }
+
                 if (startPoint == endPoint)
                 {
                     isOverlapping = true;
                 }
-                if (IsOnWater(endPoint) == true) { }
+                if (IsOnWater(endPoint) || doesNewRoadContainTileWithTileData) { }
                 else
                 {
                     float cost = grid.RoadCashCost(startPoint.Value, endPoint);
@@ -310,14 +328,15 @@ namespace CitySkylines0._5alphabeta
 
                         grid.FindRoadTilesAndAdjacentRoadTiles();
 
-                        newroad.lane1.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad.lane1, 0);
-                        newroad.lane2.occupyingNodes = grid.FindRoadTilesForSpecificEdge(newroad.lane2, 1);
+                        newroad.lane1.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane1, 0);
+                        newroad.lane2.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane2, 1);
 
                         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
                         string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
 
-                        foreach (Node n in newroad.lane1.occupyingNodes)
+                        foreach (int index in newroad.lane1.occupyingNodesIndex)
                         {
+                            Node n = grid.nodes.Where(node => node.nodeNumber == index).FirstOrDefault();
                             int num = rng.Next(100);
                             n.imagePath = "road_000.png";
                             if (num > 95) n.imagePath = "road_001.png";
@@ -326,8 +345,9 @@ namespace CitySkylines0._5alphabeta
                             if (num > 98) n.imagePath = "road_004.png";
                             if (num > 99) n.imagePath = "road_005.png";
                         }
-                        foreach (Node n in newroad.lane2.occupyingNodes)
+                        foreach (int index in newroad.lane2.occupyingNodesIndex)
                         {
+                            Node n = grid.nodes.Where(node => node.nodeNumber == index).FirstOrDefault();
                             int num = rng.Next(100);
                             n.imagePath = "road_000.png";
                             if (num > 95) n.imagePath = "road_001.png";

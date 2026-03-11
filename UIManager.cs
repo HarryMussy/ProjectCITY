@@ -45,31 +45,22 @@ public class UIManager
 
     public void ConstructUI(object? sender, Graphics g)
     {
+        var (windowWidth, windowHeight) = getDimensions();
+
         Color uiColor = Color.FromArgb(200, Color.CadetBlue);
         Brush uiBrush = new SolidBrush(uiColor);
         g.FillRectangle(uiBrush, zoomedBottomLeftX, zoomedBottomLeftY, zoomedWidth, zoomedHeight);
 
-        string totalcash = "Musbux: " + map.cash.ToString("F2");
         Font font = new Font("Segoe UI", 11, FontStyle.Bold);
         Brush innerBrush = new SolidBrush(Color.White);
         Brush outerBrush = new SolidBrush(Color.FromArgb(60, 60, 60));
 
-        SizeF textSize = g.MeasureString(totalcash, font);
-        int strokeWidth = 3;
-
-        string doing = form.allOperations[form.currentOperation];
-
-        int fps = form.fps;
-
-        //UI
-
         int padding = 20;
-        int leftColumnX = (int)zoomedBottomLeftX + padding;
-        int topRowY = (int)zoomedBottomLeftY + 10;
         int lineSpacing = 20;
 
-        //city stats
-        int statsY = topRowY;
+        // LEFT SIDE STATS
+        int leftColumnX = padding;
+        int statsY = (int)zoomedBottomLeftY + 10;
 
         string cashText = "Musbux: " + map.cash.ToString("F0");
         string popText = "Population: " + form.populationManager.Population.Count;
@@ -87,29 +78,23 @@ public class UIManager
             statsY += lineSpacing;
         }
 
-        //currently doing
-        doing = "Currently: " + form.allOperations[form.currentOperation];
-
-        int centerX = (int)(zoomedWidth / 2 - 100);
+        // CURRENT ACTION (CENTER)
+        string doing = "Currently: " + form.allOperations[form.currentOperation];
+        int centerX = (int)(windowWidth / 2 - 100);
         int centerY = (int)(zoomedBottomLeftY + zoomedHeight - 30);
 
         form.AddStrokeToText(sender, g, doing, 2, font, outerBrush, new Point(centerX, centerY - 100));
         g.DrawString(doing, font, innerBrush, centerX, centerY - 100);
 
-        //wellbeing/ wellness
-
+        // WELLBEING (RIGHT SIDE)
         float actualWellbeing = form.populationManager.AverageWellBeing;
-
-        // Smooth animation (lerp)
         displayWellbeing += (actualWellbeing - displayWellbeing) * 0.08f;
-
-        // Clamp just in case
         displayWellbeing = Math.Clamp(displayWellbeing, 0f, 100f);
 
         int barWidth = 220;
         int barHeight = 18;
 
-        int wellnessX = (int)(zoomedWidth - barWidth - padding);
+        int wellnessX = (int)(windowWidth - barWidth - padding);
         int wellnessY = (int)(zoomedBottomLeftY + 25);
 
         string wellText = "City Wellbeing: " + displayWellbeing.ToString("F0") + "%";
@@ -131,7 +116,6 @@ public class UIManager
             g.FillRectangle(fillBrush, wellnessX, wellnessY, filledWidth, barHeight);
         }
 
-        // Top 3 unmet desires
         int desireY = wellnessY + barHeight + 6;
 
         foreach (var desire in form.populationManager.GlobalDesires.OrderByDescending(d => d.Value).Take(3))
@@ -144,58 +128,95 @@ public class UIManager
             desireY += 18;
         }
 
+        // BUTTONS
         if (!buttonsCreated)
         {
-            interactingObjectManager.CreateButton("ROAD", new Point((int)zoomedBottomLeftX + 310, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 10).Click += roadButtonClickHandler;
-            interactingObjectManager.CreateButton("ROAD NAME", new Point((int)zoomedBottomLeftX + 380, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleNamesClickHandler;
-
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string pathToHouseImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Houses", "house1.png");
-            Image i = Image.FromFile(pathToHouseImage);
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 310, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHouseImage))
+
+            int buttonSize = 48;
+            int spacing = 12;
+
+            int totalButtons = 9;
+            int totalWidth = (totalButtons * buttonSize) + ((totalButtons - 1) * spacing);
+
+            int startX = (int)(windowWidth / 2 - totalWidth / 2);
+            int buttonY = (int)zoomedBottomLeftY + 45;
+
+            int x = startX;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Houses", "house1.png")))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "house");
+            x += buttonSize + spacing;
 
-
-            string pathToTurbineImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 370, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToTurbineImage))
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png")))
                 .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "powerplant");
+            x += buttonSize + spacing;
 
-            interactingObjectManager.CreateButton("OPTIONS", new Point((int)zoomedWidth - 100, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += (s, e) =>
-            {
-                new OptionsForm(true, form.audioManager, form).ShowDialog();
-            };
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
+            x += buttonSize + spacing;
 
-            string pathToBulldozerImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 790, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToBulldozerImage))
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "hospital");
+            x += buttonSize + spacing;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Shops", "shop2.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "shop");
+            x += buttonSize + spacing;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Factories", "factory1.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "factory");
+            x += buttonSize + spacing;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "police.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "policebuilding");
+            x += buttonSize + spacing;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "fireservicebuilding.png")))
+                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "fireservice");
+            x += buttonSize + spacing;
+
+            interactingObjectManager.CreateButton(new Point(x, buttonY), new Size(buttonSize, buttonSize), form, 6,
+                Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png")))
                 .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
-            string pathToPumpImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 430, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToPumpImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "waterpump");
+            // SECOND ROW UTILITY BUTTONS
+            int smallButtonWidth = 100;
+            int smallSpacing = 10;
+            int smallY = buttonY + 60;
 
-            string pathToHospitalImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 490, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToHospitalImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "hospital");
+            int smallTotalWidth = (5 * smallButtonWidth) + (4 * smallSpacing);
+            int smallStartX = (int)(windowWidth / 2 - smallTotalWidth / 2);
 
-            string pathToShopImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Shops", "shop2.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 550, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToShopImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "shop");
+            int sx = smallStartX;
 
-            string pathToFactoryImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Factories", "factory1.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 610, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToFactoryImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "factory");
+            interactingObjectManager.CreateButton("ROAD", new Point(sx, smallY), new Size(smallButtonWidth, 25), form, 10)
+                .Click += roadButtonClickHandler;
+            sx += smallButtonWidth + smallSpacing;
 
-            string pathToPoliceImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "police.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 670, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToPoliceImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "policebuilding");
+            interactingObjectManager.CreateButton("ROAD NAME", new Point(sx, smallY), new Size(smallButtonWidth, 25), form, 6)
+                .Click += toggleNamesClickHandler;
+            sx += smallButtonWidth + smallSpacing;
 
-            string pathToFireImage = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "fireservicebuilding.png");
-            interactingObjectManager.CreateButton(new Point((int)zoomedBottomLeftX + 730, (int)zoomedBottomLeftY + 45), new Size(48, 48), form, 6, Image.FromFile(pathToFireImage))
-                .Click += (s, e) => form.Form1_BuildingBuilder(s, e, "fireservice");
+            interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point(sx, smallY), new Size(smallButtonWidth, 25), form, 6)
+                .Click += viewBuildingSpaceClickHandler;
+            sx += smallButtonWidth + smallSpacing;
 
-            interactingObjectManager.CreateButton("VALID BUILD SPACE", new Point((int)zoomedBottomLeftX + 450, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += viewBuildingSpaceClickHandler;
-            interactingObjectManager.CreateButton("GRID VIEW", new Point((int)zoomedBottomLeftX + 520, (int)zoomedBottomLeftY + 100), new Size(70, 25), form, 6).Click += toggleGridViewClickHandler;
-            //interactingObjectManager.CreateSlider("VOLUME", new Point((int)zoomedBottomLeftX + 580, (int)zoomedBottomLeftY + 30), new Size(200, 25), form, 6).ValueChanged += volSlider;
+            interactingObjectManager.CreateButton("GRID VIEW", new Point(sx, smallY), new Size(smallButtonWidth, 25), form, 6)
+                .Click += toggleGridViewClickHandler;
+            sx += smallButtonWidth + smallSpacing;
+
+            interactingObjectManager.CreateButton("OPTIONS", new Point(sx, smallY), new Size(smallButtonWidth, 25), form, 6)
+                .Click += (s, e) => new OptionsForm(true, form.audioManager, form).ShowDialog();
+
             buttonsCreated = true;
         }
     }
