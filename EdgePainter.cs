@@ -20,7 +20,6 @@ namespace CitySkylines0._5alphabeta
         public Background backgroundMap;
         public List<Point> waterNodes;
         public AudioManager audioManager;
-        public SmokeParticleManager smokeParticleManager;
         public Graphics g;
         private readonly Brush whiteBrush = new SolidBrush(Color.White);
         private readonly Brush greenBrush = new SolidBrush(Color.Green);
@@ -43,7 +42,6 @@ namespace CitySkylines0._5alphabeta
             this.backgroundMap = backgroundMap;
             waterNodes = FindWaterNodePoints(this.backgroundMap);
             audioManager = form1.audioManager;
-            smokeParticleManager = form1.smokeParticleManager;
             LoadRoadTiles();
             this.rectSize = rectSize;
         }
@@ -359,7 +357,6 @@ namespace CitySkylines0._5alphabeta
 
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
-                        smokeParticleManager.SpawnParticlesOnEdge(newroad);
                         grid.RebuildEntireRoadGraph();
 
 

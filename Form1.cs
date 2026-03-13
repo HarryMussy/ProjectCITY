@@ -49,7 +49,6 @@ namespace CitySkylines0._5alphabeta
         private DateTime lastFpsUpdate = DateTime.Now;
         public LoadingForm loadingForm;
         public AudioManager audioManager;
-        public SmokeParticleManager smokeParticleManager;
         public Graphics g;
         public CarManager carManager;
         public Calendar calendar;
@@ -88,7 +87,6 @@ namespace CitySkylines0._5alphabeta
             calendar.UpdateCurrentSeason();
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
-            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
@@ -141,7 +139,6 @@ namespace CitySkylines0._5alphabeta
             background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
             grid = new Grid(gridDimensions, gridDimensions, background, rectSize);
             necessitiesManager = new NecessitiesManager(grid);
-            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
@@ -242,7 +239,6 @@ namespace CitySkylines0._5alphabeta
             }
 
             //create managers with initialized graphics and form
-            smokeParticleManager = new SmokeParticleManager();
             nameProvider = new NameProvider("roadnames.json");
             edgePainter = new EdgePainter(grid, this, nameProvider, background, g, rectSize);
             buttonManager = new InteractingObjectManager();
@@ -371,7 +367,6 @@ namespace CitySkylines0._5alphabeta
         {
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             bottomLeft = new Point(0, this.ClientSize.Height);
-            smokeParticleManager.Update();
             fps = GetFps();
             
 
@@ -490,7 +485,6 @@ namespace CitySkylines0._5alphabeta
             buildingPainter.BuildingPaint(sender, g, mousePos);
             carManager.CarPaint(sender, g);
             bulldozer.BulldozerPainter(sender, g);
-            smokeParticleManager.Draw(g);
 
             g.ResetTransform();
             uiManager.ConstructUI(sender, g);

@@ -23,7 +23,6 @@ namespace CitySkylines0._5alphabeta
         private Dictionary<Building, int> tileHouseImageIndex = new();
         private Random random = new Random();
         public AudioManager audioManager;
-        public SmokeParticleManager smokeParticleManager;
         public Graphics g;
         public string buildingType = "";
         private int rectSize;
@@ -53,7 +52,6 @@ namespace CitySkylines0._5alphabeta
             Form1 = Form1PassIn;
             LoadBuildingImages();
             audioManager = Form1.audioManager;
-            smokeParticleManager = Form1.smokeParticleManager;
             this.calendar = calendar;
             carManager = carManagerIn;
             houseSize = new Size(2, 2);
@@ -403,8 +401,6 @@ namespace CitySkylines0._5alphabeta
                     newHouse.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newHouse);
             }
 
             if (grid.cash >= 50000 && buildingType == "powerplant")
@@ -427,8 +423,6 @@ namespace CitySkylines0._5alphabeta
                     newPowerPlant.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newPowerPlant);
             }
 
             if (grid.cash >= 50000 && buildingType == "factory")
@@ -451,8 +445,6 @@ namespace CitySkylines0._5alphabeta
                     newFactory.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newFactory);
             }
 
             if (grid.cash >= 30000 && buildingType == "waterpump")
@@ -475,8 +467,6 @@ namespace CitySkylines0._5alphabeta
                     newWaterPump.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newWaterPump);
             }
 
             if (grid.cash >= 100000 && buildingType == "hospital")
@@ -499,8 +489,6 @@ namespace CitySkylines0._5alphabeta
                     newHospital.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newHospital);
             }
 
             if (grid.cash >= 30000 && buildingType == "shop")
@@ -523,8 +511,6 @@ namespace CitySkylines0._5alphabeta
                     newShop.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newShop);
             }
 
             if (grid.cash >= 100000 && buildingType == "policebuilding")
@@ -547,8 +533,6 @@ namespace CitySkylines0._5alphabeta
                     newPoliceBuilding.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newPoliceBuilding);
             }
 
             if (grid.cash >= 75000 && buildingType == "fireservice")
@@ -571,8 +555,6 @@ namespace CitySkylines0._5alphabeta
                     newFireService.occupyingNodesIndex.Add(node.nodeNumber);
                     node.hasTileData = true;
                 }
-
-                smokeParticleManager.SpawnParticlesOnBuilding(newFireService);
             }
         }
 
