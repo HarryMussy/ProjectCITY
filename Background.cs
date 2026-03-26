@@ -26,7 +26,7 @@ public class Background
     private string? cachedSeason;
     private string? cachedNextSeason;
     
-    // Image cache: path -> Image to avoid reloading every frame
+    //image cache: path => image to avoid reloading every frame
     [JsonIgnore] private static Dictionary<string, Image> imageCache = new();
     [JsonIgnore] private bool isInitialized = false;
 
@@ -36,6 +36,7 @@ public class Background
     public int rectSize { get; set; }
     public List<Node> tiles { get; set; }
 
+    //for JSON loader
     public Background() { LoadImages(); }
 
     public Background(int width, int height, Form1 form1PassIn, int rectSizeIn, int difficulty)
@@ -50,6 +51,7 @@ public class Background
         tiles = new List<Node>();
         perlinNoise = new PerlinNoise();
 
+        //set the land and noise levels based off of passed in difficulty
         if (difficulty == 1) 
         {
             noiseScale = 0.05F;
@@ -66,11 +68,13 @@ public class Background
             landThreshold = 0.05F;
         }
 
+        //loading and creation of map assets and land
         LoadImages();
         GenerateMap();
         GenerateDetails();
     }
 
+    //restructures the background when a save is loaded
     public void InitializeAfterLoad(Form1 form)
     {
         Form1 = form;
@@ -87,35 +91,45 @@ public class Background
 
         LoadImages();
     }
+
+    //finds the edge tile required for that grass edge
     private void DrawEdgesForTile(Graphics g, Rectangle destRect, string season, bool hasWaterN, bool hasWaterS, bool hasWaterE, bool hasWaterW, bool hasWaterNW, bool hasWaterNE, bool hasWaterSW, bool hasWaterSE)
     {
-        if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_E", g, destRect, season);
-        if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) DrawEdge("GrassEdge_W", g, destRect, season);
-        if (hasWaterE && !hasWaterW && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_N", g, destRect, season);
-        if (hasWaterW && !hasWaterE && !hasWaterN && !hasWaterS) DrawEdge("GrassEdge_S", g, destRect, season);
+        //flat edges
+        if (hasWaterN && !hasWaterS && !hasWaterE && !hasWaterW) { DrawEdge("GrassEdge_E", g, destRect, season); }
+        if (hasWaterS && !hasWaterN && !hasWaterE && !hasWaterW) { DrawEdge("GrassEdge_W", g, destRect, season); }
+        if (hasWaterE && !hasWaterW && !hasWaterN && !hasWaterS) { DrawEdge("GrassEdge_N", g, destRect, season); }
+        if (hasWaterW && !hasWaterE && !hasWaterN && !hasWaterS) { DrawEdge("GrassEdge_S", g, destRect, season); }
 
-        if (hasWaterN && hasWaterW && hasWaterNW) DrawEdge("GrassEdge_Outer_SE", g, destRect, season);
-        if (hasWaterN && hasWaterE && hasWaterNE) DrawEdge("GrassEdge_Outer_NE", g, destRect, season);
-        if (hasWaterS && hasWaterW && hasWaterSW) DrawEdge("GrassEdge_Outer_SW", g, destRect, season);
-        if (hasWaterS && hasWaterE && hasWaterSE) DrawEdge("GrassEdge_Outer_NW", g, destRect, season);
+        //corners facing out
+        if (hasWaterN && hasWaterW && hasWaterNW) { DrawEdge("GrassEdge_Outer_SE", g, destRect, season); }
+        if (hasWaterN && hasWaterE && hasWaterNE) { DrawEdge("GrassEdge_Outer_NE", g, destRect, season); }
+        if (hasWaterS && hasWaterW && hasWaterSW) { DrawEdge("GrassEdge_Outer_SW", g, destRect, season); }
+        if (hasWaterS && hasWaterE && hasWaterSE) { DrawEdge("GrassEdge_Outer_NW", g, destRect, season); }
 
-        if (hasWaterNW && !hasWaterN && !hasWaterW) DrawEdge("GrassEdge_Inner_SE", g, destRect, season);
-        if (hasWaterNE && !hasWaterN && !hasWaterE) DrawEdge("GrassEdge_Inner_NE", g, destRect, season);
-        if (hasWaterSW && !hasWaterS && !hasWaterW) DrawEdge("GrassEdge_Inner_SW", g, destRect, season);
-        if (hasWaterSE && !hasWaterS && !hasWaterE) DrawEdge("GrassEdge_Inner_NW", g, destRect, season);
+        //corners facing in
+        if (hasWaterNW && !hasWaterN && !hasWaterW) { DrawEdge("GrassEdge_Inner_SE", g, destRect, season); }
+        if (hasWaterNE && !hasWaterN && !hasWaterE) { DrawEdge("GrassEdge_Inner_NE", g, destRect, season); }
+        if (hasWaterSW && !hasWaterS && !hasWaterW) { DrawEdge("GrassEdge_Inner_SW", g, destRect, season); }
+        if (hasWaterSE && !hasWaterS && !hasWaterE) { DrawEdge("GrassEdge_Inner_NW", g, destRect, season); }
     }
 
+    //generates a map using perlin noise
     public void GenerateMap()
     {
         int nodeNumber = 0;
         nodeLookup = new Dictionary<Point, Node>();
 
+        //width and height being the number of nodes in y and x axes
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale);
+                //generate noise value and find if it is land or water
+                float noiseValue = perlinNoise.Generate(x * noiseScale, y * noiseScale); 
                 bool isLand = noiseValue < landThreshold;
+
+                //create a node at coordinates for grid size
                 Point coords = new Point(x * rectSize, y * rectSize);
                 Node node = new Node(new Point(coords.X, coords.Y), false, false, false, isLand, nodeNumber++);
                 tiles.Add(node);
@@ -125,10 +139,12 @@ public class Background
     }
     private void LoadImages()
     {
+        //create lists for image paths
         waterImages = new List<string>();
         seasonalGrassImages = new Dictionary<string, List<string>>();
         seasonalGrassEdgeImages = new Dictionary<string, Dictionary<string, string>>();
 
+        //load season types
         string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
         string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
 
@@ -144,6 +160,7 @@ public class Background
             }   
         }
 
+        //load the grass variants for every season
         foreach (var season in seasons)
         {
             //grass variants
@@ -216,9 +233,10 @@ public class Background
 
     private Image GetCachedImage(string path)
     {
-        if (string.IsNullOrEmpty(path) || !File.Exists(path))
-            return null;
+        //if the file doesnt exist return nothing
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) { return null; }
 
+        //if the file exists return that image and cache it in a dictionary
         if (!imageCache.TryGetValue(path, out var cachedImg))
         {
             cachedImg = Image.FromFile(path);
@@ -227,6 +245,7 @@ public class Background
         return cachedImg;
     }
 
+    //draw the grass edge image specified by DrawEdgesForTile()
     private void DrawEdge(string key, Graphics g, Rectangle destRect, string season)
     {
         g.DrawImage(Image.FromFile(waterImages[0]), destRect);
@@ -237,6 +256,7 @@ public class Background
         }
     }
 
+    //draw the full game map
     private Bitmap BuildSeasonBitmap(string season)
     {
         Bitmap map = new Bitmap(width * rectSize, height * rectSize);
@@ -262,19 +282,23 @@ public class Background
 
                 Rectangle destRect = new Rectangle(drawX, drawY, tileSize + 1, tileSize + 1);
 
+                //function that returns if it is in the bounds of the map
                 bool InBounds(int ix, int iy) => ix >= 0 && ix < width && iy >= 0 && iy < height;
+
+                //function that returns the index of a tile at a specific node
                 int idx(int ix, int iy) => iy * width + ix;
 
+                //find if adjacent tiles are grass or water
                 bool hasWaterN = !InBounds(x, y - 1) || !tiles[idx(x, y - 1)].isGrass;
                 bool hasWaterS = !InBounds(x, y + 1) || !tiles[idx(x, y + 1)].isGrass;
                 bool hasWaterE = !InBounds(x + 1, y) || !tiles[idx(x + 1, y)].isGrass;
                 bool hasWaterW = !InBounds(x - 1, y) || !tiles[idx(x - 1, y)].isGrass;
-
                 bool hasWaterNW = !InBounds(x - 1, y - 1) || !tiles[idx(x - 1, y - 1)].isGrass;
                 bool hasWaterNE = !InBounds(x + 1, y - 1) || !tiles[idx(x + 1, y - 1)].isGrass;
                 bool hasWaterSW = !InBounds(x - 1, y + 1) || !tiles[idx(x - 1, y + 1)].isGrass;
                 bool hasWaterSE = !InBounds(x + 1, y + 1) || !tiles[idx(x + 1, y + 1)].isGrass;
 
+                //draw the relevant image based off of node and adjacent node data
                 if (node.isGrass)
                 {
                     if (node.seasonalImagePaths.TryGetValue(season, out string filePath))
@@ -302,6 +326,7 @@ public class Background
 
     public void DrawMap(object? sender, Graphics g, float zoomLevel)
     {
+        //get time and season info
         if (Form1 == null) { return; }
         string currentSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month);
         string nextSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month + 1);
@@ -315,6 +340,7 @@ public class Background
             cachedSeason = currentSeason;
         }
 
+        //build map for next season
         if (nextSeasonMap == null || cachedNextSeason != nextSeason)
         {
             nextSeasonMap?.Dispose();

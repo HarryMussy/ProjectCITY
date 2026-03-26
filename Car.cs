@@ -195,7 +195,7 @@ namespace CitySkylines0._5alphabeta
             if (!cars.Contains(car)) { cars.Add(car); }
         }
 
-        public void SendSpecificCarToAndFromSpecificBuilding(Car car, Building buildingA, Building buildingB)
+        public void SendSpecificCarToAndFromSpecificBuilding(EmergencyServiceVehicle esv, Building buildingA, Building buildingB)
         {
             // use the shared RNG
             var rng = carRandom;
@@ -206,32 +206,33 @@ namespace CitySkylines0._5alphabeta
             Node destinationNode = grid.nodes.Where(n => n.isRoad).OrderBy(n => Distance(buildingB.coords, n.coords)).FirstOrDefault();
             if (destinationNode == null) return;
 
-            car.startNode = startNode;
-            car.destinationNode = destinationNode;
-            car.currentNode = startNode;
-            car.currentPosition = new PointF(startNode.coords.X + 8, startNode.coords.Y + 8);
-            startNode.OccupyingCar = car;
-            car.route = CreateCarRoute(car);
+            esv.startNode = startNode;
+            esv.destinationNode = destinationNode;
+            esv.currentNode = startNode;
+            esv.currentPosition = new PointF(startNode.coords.X + 8, startNode.coords.Y + 8);
+            startNode.OccupyingCar = esv;
+            esv.route = CreateCarRoute(esv);
+            esv.isMoving = true;
 
-            if (car.route != null && car.route.Count > 0)
+            if (esv.route != null && esv.route.Count > 0)
             {
-                Node next = car.route.Peek();
+                Node next = esv.route.Peek();
 
-                Point dir = new Point(Math.Sign(next.coords.X - car.currentNode.coords.X), Math.Sign(next.coords.Y - car.currentNode.coords.Y));
+                Point dir = new Point(Math.Sign(next.coords.X - esv.currentNode.coords.X), Math.Sign(next.coords.Y - esv.currentNode.coords.Y));
 
-                car.acingDir = dir;
-                car.rotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
-                car.targetRotationAngle = car.rotationAngle;
+                esv.acingDir = dir;
+                esv.rotationAngle = MathF.Atan2(dir.Y, dir.X) * 180f / MathF.PI;
+                esv.targetRotationAngle = esv.rotationAngle;
             }
 
-            if (car.route == null || car.route.Count == 0)
+            if (esv.route == null || esv.route.Count == 0)
             {
                 Debug.WriteLine("Car has no route — cannot move.");
                 // decide: either don't add the car or add it but mark not moving
                 return;
             }
 
-            if (!cars.Contains(car)) { cars.Add(car); }
+            if (!cars.Contains(esv)) { cars.Add(esv); }
         }
 
         public bool MoveCar(Car car)
@@ -274,7 +275,6 @@ namespace CitySkylines0._5alphabeta
             {
                 if (car.type == "car") { DespawnCar(car); }
                 else {car.isMoving = false; DespawnEmergencyServiceVehicle(car); } // emergency vehicle arrived
-
                 return true;
             }
             return false;
@@ -376,18 +376,14 @@ namespace CitySkylines0._5alphabeta
                 cars.Remove(car);
                 car.isMoving = false;
             }
+            else { DespawnEmergencyServiceVehicle(car); }
         }
         public void DespawnEmergencyServiceVehicle(Car e)
         {
-            if (e.currentNode != null && e.currentNode.OccupyingCar == e)
-            {
-                e.currentNode.OccupyingCar = null;
-            }
-
+            e.currentNode.OccupyingCar = null;
             e.currentNode = null;
             e.route?.Clear();
             e.isMoving = false;
-
             cars.Remove(e);
         }
 

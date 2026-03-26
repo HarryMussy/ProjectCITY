@@ -45,6 +45,7 @@ namespace CitySkylines0._5alphabeta
             LoadRoadTiles();
             this.rectSize = rectSize;
         }
+
         private void LoadRoadTiles()
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
@@ -62,6 +63,17 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        /// <summary>
+        /// Validates that a point is within the grid boundaries.
+        /// </summary>
+        public bool IsPointOnGrid(Point p)
+        {
+            int maxX = grid.width * rectSize;
+            int maxY = grid.height * rectSize;
+            
+            return p.X >= 0 && p.X <= maxX && p.Y >= 0 && p.Y <= maxY;
+        }
+
         public void RoadPaint(object? sender, Graphics g, Point mousePos)
         {
             foreach (Node node in grid.nodes.Where(node => node.isBuildable))
@@ -77,7 +89,6 @@ namespace CitySkylines0._5alphabeta
             {
                 if (!string.IsNullOrEmpty(node.imagePath))
                 {
-                    //try exact key, then filename fallback
                     if (!roadImages.TryGetValue(node.imagePath, out img))
                     {
                         string filename = Path.GetFileName(node.imagePath);
@@ -112,6 +123,9 @@ namespace CitySkylines0._5alphabeta
                 }
                 Point pointB = setPoint;
 
+                // Validate endpoint is on grid
+                bool endPointOnGrid = IsPointOnGrid(pointB);
+
                 // highlight intersecting nodes as before
                 int edgeAngle = FindAngle(startPoint.Value, pointB);
                 Road tempRoad = new Road(startPoint.Value, pointB, "temp", edgeAngle);
@@ -124,7 +138,7 @@ namespace CitySkylines0._5alphabeta
                 }
                 else { doesNewRoadContainTileWithTileData = false; }
 
-                if (cost > grid.cash || doesNewRoadContainTileWithTileData)
+                if (cost > grid.cash || doesNewRoadContainTileWithTileData || !endPointOnGrid)
                 {
                     using var invalidroad = new SolidBrush(Color.Red);
                     foreach (Node n in nodes) { g.FillRectangle(invalidroad, n.coords.X, n.coords.Y, 16, 16); }
@@ -195,6 +209,7 @@ namespace CitySkylines0._5alphabeta
             }
             return false;
         }
+
         public Point? GetClosestPoint(Point a, List<Point> b)
         {
             List<Point> extraPoints = null;
@@ -205,7 +220,7 @@ namespace CitySkylines0._5alphabeta
                 return null;
             }
 
-            Point closestPoint = b.First(); // Start with the first point in the list
+            Point closestPoint = b.First();
             double initialDistance = CalculateDistance(a, closestPoint);
 
             if (initialDistance <= snapRadius)
@@ -213,7 +228,6 @@ namespace CitySkylines0._5alphabeta
                 closestDistance = initialDistance;
             }
 
-            // Check extra points (intersections or any other points)
             if (extraPoints != null)
             {
                 foreach (Point point in extraPoints)
@@ -228,7 +242,6 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            // Check the road end points
             foreach (Point point in b)
             {
                 double distance = CalculateDistance(a, point);
@@ -240,7 +253,6 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            // Return the closest point if within the snap radius
             if (closestDistance <= snapRadius)
             {
                 return closestPoint;
@@ -249,8 +261,6 @@ namespace CitySkylines0._5alphabeta
             return null;
         }
 
-
-        // Helper function to calculate the Euclidean distance between two points
         private double CalculateDistance(Point p1, Point p2)
         {
             return Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
@@ -271,24 +281,16 @@ namespace CitySkylines0._5alphabeta
                     break;
                 }
             }
-            List<Point> roadEndpoints = new List<Point>();
 
-            /*foreach (Road r in grid.roads)
-            {
-                roadEndpoints.Add(r.lane1.a);
-                roadEndpoints.Add(r.lane1.b);
-                roadEndpoints.Add(r.lane2.a);
-                roadEndpoints.Add(r.lane2.b);
-            }*/
-
-
-            //if graphics is null, not already drawing a road
             if (startPoint == null)
             {
-                startPoint = clickedPoint; //if closest point is not snapable, dont snap together
-                if (IsOnWater(startPoint.Value) == true)
+                startPoint = clickedPoint;
+                foreach (Node n in grid.nodes)
                 {
-                    startPoint = null;
+                    if (IsOnWater(startPoint.Value) == true && grid.IsNodeAt(n, startPoint.Value))
+                    {
+                        startPoint = null;
+                    }
                 }
             }
 
@@ -312,7 +314,12 @@ namespace CitySkylines0._5alphabeta
                 {
                     isOverlapping = true;
                 }
-                if (IsOnWater(endPoint) || doesNewRoadContainTileWithTileData) { }
+
+                // Validate both start and end points are on the grid
+                bool startPointOnGrid = IsPointOnGrid(startPoint.Value);
+                bool endPointOnGrid = IsPointOnGrid(endPoint);
+
+                if (IsOnWater(endPoint) || doesNewRoadContainTileWithTileData || !startPointOnGrid || !endPointOnGrid) { }
                 else
                 {
                     float cost = grid.RoadCashCost(startPoint.Value, endPoint);
@@ -322,7 +329,7 @@ namespace CitySkylines0._5alphabeta
                         Road newroad = new Road(startPoint.Value, endPoint, roadname, FindAngle(startPoint.Value, endPoint));
                         audioManager.PlayPlaceSound();
                         grid.cash -= grid.RoadCashCost(startPoint.Value, endPoint);
-                        grid.roads.Add(newroad); //this is now safe
+                        grid.roads.Add(newroad);
 
                         grid.FindRoadTilesAndAdjacentRoadTiles();
 
@@ -359,18 +366,15 @@ namespace CitySkylines0._5alphabeta
                         startPoint = null;
                         grid.RebuildEntireRoadGraph();
 
-
                         foreach (Car car in form1.carManager.cars)
                         {
                             car.route = form1.carManager.CreateCarRoute(car);
                         }
                     }
                 }
-
             }
         }
 
-        
         public Point SnapTo4Directions(Point a, Point b)
         {
             int[] allowedAngles = { 0, 90, 180, 270 };
@@ -389,13 +393,11 @@ namespace CitySkylines0._5alphabeta
                 return difference;
             }
 
-            //pick nearest allowed angle
             int nearest = allowedAngles.OrderBy(ang => AngleDiff(ang, angle)).First();
 
-            //keep distance and find snapped point
             double length = Math.Sqrt(changeX * changeX + changeY * changeY);
             double rad = nearest * Math.PI / 180.0;
-            int newX = (int)Math.Round(a.X + length * Math.Cos(rad)); //no clue why it only works in radians
+            int newX = (int)Math.Round(a.X + length * Math.Cos(rad));
             int newY = (int)Math.Round(a.Y + length * Math.Sin(rad));
 
             return new Point(newX, newY);
