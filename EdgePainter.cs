@@ -268,39 +268,43 @@ namespace CitySkylines0._5alphabeta
 
         public void LeftMouseDown(object? sender, MouseEventArgs m)
         {
-            Point? snappedPoint;
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
-            var clickedPoint = worldMousePos;
+            Point? clickedPoint = worldMousePos;
 
             int tile = form1.rectSize;
-            foreach (Node n in grid.nodes)
+
+            if (clickedPoint.Value.X <= grid.nodes.Last().coords.X && clickedPoint.Value.X >= grid.nodes.First().coords.X && clickedPoint.Value.Y <= grid.nodes.Last().coords.Y && clickedPoint.Value.Y >= grid.nodes.First().coords.Y)
             {
-                if (grid.IsNodeAt(n, clickedPoint))
+                foreach (Node n in grid.nodes)
                 {
-                    clickedPoint = n.Center(rectSize);
-                    break;
+                    if (grid.IsNodeAt(n, clickedPoint.Value))
+                    {
+                        clickedPoint = n.Center(rectSize);
+                        break;
+                    }
                 }
             }
+            else { clickedPoint = null; }
 
-            if (startPoint == null)
+            if (startPoint == null && clickedPoint != null)
             {
                 startPoint = clickedPoint;
                 foreach (Node n in grid.nodes)
                 {
-                    if (IsOnWater(startPoint.Value) == true && grid.IsNodeAt(n, startPoint.Value))
+                    if (IsOnWater(startPoint.Value) == true)
                     {
                         startPoint = null;
                     }
                 }
             }
 
-            else
+            else if (clickedPoint != null)
             {
                 bool isOverlapping = false;
-                Point endPoint = clickedPoint;
+                Point endPoint = clickedPoint.Value;
                 endPoint = SnapTo4Directions(startPoint.Value, endPoint);
 
-                // snap final result to node centre
+                //snap final result to node centre
                 foreach (Node n in grid.nodes)
                 {
                     if (grid.IsNodeAt(n, endPoint))

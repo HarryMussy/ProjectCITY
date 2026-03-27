@@ -380,8 +380,8 @@ namespace CitySkylines0._5alphabeta
         }
         public void DespawnEmergencyServiceVehicle(Car e)
         {
-            e.currentNode.OccupyingCar = null;
-            e.currentNode = null;
+            if (e.currentNode != null && e.currentNode.OccupyingCar != null) { e.currentNode.OccupyingCar = null; }
+            if (e.currentNode != null) { e.currentNode = null; }
             e.route?.Clear();
             e.isMoving = false;
             cars.Remove(e);

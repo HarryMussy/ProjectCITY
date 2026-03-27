@@ -29,6 +29,7 @@ namespace CitySkylines0._5alphabeta
 
         public Building() { } // required for JSON
 
+        //building assembler
         public Building(Size size, Point coords, string type, float powerDemand, float waterDemand, int MaxOccupants)
         {
             this.size = size;
@@ -58,6 +59,7 @@ namespace CitySkylines0._5alphabeta
             efficiency = 0;
         }
 
+        //assigns new occupants to the building after loading a save if Occupants wasnt saved
         public void InitializeAfterLoad()
         {
             if (Occupants == null)
@@ -66,6 +68,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //updates the building- applies affects to it if it meets a chance
         public void UpdateBuilding(double timeElapsed)
         {
             if (this.type != "fireservice") //fireservice stations cannot be set on fire

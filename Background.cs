@@ -19,6 +19,7 @@ public class Background
     [JsonIgnore] private Dictionary<string, Dictionary<string, string>> seasonalGrassEdgeImages;
     [JsonIgnore] private float noiseScale = 0.05F;
     [JsonIgnore] private float landThreshold = 0.25F;
+    [JsonIgnore] private Dictionary<string, Bitmap> seasonMaps = new();
 
     private Bitmap? currentSeasonMap;
     private Bitmap? nextSeasonMap;
@@ -26,7 +27,6 @@ public class Background
     private string? cachedSeason;
     private string? cachedNextSeason;
     
-    //image cache: path => image to avoid reloading every frame
     [JsonIgnore] private static Dictionary<string, Image> imageCache = new();
     [JsonIgnore] private bool isInitialized = false;
 
@@ -72,6 +72,9 @@ public class Background
         LoadImages();
         GenerateMap();
         GenerateDetails();
+        
+        // Pre-load all season maps at startup
+        PreloadSeasonMaps();
     }
 
     //restructures the background when a save is loaded
@@ -90,6 +93,22 @@ public class Background
         }
 
         LoadImages();
+        
+        // Pre-load all season maps after loading save
+        PreloadSeasonMaps();
+    }
+
+    private void PreloadSeasonMaps()
+    {
+        string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
+
+        foreach (string season in seasons)
+        {
+            if (!seasonMaps.ContainsKey(season))
+            {
+                seasonMaps[season] = BuildSeasonBitmap(season);
+            }
+        }
     }
 
     //finds the edge tile required for that grass edge
@@ -137,6 +156,7 @@ public class Background
             }
         }
     }
+
     private void LoadImages()
     {
         //create lists for image paths
@@ -332,20 +352,16 @@ public class Background
         string nextSeason = Form1.calendar.GetCurrentSeason(Form1.calendar.month + 1);
         float t = Form1.calendar.GetSeasonTransitionFactor();
 
-        //rebuild if season changed
-        if (currentSeasonMap == null || cachedSeason != currentSeason)
+        //use pre cached season maps - no building needed
+        if (!seasonMaps.TryGetValue(currentSeason, out currentSeasonMap) || currentSeasonMap == null)
         {
-            currentSeasonMap?.Dispose();
-            currentSeasonMap = BuildSeasonBitmap(currentSeason);
-            cachedSeason = currentSeason;
+            return;
         }
 
-        //build map for next season
-        if (nextSeasonMap == null || cachedNextSeason != nextSeason)
+        //get next season map if transitioning
+        if (t > 0f)
         {
-            nextSeasonMap?.Dispose();
-            nextSeasonMap = BuildSeasonBitmap(nextSeason);
-            cachedNextSeason = nextSeason;
+            seasonMaps.TryGetValue(nextSeason, out nextSeasonMap);
         }
 
         if (currentSeasonMap == null) { return; }
@@ -373,6 +389,7 @@ public class Background
     }
 }
 
+//perlin noise generation for map creating
 public class PerlinNoise
 {
     private Random random;
@@ -381,36 +398,48 @@ public class PerlinNoise
     public PerlinNoise()
     {
         random = new Random();
+        //create a random table of 8bit values
         for (int i = 0; i < 512; i++)
         {
             randomTable[i] = random.Next(0, 255);
         }
     }
 
+    //generates a perlin noise value between 0 and 1 for given x and y coordinates
     public float Generate(float x, float y)
     {
+        //get integer parts of coordinates and wrap to 0-255 range
         int X = (int)Math.Floor(x) & 255;
         int Y = (int)Math.Floor(y) & 255;
 
         float fx = x - (int)x;
         float fy = y - (int)y;
 
+        //apply smoothing
         float u = Fade(fx);
         float v = Fade(fy);
 
+        //look up gradient values
         int aa = randomTable[X + randomTable[Y]];
         int ab = randomTable[X + randomTable[Y + 1]];
         int ba = randomTable[X + 1 + randomTable[Y]];
         int bb = randomTable[X + 1 + randomTable[Y + 1]];
 
+        //interpolate gradients along x axis
         float x1 = Lerp(Grad(aa, fx, fy), Grad(ba, fx - 1, fy), u);
         float x2 = Lerp(Grad(ab, fx, fy - 1), Grad(bb, fx - 1, fy - 1), u);
 
+        //interpolate gradients along y axis and return final noise value
         return Lerp(x1, x2, v);
     }
 
+    //create smooth curves for interpolation
     private float Fade(float t) => t * t * t * (t * (t * 6 - 15) + 10);
+
+    //linear interpolation between two values based on factor t
     private float Lerp(float a, float b, float t) => a + t * (b - a);
+
+    //calculate gradient value based on hash and distance from grid point
     private float Grad(int hash, float x, float y)
     {
         int h = hash & 15;
