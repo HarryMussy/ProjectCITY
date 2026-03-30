@@ -237,44 +237,23 @@ namespace CitySkylines0._5alphabeta
 
         public bool MoveCar(Car car)
         {
-            //despawn cars that are occupying the same space
-            var carsOccupyingDifferentNodes = cars.Where(c => c.currentNode != null).GroupBy(c => c.currentNode).ToDictionary(g => g.Key, g => g.ToList());
-
-            // despawn extras, keep one car per node (if you want to remove all, adjust accordingly)
-            foreach (var kv in carsOccupyingDifferentNodes)
-            {
-                var carsAtNode = kv.Value;
-                if (carsAtNode.Count >= 2)
-                {
-                    // keep the first, despawn the rest
-                    for (int i = 1; i < carsAtNode.Count; i++)
-                    {
-                        DespawnCar(carsAtNode[i]);
-                    }
-                }
-            }
+            // REMOVED: the carsOccupyingDifferentNodes block that was despawning cars
 
             if (car.route != null && car.route.Count > 0)
             {
                 Node nextNode = car.route.Peek();
-
-                //determine grid direction to next node
                 Point desiredDir = new Point(Math.Sign(nextNode.coords.X - car.currentNode.coords.X), Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y));
-
                 car.acingDir = desiredDir;
                 car.targetRotationAngle = MathF.Atan2(desiredDir.Y, desiredDir.X) * 180f / MathF.PI;
-
                 RotateTowardsTarget(car);
-
                 if (IsBlocked(car, nextNode)) return false;
-
                 MoveTowardsNode(car, nextNode);
             }
 
             if (car.route != null && car.route.Count == 0 && car.currentNode == car.destinationNode)
             {
                 if (car.type == "car") { DespawnCar(car); }
-                else {car.isMoving = false; DespawnEmergencyServiceVehicle(car); } // emergency vehicle arrived
+                else { car.isMoving = false; DespawnEmergencyServiceVehicle(car); }
                 return true;
             }
             return false;
@@ -304,19 +283,24 @@ namespace CitySkylines0._5alphabeta
         {
             if (nextNode.OccupyingCar == null || nextNode.OccupyingCar == car) { return false; }
 
-            else
+            car.stuckTimeSeconds += tickDelta;
+
+            //grant this car priority after 1.5s so it can push through
+            if (car.stuckTimeSeconds >= 1.5f)
             {
-                car.stuckTimeSeconds += tickDelta;
-
-                if (car.stuckTimeSeconds >= 3f)
-                {
-                    car.blockedNodes.Add(nextNode);
-                    TryRerouteCar(car);
-                }
-
-                if (car.blockedNodes.Count > 20) { car.blockedNodes.Clear(); }
-                return true;
+                car.hasPriority = true;
             }
+
+            if (car.stuckTimeSeconds >= 3f)
+            {
+                car.blockedNodes.Add(nextNode);
+                car.hasPriority = false;
+                car.stuckTimeSeconds = 0f;
+                TryRerouteCar(car);
+            }
+
+            if (car.blockedNodes.Count > 20) { car.blockedNodes.Clear(); }
+            return true;
         }
 
         private void MoveTowardsNode(Car car, Node nextNode)
@@ -329,12 +313,7 @@ namespace CitySkylines0._5alphabeta
 
             car.stuckTimeSeconds = 0f;
 
-            //center of next tile
             PointF target = new PointF(nextNode.coords.X + 8, nextNode.coords.Y + 8);
-
-            //direction from node → node (NOT position-based)
-            Point dir = new Point(Math.Sign(nextNode.coords.X - car.currentNode.coords.X), Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y));
-
             float dx = target.X - car.currentPosition.X;
             float dy = target.Y - car.currentPosition.Y;
             float dist = MathF.Sqrt(dx * dx + dy * dy);
@@ -348,14 +327,20 @@ namespace CitySkylines0._5alphabeta
             if (dist <= step)
             {
                 if (nextNode.OccupyingCar != null && nextNode.OccupyingCar != car && !car.hasPriority) { return; }
-                if (car.currentNode.OccupyingCar == car) { car.currentNode.OccupyingCar = null; }
+
+                //always clear old node before taking new one
+                if (car.currentNode != null && car.currentNode.OccupyingCar == car)
+                {
+                    car.currentNode.OccupyingCar = null;
+                }
 
                 car.currentNode = nextNode;
                 nextNode.OccupyingCar = car;
                 car.currentPosition = target;
-
                 car.route.Dequeue();
-                car.hasPriority = false;
+
+                //only reset hasPriority for regular cars, not emergency vehicles
+                if (car.type == "car") { car.hasPriority = false; }
             }
             else
             {
@@ -447,13 +432,20 @@ namespace CitySkylines0._5alphabeta
                 }
 
                 List<Node> nodes = GetNeighbors(current, car);
-
                 if (nodes == null) { return null; }
+
                 foreach (Node neighbor in nodes)
                 {
                     if (closed.Contains(neighbor)) { continue; }
 
-                    float trafficPenalty = neighbor.OccupyingCar != null ? 1000f : 0f;
+                    //count how many neighbours of this node are also occupied to detect and heavily penalise queue build-up
+                    int surroundingCars = neighbor.neighbors.Count(n => n.OccupyingCar != null && n.OccupyingCar != car);
+
+                    float trafficPenalty = 0f;
+                    if (neighbor.OccupyingCar != null && neighbor.OccupyingCar != car) { trafficPenalty = 1000f; }
+                    else if (surroundingCars >= 2) { trafficPenalty = 500f; }  //heavily penalise approach to a backed-up area
+                    else if (surroundingCars == 1) { trafficPenalty = 150f; }  //mild penalty for approaching traffic
+
                     float tentativeG = current.gCost + Distance(current.coords, neighbor.coords) + trafficPenalty;
 
                     if (!open.Contains(neighbor) || tentativeG < neighbor.gCost)
@@ -461,7 +453,6 @@ namespace CitySkylines0._5alphabeta
                         neighbor.parent = current;
                         neighbor.gCost = tentativeG;
                         neighbor.hCost = Heuristic(neighbor, destination);
-
                         if (!open.Contains(neighbor)) { open.Add(neighbor); }
                     }
                 }

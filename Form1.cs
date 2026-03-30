@@ -385,7 +385,7 @@ namespace CitySkylines0._5alphabeta
             buildingPainter.buildingType = buildingType;
 
             //spawn a car with 50% chance each tick, as long as there are fewer cars than buildings
-            if (carManager.cars.Count() < grid.buildings.Count() && spawnCarRandom.Next(100) < 50)
+            if (carManager.cars.Count() < grid.buildings.Count() / 3 && spawnCarRandom.Next(100) < 15)
             {
                 carManager.SpawnCarNearBuilding();
             }

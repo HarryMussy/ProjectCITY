@@ -284,9 +284,9 @@ namespace CitySkylines0._5alphabeta
                 }
 
                 //bring ambulance back
-                if (!a.inService && !a.isMoving)
+                if (!a.inService && !a.isMoving && a.destBuilding != null)
                 {
-                    a.speed = 3f; //set it to normal car speed
+                    a.speed = 3f;
                     a.isMoving = true;
                     BringAmbulanceFromBuilding(a, a.destBuilding);
                 }
@@ -381,7 +381,8 @@ namespace CitySkylines0._5alphabeta
                     pc.destBuilding.isInCrime = false;
                     pc.inService = false;
                 }
-                if (!pc.inService && !pc.isMoving)
+
+                if (!pc.inService && !pc.isMoving && pc.destBuilding != null)
                 {
                     pc.speed = 3f;
                     pc.isMoving = true;
@@ -476,7 +477,8 @@ namespace CitySkylines0._5alphabeta
                     ft.destBuilding.isOnFire = false;
                     ft.inService = false;
                 }
-                if (!ft.inService && !ft.isMoving)
+
+                if (!ft.inService && !ft.isMoving && ft.destBuilding != null)
                 {
                     ft.speed = 3f;
                     ft.isMoving = true;
