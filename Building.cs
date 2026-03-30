@@ -247,17 +247,18 @@ namespace CitySkylines0._5alphabeta
         //called every tick to update every hospital
         public void UpdateHospital()
         {
-            //for every house that has occupants that arent healthy
-            foreach (Building h in grid.buildings.Where(b => b.type == "house")) 
+            foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
-                foreach (Person p in h.Occupants.Where(p => p != null)) 
+                foreach (Person p in h.Occupants.Where(p => p != null))
                 {
-                    if (p.IsHealthy == false) 
+                    if (p.IsHealthy == false)
                     {
                         for (int i = 0; i < ambulances.Length; i++)
                         {
-                            //find an ambulance that is not in service and send it to a house
-                            if (!ambulances[i].inService && ambulances.Where(e => e.destBuilding == h).Count() == 0)
+                            if (!ambulances[i].inService
+                                && !ambulances[i].isMoving
+                                && ambulances[i].destBuilding == null
+                                && ambulances.Where(e => e.destBuilding == h).Count() == 0)
                             {
                                 ambulances[i].speed = 6f;
                                 SendAmbulanceToBuilding(ambulances[i], h);
@@ -274,21 +275,23 @@ namespace CitySkylines0._5alphabeta
             {
                 if (a.inService && !a.isMoving)
                 {
-                    SendAmbulanceToBuilding(a, this); //send ambulance to house
-                    //make everyone in the ill house healthy
-                    foreach (Person p in a.destBuilding.Occupants.Where(p => p != null))
+                    // Heal the occupants
+                    if (a.destBuilding != null)
                     {
-                        p.IsHealthy = true;
+                        foreach (Person p in a.destBuilding.Occupants.Where(p => p != null))
+                        {
+                            p.IsHealthy = true;
+                        }
                     }
                     a.inService = false;
-                }
-
-                //bring ambulance back
-                if (!a.inService && !a.isMoving && a.destBuilding != null)
-                {
                     a.speed = 3f;
                     a.isMoving = true;
                     BringAmbulanceFromBuilding(a, a.destBuilding);
+                }
+                else if (!a.inService && !a.isMoving && a.destBuilding != null)
+                {
+                    // Returned to hospital — fully reset
+                    a.destBuilding = null;
                 }
             }
         }
@@ -361,7 +364,10 @@ namespace CitySkylines0._5alphabeta
                 {
                     for (int i = 0; i < PoliceCars.Length; i++)
                     {
-                        if (!PoliceCars[i].inService && PoliceCars.Where(e => e.destBuilding == h).Count() == 0)
+                        if (!PoliceCars[i].inService
+                            && !PoliceCars[i].isMoving
+                            && PoliceCars[i].destBuilding == null
+                            && PoliceCars.Where(e => e.destBuilding == h).Count() == 0)
                         {
                             PoliceCars[i].speed = 6f;
                             SendPoliceCarToBuilding(PoliceCars[i], h);
@@ -377,19 +383,23 @@ namespace CitySkylines0._5alphabeta
             {
                 if (pc.inService && !pc.isMoving)
                 {
-                    SendPoliceCarToBuilding(pc, this);
-                    pc.destBuilding.isInCrime = false;
+                    if (pc.destBuilding != null)
+                    {
+                        pc.destBuilding.isInCrime = false;
+                    }
                     pc.inService = false;
-                }
-
-                if (!pc.inService && !pc.isMoving && pc.destBuilding != null)
-                {
                     pc.speed = 3f;
                     pc.isMoving = true;
                     BringPoliceCarFromBuilding(pc, pc.destBuilding);
                 }
+                else if (!pc.inService && !pc.isMoving && pc.destBuilding != null)
+                {
+                    // Returned to station — fully reset
+                    pc.destBuilding = null;
+                }
             }
         }
+
         public void SendPoliceCarToBuilding(EmergencyServiceVehicle policeCar, Building building)
         {
             carManager.SendSpecificCarToAndFromSpecificBuilding(policeCar, this, building);
@@ -457,7 +467,10 @@ namespace CitySkylines0._5alphabeta
                 {
                     for (int i = 0; i < fireTrucks.Length; i++)
                     {
-                        if (!fireTrucks[i].inService && fireTrucks.Where(e => e.destBuilding == h).Count() == 0)
+                        if (!fireTrucks[i].inService
+                            && !fireTrucks[i].isMoving
+                            && fireTrucks[i].destBuilding == null
+                            && fireTrucks.Where(e => e.destBuilding == h).Count() == 0)
                         {
                             fireTrucks[i].speed = 6f;
                             SendFireTruckToBuilding(fireTrucks[i], h);
@@ -466,26 +479,30 @@ namespace CitySkylines0._5alphabeta
                             break;
                         }
                     }
-                } 
+                }
             }
 
             foreach (FireTruck ft in fireTrucks)
             {
                 if (ft.inService && !ft.isMoving)
                 {
-                    SendFireTruckToBuilding(ft, this);
-                    ft.destBuilding.isOnFire = false;
+                    if (ft.destBuilding != null)
+                    {
+                        ft.destBuilding.isOnFire = false;
+                    }
                     ft.inService = false;
-                }
-
-                if (!ft.inService && !ft.isMoving && ft.destBuilding != null)
-                {
                     ft.speed = 3f;
                     ft.isMoving = true;
                     BringFireTruckFromBuilding(ft, ft.destBuilding);
                 }
+                else if (!ft.inService && !ft.isMoving && ft.destBuilding != null)
+                {
+                    // Returned to station — fully reset
+                    ft.destBuilding = null;
+                }
             }
         }
+
         public void SendFireTruckToBuilding(EmergencyServiceVehicle fireTruck, Building building)
         {
             carManager.SendSpecificCarToAndFromSpecificBuilding(fireTruck, this, building);

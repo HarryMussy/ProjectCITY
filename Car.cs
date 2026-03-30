@@ -237,16 +237,20 @@ namespace CitySkylines0._5alphabeta
 
         public bool MoveCar(Car car)
         {
-            // REMOVED: the carsOccupyingDifferentNodes block that was despawning cars
-
             if (car.route != null && car.route.Count > 0)
             {
                 Node nextNode = car.route.Peek();
-                Point desiredDir = new Point(Math.Sign(nextNode.coords.X - car.currentNode.coords.X), Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y));
+                Point desiredDir = new Point(
+                    Math.Sign(nextNode.coords.X - car.currentNode.coords.X),
+                    Math.Sign(nextNode.coords.Y - car.currentNode.coords.Y));
                 car.acingDir = desiredDir;
                 car.targetRotationAngle = MathF.Atan2(desiredDir.Y, desiredDir.X) * 180f / MathF.PI;
                 RotateTowardsTarget(car);
-                if (IsBlocked(car, nextNode)) return false;
+
+                // Only block on non-intersection nodes — let cars flow through intersections
+                bool nextIsIntersection = nextNode.neighbors.Count >= 3;
+                if (!nextIsIntersection && IsBlocked(car, nextNode)) return false;
+
                 MoveTowardsNode(car, nextNode);
             }
 
@@ -285,7 +289,6 @@ namespace CitySkylines0._5alphabeta
 
             car.stuckTimeSeconds += tickDelta;
 
-            //grant this car priority after 1.5s so it can push through
             if (car.stuckTimeSeconds >= 1.5f)
             {
                 car.hasPriority = true;
@@ -297,6 +300,12 @@ namespace CitySkylines0._5alphabeta
                 car.hasPriority = false;
                 car.stuckTimeSeconds = 0f;
                 TryRerouteCar(car);
+            }
+
+            if (car.type == "car" && car.stuckTimeSeconds >= 8f)
+            {
+                DespawnCar(car);
+                return true;
             }
 
             if (car.blockedNodes.Count > 20) { car.blockedNodes.Clear(); }
@@ -326,25 +335,38 @@ namespace CitySkylines0._5alphabeta
 
             if (dist <= step)
             {
-                if (nextNode.OccupyingCar != null && nextNode.OccupyingCar != car && !car.hasPriority) { return; }
+                bool nextIsIntersection = nextNode.neighbors.Count >= 3;
 
-                //always clear old node before taking new one
+                // Only enforce occupancy on non-intersection nodes
+                if (!nextIsIntersection && nextNode.OccupyingCar != null
+                    && nextNode.OccupyingCar != car && !car.hasPriority)
+                {
+                    return;
+                }
+
                 if (car.currentNode != null && car.currentNode.OccupyingCar == car)
                 {
                     car.currentNode.OccupyingCar = null;
                 }
 
                 car.currentNode = nextNode;
-                nextNode.OccupyingCar = car;
+
+                // Don't mark intersection nodes as occupied — they're shared space
+                if (!nextIsIntersection)
+                {
+                    nextNode.OccupyingCar = car;
+                }
+
                 car.currentPosition = target;
                 car.route.Dequeue();
 
-                //only reset hasPriority for regular cars, not emergency vehicles
                 if (car.type == "car") { car.hasPriority = false; }
             }
             else
             {
-                car.currentPosition = new PointF(car.currentPosition.X + dx / dist * step, car.currentPosition.Y + dy / dist * step);
+                car.currentPosition = new PointF(
+                    car.currentPosition.X + dx / dist * step,
+                    car.currentPosition.Y + dy / dist * step);
             }
         }
 

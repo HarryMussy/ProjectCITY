@@ -47,6 +47,7 @@ namespace CitySkylines0._5alphabeta
         public Graphics g;
         public CarManager carManager;
         public Calendar calendar;
+        public bool ReturnToMenu = false;
 
         public int gridDimensions = 100;
         public Point camera = new Point(0, 0);
@@ -287,6 +288,13 @@ namespace CitySkylines0._5alphabeta
             Form1_PlayRandomTrack();
 
             lastTickTime = DateTime.Now;
+        }
+
+
+        public void ReturnToMainMenu()
+        {
+            ReturnToMenu = true;
+            this.Close();
         }
 
         //changes the volume
@@ -663,13 +671,6 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
             }
-        }
-
-        public void ReturnToMainMenu()
-        {
-            this.Hide();
-            new MainMenuForm().ShowDialog();
-            this.Close();
         }
     }
 }

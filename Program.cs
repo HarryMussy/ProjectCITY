@@ -53,8 +53,6 @@ namespace CitySkylines0._5alphabeta
             loadingForm.Show();
             loadingForm.Refresh();
 
-
-            // Create game form
             if (menu.IsNewGame)
             {
                 mainForm = new Form1(menu.SelectedDifficulty, new AudioManager());
@@ -64,10 +62,20 @@ namespace CitySkylines0._5alphabeta
                 mainForm = new Form1(menu.LoadedSave, new AudioManager());
             }
 
-            mainForm.FormClosed += (s, e) => ExitThread();
+            // Key change: instead of ExitThread on close, go back to menu
+            mainForm.FormClosed += (s, e) =>
+            {
+                if (mainForm.ReturnToMenu)
+                {
+                    ShowMainMenu();
+                }
+                else
+                {
+                    ExitThread();
+                }
+            };
 
             loadingForm.Hide();
-
             this.MainForm = mainForm;
             mainForm.Show();
         }

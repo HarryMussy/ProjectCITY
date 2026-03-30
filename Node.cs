@@ -47,10 +47,7 @@ namespace CitySkylines0._5alphabeta
 
         public void IsNodeBuildable()
         {
-            if (!hasTileData && isGrass && isNearRoad && !isRoad) 
-            {
-                isBuildable = true;
-            }
+            isBuildable = !hasTileData && isGrass && isNearRoad && !isRoad;
         }
 
         public Point Center(int rectSize)
