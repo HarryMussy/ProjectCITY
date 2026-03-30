@@ -33,17 +33,16 @@ namespace CitySkylines0._5alphabeta
         public string CurrentSeason;
 
 
-        // Must be serialized or time will jump after load
+        //must be serialized or time will jump after load
         public double elapsedMilliSeconds { get; set; }
         public double elapsedSeconds { get; set; }
 
-        // configuration for visual alpha ranges
+        //configuration for visual alpha ranges
         private const int MaxAlpha = 150;
 
-        // REQUIRED for JSON
+        //required for JSON
         public Calendar() { }
 
-        // Your existing constructor
         public Calendar(int dayIn, int monthIn, int yearIn, int hourIn, int minuteIn, Form1 form1)
         {
             day = dayIn;
@@ -56,18 +55,19 @@ namespace CitySkylines0._5alphabeta
             form1PassIn = form1;
         }
 
-        public int GetHour() => hour;
+        public int GetHour() => hour; //returns the current hour
 
-        // Return a fade factor 0-1 depending on how close we are to season end
+        //return a fade factor 0-1 depending on how close we are to season end
         public float GetSeasonTransitionFactor()
         {
             int monthLength = DaysInMonth(month);
-            int fadeStart = monthLength - 7; // last 7 days of season
+            int fadeStart = monthLength - 7; //last 7 days of season is transitional period
             if (day <= fadeStart) return 0f;
 
             return (float)(day - fadeStart) / 7f;
         }
 
+        //at the end of every month, this is called to find the current season
         public void UpdateCurrentSeason()
         {
             if (month == 12 || month == 1 || month == 2)
@@ -88,6 +88,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //this is called when retrieving the current or next season
         public string GetCurrentSeason(int month)
         {
             if (month == 12 || month == 1 || month == 2 || month == 13) //13th month used to prevent getting Autumn when transitioning from 12th month the 13th/ 1st month
@@ -108,11 +109,13 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //advance the in game time
         public void AdvanceTime(double elapsed)
         {
             elapsedMilliSeconds += elapsed;
             elapsedSeconds += elapsed / 1000;
 
+            //every real second is 1 minute and 1 day
             if (elapsedMilliSeconds >= timeToAdvanceMinute)
             {
                 minute += advanceMinutes;
@@ -125,36 +128,37 @@ namespace CitySkylines0._5alphabeta
 
                 elapsedMilliSeconds = 0;
             }
-
             if (elapsedSeconds >= timeToAdvanceDay)
             {
                 day++;
                 elapsedSeconds = 0;
             }
 
-            if (hour >= 24) //days go forward every second or when 1 second has passed
+            if (hour >= 24) //days go forward every second or when 24 hours have passed, reset minute and hour counter
             {
                 day += 1;
                 hour = 0;
                 minute = 0;
             }
 
+            //increase the month when the number of days is greater than the days in the month and reset day counter
             if (day > DaysInMonth(month))
             {
                 month += 1;
                 UpdateCurrentSeason();
-                form1PassIn.populationManager.UpdatePopulationByMonth();
+                form1PassIn.populationManager.UpdatePopulationByMonth(); //update monthly population data
                 day = 1;
             }
 
             if (month > 12)
             {
                 year += 1;
-                form1PassIn.populationManager.UpdatePopulationByYear();
+                form1PassIn.populationManager.UpdatePopulationByYear(); //update yearly population data
                 month = 1;
             }
         }
 
+        //apply a screen to the game at specific times of day
         public void TimePainter(object? sender, Graphics g)
         {
             double progress = minute / 60.0;
@@ -165,30 +169,41 @@ namespace CitySkylines0._5alphabeta
             double factorIncrease = Math.Sin(Math.PI / 2 * progress);
             double factorDecrease = Math.Cos(Math.PI / 2 * progress);
 
+            //increase dawn and decrease night at 5 am
             if (hour == 5)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
                 nightOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
             }
+
+            //decrease dawn factor at 6 am
             else if (hour == 6)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
                 nightOpacity = 0;
             }
+
+            //increase dusk factor at 8pm
             else if (hour == 20)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
             }
+
+            //decrease dusk factor and increase nightly factor at 9 pm
             else if (hour == 21)
             {
                 duskOpacity = (int)Math.Round(MaxAlpha * factorDecrease);
                 nightOpacity = (int)Math.Round(MaxAlpha * factorIncrease);
             }
+
+            //between the hours of 10pm and 4am, it is night
             else if (hour > 21 || hour < 5)
             {
                 nightOpacity = MaxAlpha;
                 duskOpacity = 0;
             }
+
+            //between 7am and 8pm it is day
             else
             {
                 duskOpacity = 0;
@@ -198,12 +213,14 @@ namespace CitySkylines0._5alphabeta
             duskOpacity = Clamp(duskOpacity, 0, 255);
             nightOpacity = Clamp(nightOpacity, 0, 255);
 
+            //draw dusk over the screen if the opacity is > 0
             if (duskOpacity > 0)
             {
                 using Brush dusk = new SolidBrush(Color.FromArgb((int)(duskOpacity * 0.25), 180, 80, 30));
                 g.FillRectangle(dusk, 0, 0, form1PassIn.ClientSize.Width, form1PassIn.ClientSize.Height);
             }
 
+            //draw night over the screen if the opacity is > 0
             if (nightOpacity > 0)
             {
                 using Brush night = new SolidBrush(Color.FromArgb(nightOpacity, 0, 0, 50));
@@ -211,6 +228,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //returns the number of days dependant on the month int
         private int DaysInMonth(int month)
         {
             if (month == 2) return 28;
@@ -218,6 +236,7 @@ namespace CitySkylines0._5alphabeta
             else return 31;
         }
 
+        //clamps data between values
         private static int Clamp(int v, int lo, int hi) => v < lo ? lo : (v > hi ? hi : v);
     }
 }

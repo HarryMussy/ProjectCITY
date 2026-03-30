@@ -13,9 +13,9 @@ namespace CitySkylines0._5alphabeta
         public Grid gridRef;
         public CarManager carManager;
         public Form1 form1;
-        private Road road;
-        private Building building;
-        private Car car;
+        private Road road; //the road that is being selected
+        private Building building; //the building that is being selected
+        private Car car; //the car that is being selected
 
 
         // visible semi-transparent red
@@ -32,6 +32,7 @@ namespace CitySkylines0._5alphabeta
         {
             if (b == null) return;
 
+            //reset the tile data that the building occupies
             foreach (int index in b.occupyingNodesIndex)
             {
                 Node n = gridRef.nodes.FirstOrDefault(node => node.nodeNumber == index);
@@ -40,40 +41,25 @@ namespace CitySkylines0._5alphabeta
                 n.IsNodeBuildable();
             }
 
+            //remove the building
             gridRef.buildings.Remove(b);
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
-            gridRef.cash += b.cost / 2;
+            gridRef.cash += b.cost / 2; //give the player half of the cost of the building back
         }
 
         public void RemoveCar(Car c)
         {
-            if (c.type == "car") { carManager.DespawnCar(c); }
-            else { carManager.DespawnEmergencyServiceVehicle(c); }
+            if (c.type == "car") { carManager.DespawnCar(c); } //remove the car fully
+            else { carManager.DespawnEmergencyServiceVehicle(c); } //otherwise despawn the emergency vehicle: safe so it can be reused
         }
 
         public void RemoveRoad(Road r)
         {
             if (r == null) return;
 
-            if (gridRef.roads.Contains(r)) { gridRef.roads.Remove(r); }
+            if (gridRef.roads.Contains(r)) { gridRef.roads.Remove(r); } //remove the road
 
-            /*if (r.lane1.occupyingNodesIndex != null)
-            {
-                foreach (Node n in gridRef.nodes.Where(node => r.lane1.occupyingNodesIndex.Contains(node.nodeNumber)))
-                {
-                    n.isRoad = false;
-                    n.isNearRoad = false;
-                    n.IsNodeBuildable();
-                }
-            }
-
-            foreach (Node n in gridRef.nodes.Where(node => r.lane2.occupyingNodesIndex.Contains(node.nodeNumber)))
-            {
-                n.isRoad = false;
-                n.isNearRoad = false;
-                n.IsNodeBuildable();
-            }*/
-
+            //reset all nodes tile data
             foreach (Node n in gridRef.nodes)
             {
                 n.isBuildable = false;
@@ -81,7 +67,7 @@ namespace CitySkylines0._5alphabeta
                 n.isNearRoad = false;
             }
 
-            
+            //reconstruct tile data for roads
             gridRef.FindRoadTilesAndAdjacentRoadTiles();
 
             foreach (Road road in gridRef.roads)
@@ -90,18 +76,19 @@ namespace CitySkylines0._5alphabeta
                 road.lane2.occupyingNodesIndex = gridRef.FindRoadTilesForSpecificEdge(road.lane2, 1);
             }
 
+            //rebuilding adjacency for car navigation for roads
             gridRef.RebuildEntireRoadGraph();
         }
 
         public void BulldozerPainter(object? sender, Graphics g)
         {
             int tileW = form1.rectSize;
-            if (car != null)
+            if (car != null) //highlight a car
             {
                 g.FillRectangle(redBrush, car.currentPosition.X - 8, car.currentPosition.Y - 8, tileW, tileW);
             }
 
-            if (road != null)
+            if (road != null) //highlight every node that a road occupies
             {
                 foreach (int index in road.lane1.occupyingNodesIndex)
                 {
@@ -116,7 +103,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (building != null)
+            if (building != null) //highlight every node that a building occupies
             {
                 foreach (int index in building.occupyingNodesIndex)
                 {
@@ -134,9 +121,9 @@ namespace CitySkylines0._5alphabeta
             building = null;
             car = null;
 
-            Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
+            Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m); //find the world mouse position
 
-            foreach (Car c in carManager.cars)
+            foreach (Car c in carManager.cars) //check if the mouse is over a car
             {
                 int cx = (int)c.currentPosition.X;
                 int cy = (int)c.currentPosition.Y;
@@ -148,9 +135,9 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (car == null)
+            if (car == null) //dont check to see if highlighting a road if a car is being selected
             {
-                // find edge by checking points on the edge (tolerance matches node size)
+                //find edge by checking points on the edge (tolerance matches node size)
                 foreach (Road r in gridRef.roads)
                 {
                     foreach (Point p in r.lane1.pointsOnTheEdge)
@@ -173,9 +160,9 @@ namespace CitySkylines0._5alphabeta
                 }
             }
             
-            if (car == null && road == null)
+            if (car == null && road == null) //dont check to see if highlighting a building if selecting a car or road
             {
-                // find building (account for tile -> pixel size)
+                //find building (account for tile -> pixel size)
                 foreach (Building b in gridRef.buildings)
                 {
                     int bx = b.coords.X;
@@ -191,7 +178,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            // now we are allowed to delete
+            //now we are allowed to delete if clicked over the highlighted object
             if (click)
             {
                 if (road != null) { RemoveRoad(road); }

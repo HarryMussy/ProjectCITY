@@ -233,6 +233,8 @@ namespace CitySkylines0._5alphabeta
 
             string projectRoot = AppContext.BaseDirectory;
             string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+
+            //reconstruct ambulances
             ambulances =
             [
                 new Ambulance(null, 6f, null, path, "ambulance", null),
@@ -247,12 +249,14 @@ namespace CitySkylines0._5alphabeta
         //called every tick to update every hospital
         public void UpdateHospital()
         {
+            //find a house with occupants that are unhealthy
             foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 foreach (Person p in h.Occupants.Where(p => p != null))
                 {
                     if (p.IsHealthy == false)
                     {
+                        //search for an available ambulance and send it to the desired house
                         for (int i = 0; i < ambulances.Length; i++)
                         {
                             if (!ambulances[i].inService
@@ -272,9 +276,10 @@ namespace CitySkylines0._5alphabeta
 
             foreach (EmergencyServiceVehicle a in ambulances)
             {
+                //if the ambulance has reached its destination
                 if (a.inService && !a.isMoving)
                 {
-                    // Heal the occupants
+                    //heal the occupants
                     if (a.destBuilding != null)
                     {
                         foreach (Person p in a.destBuilding.Occupants.Where(p => p != null))
@@ -282,6 +287,8 @@ namespace CitySkylines0._5alphabeta
                             p.IsHealthy = true;
                         }
                     }
+
+                    //bring the ambulance back to the hospital
                     a.inService = false;
                     a.speed = 3f;
                     a.isMoving = true;
@@ -289,7 +296,7 @@ namespace CitySkylines0._5alphabeta
                 }
                 else if (!a.inService && !a.isMoving && a.destBuilding != null)
                 {
-                    // Returned to hospital — fully reset
+                    //returned to hospital — fully reset
                     a.destBuilding = null;
                 }
             }
@@ -328,6 +335,8 @@ namespace CitySkylines0._5alphabeta
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             grid = gridIn;
             carManager = carManagerIn;
+
+            //construct the available police cars
             string projectRoot = AppContext.BaseDirectory;
             string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
             PoliceCars =
@@ -339,11 +348,13 @@ namespace CitySkylines0._5alphabeta
             PoliceCars[1].hasPriority = true;
         }
 
+        //reconstructs police buildings when loading a new save
         public void Reconnect(Grid gridIn, CarManager carManagerIn)
         {
             grid = gridIn;
             carManager = carManagerIn;
 
+            //reconstruct police cars
             string projectRoot = AppContext.BaseDirectory;
             string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
             PoliceCars =
@@ -357,10 +368,12 @@ namespace CitySkylines0._5alphabeta
 
         public void UpdatePoliceBuilding()
         {
+            //find a house that is experiencing crime
             foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 if (h.isInCrime == true)
                 {
+                    //send a police car to that building
                     for (int i = 0; i < PoliceCars.Length; i++)
                     {
                         if (!PoliceCars[i].inService
@@ -381,10 +394,13 @@ namespace CitySkylines0._5alphabeta
             {
                 if (pc.inService && !pc.isMoving)
                 {
+                    //ensure the building is no longer experiencing a crime
                     if (pc.destBuilding != null)
                     {
                         pc.destBuilding.isInCrime = false;
                     }
+
+                    //bring the police car home
                     pc.inService = false;
                     pc.speed = 3f;
                     pc.isMoving = true;
@@ -392,7 +408,7 @@ namespace CitySkylines0._5alphabeta
                 }
                 else if (!pc.inService && !pc.isMoving && pc.destBuilding != null)
                 {
-                    // Returned to station — fully reset
+                    //returned to station — fully reset
                     pc.destBuilding = null;
                 }
             }
@@ -430,6 +446,8 @@ namespace CitySkylines0._5alphabeta
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             grid = gridIn;
             carManager = carManagerIn;
+
+            //construct the fire trucks
             string projectRoot = AppContext.BaseDirectory;
             string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
             fireTrucks =
@@ -441,11 +459,13 @@ namespace CitySkylines0._5alphabeta
             fireTrucks[1].hasPriority = true;
         }
 
+        //reassigns [JSON IGNORE] attributes when loading a save
         public void Reconnect(Grid gridIn, CarManager carManagerIn)
         {
             grid = gridIn;
             carManager = carManagerIn;
 
+            //reconstruct fire trucks when reloading a save
             string projectRoot = AppContext.BaseDirectory;
             string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
             fireTrucks =
@@ -459,10 +479,12 @@ namespace CitySkylines0._5alphabeta
 
         public void UpdateFireService()
         {
+            //find a house that is on fire
             foreach (Building h in grid.buildings.Where(b => b.type == "house"))
             {
                 if (h.isOnFire)
                 {
+                    //find an available fire truck and send it to that house
                     for (int i = 0; i < fireTrucks.Length; i++)
                     {
                         if (!fireTrucks[i].inService
@@ -481,12 +503,15 @@ namespace CitySkylines0._5alphabeta
 
             foreach (FireTruck ft in fireTrucks)
             {
+                //once the fire truck has reached its destination, put out the fire
                 if (ft.inService && !ft.isMoving)
                 {
                     if (ft.destBuilding != null)
                     {
                         ft.destBuilding.isOnFire = false;
                     }
+
+                    //bring back the fire truck
                     ft.inService = false;
                     ft.speed = 3f;
                     ft.isMoving = true;
@@ -494,7 +519,7 @@ namespace CitySkylines0._5alphabeta
                 }
                 else if (!ft.inService && !ft.isMoving && ft.destBuilding != null)
                 {
-                    // Returned to station — fully reset
+                    //returned to station — fully reset
                     ft.destBuilding = null;
                 }
             }

@@ -65,6 +65,7 @@ namespace CitySkylines0._5alphabeta
             policeBuildingSize = new Size(3, 2);
         }
 
+        //returns an image based off of the image path
         public Image GetImage(string path)
         {
             if (!imageCache.ContainsKey(path))
@@ -74,8 +75,10 @@ namespace CitySkylines0._5alphabeta
             return imageCache[path];
         }
 
+        //draws the building information onto the map
         public void BuildingPaint(object? sender, Graphics g, Point mousePos)
         {
+            //draws an outline of where the building will be based off the type of building
             if (Form1.selectingBuildingPainting == true)
             {
                 if (buildingType == "house")
@@ -83,6 +86,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, houseSize.Width, houseSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, houseSize.Width, houseSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 10000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -99,6 +103,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, powerPlantSize.Width, powerPlantSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, powerPlantSize.Width, powerPlantSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 50000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -115,6 +120,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, factorySize.Width, factorySize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, factorySize.Width, factorySize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 50000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -131,6 +137,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, waterPumpSize.Width, waterPumpSize.Height);
                     bool canPlace = CanPlaceWaterPump(grid, mousePos, waterPumpSize.Width, waterPumpSize.Height);
 
+                    //3 states: have enough money and is in a valid placement- difference for water pumps as they need to be placed by water as well
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 10000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -147,6 +154,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, shopSize.Width, shopSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, shopSize.Width, shopSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 30000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -163,6 +171,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, hospitalSize.Width, hospitalSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, hospitalSize.Width, hospitalSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 100000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -179,6 +188,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, policeBuildingSize.Width, policeBuildingSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, policeBuildingSize.Width, policeBuildingSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 100000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -195,6 +205,7 @@ namespace CitySkylines0._5alphabeta
                     var footprintNodes = GetFootprintNodes(mousePos, fireServiceSize.Width, fireServiceSize.Height);
                     bool canPlace = CanPlaceBuilding(grid, mousePos, fireServiceSize.Width, fireServiceSize.Height);
 
+                    //3 states: have enough money and is in a valid placement
                     foreach (Node node in footprintNodes)
                     {
                         if (grid.cash < 75000) { g.FillRectangle(moneyCostBrushSpace, node.coords.X, node.coords.Y, rectSize, rectSize); }
@@ -207,11 +218,13 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            // Use the form's zoomLevel if available
+            //use the form's zoomLevel if available
             float zoom = Form1 != null ? Form1.rectSize / 200f : 1.0f;
 
+            //loop through every building
             foreach (Building building in grid.buildings)
             {
+                //apply a glow to buildings at night
                 if (building.isAbandoned == false && (calendar.GetHour() >= 21 || calendar.GetHour() <= 5))
                 {
                     using Brush glow1 = new SolidBrush(Color.FromArgb(90, 255, 255, 200));  // bright center
@@ -224,6 +237,7 @@ namespace CitySkylines0._5alphabeta
                     g.FillEllipse(glow1, building.coords.X, building.coords.Y, (building.size.Width * rectSize), (building.size.Height * rectSize));
                 }
 
+                //for every house that isn't abandoned
                 if (building.type == "house" && !building.isAbandoned)
                 {
                     int imgIdx;
@@ -232,12 +246,13 @@ namespace CitySkylines0._5alphabeta
                         imgIdx = random.Next(houseImagesPath.Count);
                         tileHouseImageIndex[building] = imgIdx;
                     }
-                    // Use building.size for drawing
+
+                    //use building.size for drawing
                     g.DrawImage(GetImage(building.imagePath), building.coords.X, building.coords.Y, building.size.Width * rectSize, building.size.Height * rectSize);
-                    /*                    g.DrawString(building.Occupants.Where(p => p != null).Count().ToString(), new Font("Segoe UI", 8, FontStyle.Bold), new SolidBrush(Color.White), building.coords.X, building.coords.Y + 5);*/
 
                     foreach (Person p in building.Occupants.Where(p => p != null))
                     {
+                        //draw an unhealthy icon in the case of the people in the house being ill
                         if (p.IsHealthy == false)
                         {
                             Unhealthy ne = new Unhealthy(10);
@@ -248,6 +263,8 @@ namespace CitySkylines0._5alphabeta
                         }
                     }
                 }
+
+                //for any other building
                 else
                 {
                     if (!building.isAbandoned)
@@ -256,12 +273,14 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
+                //draw the necessities for the building (power water etc.) if not fulfilled
                 for (int i = 0; i < building.necessities.Count; i++)
                 {
                     Necessity ne = building.necessities[i];
                     ne.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + (i * 8), building.coords.Y));
                 }
 
+                //if the building is experiencing crime, draw the crime icon as well
                 if (building.isInCrime)
                 {
                     Crime crime = new Crime();
@@ -270,7 +289,8 @@ namespace CitySkylines0._5alphabeta
                     crime.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + 16, building.coords.Y + 8));
                 }
 
-                if (building.isOnFire /*&& !building.isAbandoned*/)
+                //if the building is on fire draw a fire over the building
+                if (building.isOnFire)
                 {
                     foreach (int nodeNumber in building.occupyingNodesIndex)
                     {
@@ -282,6 +302,7 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
+                //if the building is abandoned kill every person in the building and draw the abandoned building image
                 if (building.isAbandoned)
                 {
                     if (building.Occupants != null)
@@ -299,6 +320,8 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+
+            //update each emergency service
             foreach (Hospital h in grid.buildings.Where(b => b.type == "hospital"))
             {
                 h.UpdateHospital();
@@ -315,52 +338,61 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //load the images for each building and each effect
         private void LoadBuildingImages()
         {
+            //find the project folder
             string projectRoot = AppContext.BaseDirectory;
+
+            //find the folder for all of the houses
             string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Houses");
             houseImagesPath = new List<string>();
 
             foreach (string path in Directory.GetFiles(houseFolder, "*.png"))
             {
+                //load all of the house images
                 using var original = Image.FromFile(path);
                 houseImagesPath.Add(path);
             }
 
+            //find the folder for shops
             string shopFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Shops");
             shopsImagesPath = new List<string>();
 
             foreach (string path in Directory.GetFiles(shopFolder, "*.png"))
             {
+                //load all of the shop images
                 using var original = Image.FromFile(path);
                 shopsImagesPath.Add(path);
             }
 
+            //find the folder for factories
             string factoryFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Factories");
             factoriesImagesPath = new List<string>();
 
             foreach (string path in Directory.GetFiles(factoryFolder, "*.png"))
             {
+                //load every factory image
                 using var original = Image.FromFile(path);
                 factoriesImagesPath.Add(path);
             }
 
+            //load all of the other building images
             powerPlantImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "powerPlant.png");
-
             waterPumpImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "waterPump.png");
-
             hospitalImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "hospital.png");
-
             policeBuildingImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "police.png");
-
             fireServiceBuildingImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "fireservicebuilding.png");
 
+            //find the images for the fires
             fireImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons", "fire.png");
             fireImg = GetImage(fireImagePath);
 
+            //find the images for crimes
             string crimeImgPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons", "Crime.png");
             crimeImg = GetImage(crimeImgPath);
 
+            //find the images for abandoned buildings
             string abandonedTileImagePath = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Abandoned.png");
             abandonedTileImage = GetImage(abandonedTileImagePath);
         }
@@ -368,32 +400,40 @@ namespace CitySkylines0._5alphabeta
 
         public void LeftMouseDown(object? sender, MouseEventArgs m)
         {
+            //find the position of the mouse oon the world map
             List<int> checkedSpaces = new List<int>();
             List<Node> checkedNodes = new List<Node>();
             Point worldMousePos = ((Form1)sender).Mouse_Pos(sender, m);
-            //var clickedPoint = new Point((int)((worldMousePos.X - screencentre.X) / zoomLevel + screencentre.X), (int)((worldMousePos.Y - screencentre.Y) / zoomLevel + screencentre.Y));
             var clickedPoint = worldMousePos;
 
+            //if the clicked point is not on the world map do nothing
             if (clickedPoint.X < grid.nodes.First().coords.X || clickedPoint.Y < grid.nodes.First().coords.Y || clickedPoint.X > grid.nodes.Last().coords.X || clickedPoint.Y > grid.nodes.Last().coords.Y)
             {
                 return;
             }
 
+            //if the clicked point is on the map and you have enough cash, building a specific building
             if (grid.cash >= 10000 && buildingType == "house")
             {
+                //check if the building space is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, houseSize.Width, houseSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, houseSize.Width, houseSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //create a new house
                 House newHouse = new House(houseSize, placement, "house", 10, 10);
                 newHouse.imagePath = houseImagesPath[random.Next(houseImagesPath.Count())];
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the house to the available buildings
                 grid.buildings.Add(newHouse);
                 grid.cash -= newHouse.cost;
 
+                //update map tile data
                 foreach (Node node in footprintNodes)
                 {
                     newHouse.occupyingNodesIndex.Add(node.nodeNumber);
@@ -403,19 +443,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 50000 && buildingType == "powerplant")
             {
+                //check if the building placement is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, powerPlantSize.Width, powerPlantSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, powerPlantSize.Width, powerPlantSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new power plant
                 PowerPlant newPowerPlant = new PowerPlant(powerPlantSize, placement, "powerplant", 1000, 50);
                 newPowerPlant.imagePath = powerPlantImagePath;
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the building to the list
                 grid.buildings.Add(newPowerPlant);
                 grid.cash -= newPowerPlant.cost;
 
+                //update map tile data
                 foreach (Node node in footprintNodes)
                 {
                     newPowerPlant.occupyingNodesIndex.Add(node.nodeNumber);
@@ -425,19 +471,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 50000 && buildingType == "factory")
             {
+                //check if the building space is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, factorySize.Width, factorySize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, factorySize.Width, factorySize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new factory
                 Factory newFactory = new Factory(factorySize, placement, "factory", 100, 100);
                 newFactory.imagePath = factoriesImagesPath[random.Next(factoriesImagesPath.Count())];
 
+                //play a placement sound
                 audioManager.PlayPlaceSound();
+
+                //add a building to the list
                 grid.buildings.Add(newFactory);
                 grid.cash -= newFactory.cost;
 
+                //update node tile data on the map
                 foreach (Node node in footprintNodes)
                 {
                     newFactory.occupyingNodesIndex.Add(node.nodeNumber);
@@ -447,19 +499,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 30000 && buildingType == "waterpump")
             {
+                //check if building placement is valid- different from other buildings as it has to be adjacent to water
                 if (!CanPlaceWaterPump(grid, clickedPoint, waterPumpSize.Width, waterPumpSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, waterPumpSize.Width, waterPumpSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new water pump
                 WaterPump newWaterPump = new WaterPump(waterPumpSize, placement, "waterpump", 50, 500);
                 newWaterPump.imagePath = waterPumpImagePath;
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the building to the list of buildings
                 grid.buildings.Add(newWaterPump);
                 grid.cash -= newWaterPump.cost;
 
+                //update map tile data
                 foreach (Node node in footprintNodes)
                 {
                     newWaterPump.occupyingNodesIndex.Add(node.nodeNumber);
@@ -469,19 +527,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 100000 && buildingType == "hospital")
             {
+                //check to see if the placement is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, hospitalSize.Width, hospitalSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, hospitalSize.Width, hospitalSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new hospital
                 Hospital newHospital = new Hospital(hospitalSize, placement, "hospital", 250, 250, grid, carManager);
                 newHospital.imagePath = hospitalImagePath;
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the hospital to the list of buildings
                 grid.buildings.Add(newHospital);
                 grid.cash -= newHospital.cost;
 
+                //update node tile data
                 foreach (Node node in footprintNodes)
                 {
                     newHospital.occupyingNodesIndex.Add(node.nodeNumber);
@@ -491,19 +555,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 30000 && buildingType == "shop")
             {
+                //check if building placmenet is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, shopSize.Width, shopSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, shopSize.Width, shopSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new shop
                 Shop newShop = new Shop(shopSize, placement, "shop", 10, 10);
                 newShop.imagePath = shopsImagesPath[random.Next(shopsImagesPath.Count())];
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the shop to the buildings list
                 grid.buildings.Add(newShop);
                 grid.cash -= newShop.cost;
 
+                //update node tile data
                 foreach (Node node in footprintNodes)
                 {
                     newShop.occupyingNodesIndex.Add(node.nodeNumber);
@@ -513,19 +583,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 100000 && buildingType == "policebuilding")
             {
+                //check if the building placement is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, policeBuildingSize.Width, policeBuildingSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, policeBuildingSize.Width, policeBuildingSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new police building
                 PoliceBuilding newPoliceBuilding = new PoliceBuilding(policeBuildingSize, placement, "policebuilding", 50, 25, grid, carManager);
                 newPoliceBuilding.imagePath = policeBuildingImagePath;
 
+                //play a placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the police building to the list of buildings
                 grid.buildings.Add(newPoliceBuilding);
                 grid.cash -= newPoliceBuilding.cost;
 
+                //update node data on map
                 foreach (Node node in footprintNodes)
                 {
                     newPoliceBuilding.occupyingNodesIndex.Add(node.nodeNumber);
@@ -535,19 +611,25 @@ namespace CitySkylines0._5alphabeta
 
             if (grid.cash >= 75000 && buildingType == "fireservice")
             {
+                //check if the building placement is valid
                 if (!CanPlaceBuilding(grid, clickedPoint, fireServiceSize.Width, fireServiceSize.Height)) { return; }
 
                 var footprintNodes = GetFootprintNodes(clickedPoint, fireServiceSize.Width, fireServiceSize.Height);
 
                 Point placement = footprintNodes.OrderBy(n => n.coords.X).ThenBy(n => n.coords.Y).First().coords;
 
+                //construct a new fire service station
                 FireService newFireService = new FireService(fireServiceSize, placement, "fireservice", 15, 350, grid, carManager);
                 newFireService.imagePath = fireServiceBuildingImagePath;
 
+                //play the placement sound
                 audioManager.PlayPlaceSound();
+
+                //add the building to the buildings list
                 grid.buildings.Add(newFireService);
                 grid.cash -= newFireService.cost;
 
+                //update node tile data on the map
                 foreach (Node node in footprintNodes)
                 {
                     newFireService.occupyingNodesIndex.Add(node.nodeNumber);
@@ -556,48 +638,46 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //check if the node is next to a road-node
         private bool IsDirectlyAdjacentToRoad(Node node)
         {
             int tile = rectSize;
 
+            //check all possible directions
             Point[] directions = { new Point(tile, 0), new Point(-tile, 0), new Point(0, tile), new Point(0, -tile) };
 
+            //for every direction
             foreach (Point dir in directions)
             {
+                //check if the adjacent node is a road
                 Point checkPoint = new Point(node.coords.X + dir.X, node.coords.Y + dir.Y);
-
                 Node adjacent = grid.nodes.FirstOrDefault(n => n.coords == checkPoint);
-
-                if (adjacent != null && adjacent.isRoad) { return true; }
+                if (adjacent != null && adjacent.isRoad) { return true; } //if it is a road, return true
             }
 
             return false;
         }
 
+        //check if the building can be placed by checking if the building is adjacent to a road and on grass
         public bool CanPlaceBuilding(Grid grid, Point mousePos, int width, int height)
         {
+            //footprintNodes => the nodes that a building occupies
             List<Node> footprintNodes = new List<Node>();
 
             foreach (Node node in grid.nodes)
             {
-                if (node.coords.X + 8 <= mousePos.X + (8 * width) &&
-                    node.coords.X + 8 >= mousePos.X - (8 * width) &&
-                    node.coords.Y + 8 <= mousePos.Y + (8 * height) &&
-                    node.coords.Y + 8 >= mousePos.Y - (8 * height))
+                if (node.coords.X + 8 <= mousePos.X + (8 * width) && node.coords.X + 8 >= mousePos.X - (8 * width) && node.coords.Y + 8 <= mousePos.Y + (8 * height) &&node.coords.Y + 8 >= mousePos.Y - (8 * height))
                 {
-                    if (!node.isGrass || node.hasTileData || node.isRoad)
-                        return false;
-
-                    footprintNodes.Add(node);
+                    if (!node.isGrass || node.hasTileData || node.isRoad) { return false; } //checks to see if any of the nodes fulfill these invalid properties
+                    footprintNodes.Add(node); //otherwise add to footprint
                 }
             }
 
-            if (footprintNodes.Count == 0)
-                return false;
+            if (footprintNodes.Count == 0) { return false; } //if no nodes in footprint, output false
 
-            bool hasRoadAccess = footprintNodes.Any(n => IsDirectlyAdjacentToRoad(n));
+            bool hasRoadAccess = footprintNodes.Any(n => IsDirectlyAdjacentToRoad(n)); //checks if the building nodes is adjacent to a road-node
 
-            return hasRoadAccess;
+            return hasRoadAccess; //if footprint nodes is valid and is adjacent to a road
         }
 
 
@@ -655,6 +735,7 @@ namespace CitySkylines0._5alphabeta
             return true;
         }
 
+        //finds the nodes that a building is placed over
         private List<Node> GetFootprintNodes(Point mousePos, int width, int height)
         {
             List<Node> footprintNodes = new List<Node>();
