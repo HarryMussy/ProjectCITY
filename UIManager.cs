@@ -131,7 +131,7 @@ public class UIManager
         // BUTTONS
         if (!buttonsCreated)
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
 
             int buttonSize = 48;
             int spacing = 12;

@@ -51,7 +51,7 @@ namespace CitySkylines0._5alphabeta
 
         public void LoadNecessityImages()
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string necessityFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Icons");
 
             foreach (string path in Directory.GetFiles(necessityFolder, "*.png"))

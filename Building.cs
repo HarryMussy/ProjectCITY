@@ -211,8 +211,8 @@ namespace CitySkylines0._5alphabeta
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             grid = gridIn;
             carManager = carManagerIn;
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
             //create 3 ambulances per hospital
             ambulances =
             [
@@ -231,8 +231,8 @@ namespace CitySkylines0._5alphabeta
             grid = gridIn;
             carManager = carManagerIn;
 
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
             ambulances =
             [
                 new Ambulance(null, 6f, null, path, "ambulance", null),
@@ -328,8 +328,8 @@ namespace CitySkylines0._5alphabeta
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             grid = gridIn;
             carManager = carManagerIn;
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
             PoliceCars =
             [
                 new PoliceCar(null, 6f, null, path, "policecar", null),
@@ -344,8 +344,8 @@ namespace CitySkylines0._5alphabeta
             grid = gridIn;
             carManager = carManagerIn;
 
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "policecar.png");
             PoliceCars =
             [
                 new PoliceCar(null, 6f, null, path, "policecar", null),
@@ -430,8 +430,8 @@ namespace CitySkylines0._5alphabeta
             necessities = [new Power(powerDemand), new Water(waterDemand), new Workers(0)];
             grid = gridIn;
             carManager = carManagerIn;
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
             fireTrucks =
             [
                 new FireTruck(null, 6f, null, path, "firetruck", null),
@@ -446,8 +446,8 @@ namespace CitySkylines0._5alphabeta
             grid = gridIn;
             carManager = carManagerIn;
 
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
+            string projectRoot = AppContext.BaseDirectory;
+            string path = Path.Combine(projectRoot, "gameAssets", "gameArt", "Service Vehicles", "firetruck.png");
             fireTrucks =
             [
                 new FireTruck(null, 6f, null, path, "firetruck", null),

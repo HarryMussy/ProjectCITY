@@ -28,7 +28,7 @@ namespace CitySkylines0._5alphabeta
             audioManager = new AudioManager();
 
             // --- Load background ---
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string backgroundPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "projectCityMain.png");
 
             backgroundBox = new PictureBox
@@ -180,7 +180,7 @@ namespace CitySkylines0._5alphabeta
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(40, 40, 40);
 
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string diffPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "difficulties");
 
             Label title = new Label

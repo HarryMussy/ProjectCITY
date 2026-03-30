@@ -48,7 +48,7 @@ namespace CitySkylines0._5alphabeta
 
         private void LoadRoadTiles()
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
             foreach (string path in Directory.GetFiles(roadFolder, "*.png"))
             {
@@ -340,7 +340,7 @@ namespace CitySkylines0._5alphabeta
                         newroad.lane1.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane1, 0);
                         newroad.lane2.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane2, 1);
 
-                        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+                        string projectRoot = AppContext.BaseDirectory;
                         string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
 
                         foreach (int index in newroad.lane1.occupyingNodesIndex)

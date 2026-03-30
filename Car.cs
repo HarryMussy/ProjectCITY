@@ -134,8 +134,8 @@ namespace CitySkylines0._5alphabeta
 
         private void LoadImages()
         {
-            string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string folder = Path.Combine(root, "gameAssets", "gameArt", "Cars");
+            string projectRoot = AppContext.BaseDirectory;
+            string folder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Cars");
 
             foreach (string path in Directory.GetFiles(folder, "*.png"))
             {

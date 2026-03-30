@@ -47,37 +47,43 @@ namespace CitySkylines0._5alphabeta
 
         private async Task ShowLoadingAndLaunchGameAsync(MainMenuForm menu)
         {
-            loadingForm = new LoadingForm();
-            this.MainForm = loadingForm;
-
-            loadingForm.Show();
-            loadingForm.Refresh();
-
-            if (menu.IsNewGame)
+            try
             {
-                mainForm = new Form1(menu.SelectedDifficulty, new AudioManager());
-            }
-            else
-            {
-                mainForm = new Form1(menu.LoadedSave, new AudioManager());
-            }
+                loadingForm = new LoadingForm();
+                this.MainForm = loadingForm;
 
-            // Key change: instead of ExitThread on close, go back to menu
-            mainForm.FormClosed += (s, e) =>
-            {
-                if (mainForm.ReturnToMenu)
+                loadingForm.Show();
+                loadingForm.Refresh();
+
+                if (menu.IsNewGame)
                 {
-                    ShowMainMenu();
+                    mainForm = new Form1(menu.SelectedDifficulty, new AudioManager());
                 }
                 else
                 {
-                    ExitThread();
+                    mainForm = new Form1(menu.LoadedSave, new AudioManager());
                 }
-            };
 
-            loadingForm.Hide();
-            this.MainForm = mainForm;
-            mainForm.Show();
+                mainForm.FormClosed += (s, e) =>
+                {
+                    if (mainForm.ReturnToMenu)
+                    {
+                        ShowMainMenu();
+                    }
+                    else
+                    {
+                        ExitThread();
+                    }
+                };
+
+                loadingForm.Hide();
+                this.MainForm = mainForm;
+                mainForm.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ public class LoadingForm : Form
             SizeMode = PictureBoxSizeMode.Zoom
         };
 
-        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+        string projectRoot = AppContext.BaseDirectory;
         string gifPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "loadingScreen.gif");
         pictureBoxLoading.Image = Image.FromFile(gifPath);
 

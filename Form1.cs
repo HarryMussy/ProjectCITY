@@ -315,8 +315,8 @@ namespace CitySkylines0._5alphabeta
         {
             Random rnd = new Random();
             int i = rnd.Next(1, 4);
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
-            string filepath = Path.Combine(projectRoot, @$"gameAssets\audio\Tracks\track{i}.wav");
+            string root = AppContext.BaseDirectory;
+            string filepath = Path.Combine(root, @$"gameAssets\audio\Tracks\track{i}.wav");
             audioManager.PlayTrack(filepath, false);
         }
 
@@ -428,7 +428,7 @@ namespace CitySkylines0._5alphabeta
         //loads game items
         private void Form1_Load(object sender, EventArgs e)
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string iconPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "projectCityMain.ico");
 
             this.CreateGraphics();

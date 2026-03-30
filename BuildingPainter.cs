@@ -317,7 +317,7 @@ namespace CitySkylines0._5alphabeta
 
         private void LoadBuildingImages()
         {
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = AppContext.BaseDirectory;
             string houseFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Buildings", "Houses");
             houseImagesPath = new List<string>();
 

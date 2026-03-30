@@ -165,7 +165,7 @@ public class Background
         seasonalGrassEdgeImages = new Dictionary<string, Dictionary<string, string>>();
 
         //load season types
-        string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+        string projectRoot = AppContext.BaseDirectory;
         string[] seasons = { "Spring", "Summer", "Autumn", "Winter" };
 
         foreach(string season in seasons)
