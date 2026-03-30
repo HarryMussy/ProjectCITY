@@ -91,15 +91,19 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (isNecessityUnfulfilled)
-            {
-                timeUntilAbandoned += timeElapsed;
-            }
-            if (isOnFire)
+            //if the building is on fire, the time it takes to be abandoned is reduced
+            if (isOnFire && isNecessityUnfulfilled)
             {
                 timeUntilAbandoned += timeElapsed * 2;
             }
 
+            //otherwise, regular progression
+            if (isNecessityUnfulfilled)
+            {
+                timeUntilAbandoned += timeElapsed;
+            }
+            
+            //after 100 seconds the building is abandoned
             if (timeUntilAbandoned >= 100f)
             {
                 isAbandoned = true;
@@ -111,7 +115,7 @@ namespace CitySkylines0._5alphabeta
     {
         float energyDemand { get; set; }
         float waterDemand { get; set; }
-        public House() { } //required
+        public House() { } //required for json
 
         public House(Size size, Point coords, string type, float energyDemand, float waterDemand) : base(size, coords, type, energyDemand, waterDemand, 5)
         {
@@ -127,7 +131,7 @@ namespace CitySkylines0._5alphabeta
     {
         float energyDemand { get; set; }
         float waterDemand { get; set; }
-        public PowerPlant() { } //required
+        public PowerPlant() { } //required for json
         public PowerPlant(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 35, true)
         {
             type = "powerplant";
@@ -143,7 +147,7 @@ namespace CitySkylines0._5alphabeta
     {
         float powerDemand { get; set; }
         float waterDemand { get; set; }
-        public WaterPump() { } //required
+        public WaterPump() { } //required for json
         public WaterPump(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 25, true)
         {
             type = "waterpump";
@@ -159,7 +163,7 @@ namespace CitySkylines0._5alphabeta
     {
         float powerDemand { get; set; }
         float waterDemand { get; set; }
-        public Shop() { } //required
+        public Shop() { } //required for json
         public Shop(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 5, true)
         {
             type = "shop";
@@ -175,7 +179,7 @@ namespace CitySkylines0._5alphabeta
     {
         float powerDemand { get; set; }
         float waterDemand { get; set; }
-        public Factory() { } //required
+        public Factory() { } //required for json
         public Factory(Size size, Point coords, string type, float powerDemand, float waterDemand) : base(size, coords, type, powerDemand, waterDemand, 30, true)
         {
             type = "shop";
@@ -187,10 +191,9 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
-    //hospital
     public class Hospital : Building
     {
-        Ambulance[] ambulances;
+        Ambulance[] ambulances; //available ambulances
 
         [JsonIgnore] Grid grid;
         [JsonIgnore] CarManager carManager;
@@ -210,6 +213,7 @@ namespace CitySkylines0._5alphabeta
             carManager = carManagerIn;
             string root = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string path = Path.Combine(root, "gameAssets", "gameArt", "Service Vehicles", "ambulance.png");
+            //create 3 ambulances per hospital
             ambulances =
             [
                 new Ambulance(null, 6f, null, path, "ambulance", null),
@@ -221,6 +225,7 @@ namespace CitySkylines0._5alphabeta
             ambulances[2].hasPriority = true;
         }
 
+        //upon reloading a save, reassign [JSONIGNORE] properties and remake ambulances
         public void Reconnect(Grid gridIn, CarManager carManagerIn)
         {
             grid = gridIn;
@@ -239,16 +244,19 @@ namespace CitySkylines0._5alphabeta
             ambulances[2].hasPriority = true;
         }
 
+        //called every tick to update every hospital
         public void UpdateHospital()
         {
-            foreach (Building h in grid.buildings.Where(b => b.type == "house"))
+            //for every house that has occupants that arent healthy
+            foreach (Building h in grid.buildings.Where(b => b.type == "house")) 
             {
-                foreach (Person p in h.Occupants.Where(p => p != null))
+                foreach (Person p in h.Occupants.Where(p => p != null)) 
                 {
-                    if (p.IsHealthy == false)
+                    if (p.IsHealthy == false) 
                     {
                         for (int i = 0; i < ambulances.Length; i++)
                         {
+                            //find an ambulance that is not in service and send it to a house
                             if (!ambulances[i].inService && ambulances.Where(e => e.destBuilding == h).Count() == 0)
                             {
                                 ambulances[i].speed = 6f;
@@ -266,16 +274,19 @@ namespace CitySkylines0._5alphabeta
             {
                 if (a.inService && !a.isMoving)
                 {
-                    SendAmbulanceToBuilding(a, this);
+                    SendAmbulanceToBuilding(a, this); //send ambulance to house
+                    //make everyone in the ill house healthy
                     foreach (Person p in a.destBuilding.Occupants.Where(p => p != null))
                     {
                         p.IsHealthy = true;
                     }
                     a.inService = false;
                 }
+
+                //bring ambulance back
                 if (!a.inService && !a.isMoving)
                 {
-                    a.speed = 3f;
+                    a.speed = 3f; //set it to normal car speed
                     a.isMoving = true;
                     BringAmbulanceFromBuilding(a, a.destBuilding);
                 }

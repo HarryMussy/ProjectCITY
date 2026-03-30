@@ -12,6 +12,9 @@ namespace CitySkylines0._5alphabeta
         private Button btnQuit;
         private PictureBox backgroundBox;
         private AudioManager audioManager;
+        public int SelectedDifficulty { get; private set; }
+        public bool IsNewGame { get; private set; }
+        public SaveManager.SaveData? LoadedSave { get; private set; }
 
         public MainMenuForm()
         {
@@ -89,6 +92,7 @@ namespace CitySkylines0._5alphabeta
             btnQuit.Location = new Point(centerX, startY + 140);
         }
 
+        
         private void BtnPlay_Click(object? sender, EventArgs e)
         {
             using (Form playMenu = new Form())
@@ -105,19 +109,18 @@ namespace CitySkylines0._5alphabeta
 
                 btnNew.Click += (s, e2) =>
                 {
-                    playMenu.Close();
-
-                    // Show difficulty selector
                     using (DifficultySelectForm diffForm = new DifficultySelectForm())
                     {
                         if (diffForm.ShowDialog() == DialogResult.OK)
                         {
-                            // Close main menu
-                            this.Close();
+                            SelectedDifficulty = diffForm.SelectedDifficulty;
+                            IsNewGame = true;
 
-                            // Start the game with selected difficulty
-                            Form1 form = new Form1(diffForm.SelectedDifficulty, audioManager);
-                            form.Show();
+                            playMenu.DialogResult = DialogResult.OK; 
+                            playMenu.Close();
+
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
                         }
                     }
                 };
@@ -127,16 +130,14 @@ namespace CitySkylines0._5alphabeta
                     var save = SaveManager.LoadGameFromFile();
                     if (save != null)
                     {
+                        LoadedSave = save;
+                        IsNewGame = false;
+
                         playMenu.DialogResult = DialogResult.OK;
                         playMenu.Close();
+
+                        this.DialogResult = DialogResult.OK;
                         this.Close();
-                        Form1 form = new Form1(save, audioManager);
-                        form.Show();
-                    }
-                    else
-                    {
-                        // load was cancelled or failed - keep the play menu open (optional)
-                        Console.WriteLine("Load cancelled or failed.");
                     }
                 };
 

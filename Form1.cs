@@ -1,8 +1,4 @@
-using System.Diagnostics;
 using System.IO;
-using System.Windows.Controls;
-
-
 
 namespace CitySkylines0._5alphabeta
 {
@@ -20,6 +16,7 @@ namespace CitySkylines0._5alphabeta
         public bool notselecting = true;
         public bool creatingedge = true;
         public Point screencentre;
+        bool viewGrid = false;
         public bool movingtiles = false;
         public bool mousedown = false;
         public string[] allOperations = { "None", "Building Roads", "Building", "Bulldozing" };
@@ -44,10 +41,8 @@ namespace CitySkylines0._5alphabeta
         public long _frameCount = 0;
         public DateTime _lastCheckTime;
         public int fps;
-        public bool viewGrid = false;
         private int lastFps = 0;
         private DateTime lastFpsUpdate = DateTime.Now;
-        public LoadingForm loadingForm;
         public AudioManager audioManager;
         public Graphics g;
         public CarManager carManager;
@@ -59,9 +54,6 @@ namespace CitySkylines0._5alphabeta
 
         public Form1(int difficulty, AudioManager audioManagerIn)
         {
-            //initiate loading form
-            loadingForm = new LoadingForm();
-            loadingForm.Show();
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
@@ -73,11 +65,9 @@ namespace CitySkylines0._5alphabeta
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
-            tickSpeed.Interval = 16;
+            tickSpeed.Interval = 16; //~60fps
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
-            //close loading form
-            loadingForm.Close();
             this.ClientSizeChanged += Form1_Resize;
 
             //classes... ASSEMBLE!
@@ -112,9 +102,6 @@ namespace CitySkylines0._5alphabeta
         //difficulty falls to 1 if there is no difficulty input
         public Form1(AudioManager audioManagerIn)
         {
-            //initiate loading form
-            loadingForm = new LoadingForm();
-            loadingForm.Show();
             g = CreateGraphics();
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
@@ -129,8 +116,6 @@ namespace CitySkylines0._5alphabeta
             tickSpeed.Interval = 8;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
-            //close loading form
-            loadingForm.Close();
             this.ClientSizeChanged += Form1_Resize;
 
             //classes... ASSEMBLE!
@@ -163,33 +148,27 @@ namespace CitySkylines0._5alphabeta
 
         public Form1(SaveManager.SaveData save, AudioManager audioManagerIn)
         {
-            // Initialize component FIRST, before any game logic
+            //initialize component FIRST, before any game logic
             InitializeComponent();
             this.BackColor = ColorTranslator.FromHtml("#1E7CB8");
             audioManager = audioManagerIn;
             rectSize = 16;
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
-            
-            // Now create graphics AFTER form is initialized
+
+            //create graphics AFTER form is initialized
             g = CreateGraphics();
-            
-            // Attach event handlers
+
             this.MouseWheel += Form1_MouseWheel;
             this.MouseDown += Form1_MouseDown;
             this.MouseMove += Form1_MouseMove;
             this.MouseUp += Form1_MouseUp;
             this.ClientSizeChanged += Form1_Resize;
 
-            // Setup timer
             System.Windows.Forms.Timer tickSpeed = new System.Windows.Forms.Timer();
             tickSpeed.Interval = 16;
             tickSpeed.Tick += TimerTick;
             tickSpeed.Start();
 
-            // NOW load the game data and managers
-            loadingForm = new LoadingForm();
-            loadingForm.Show();
-    
             if (save != null && save.background != null)
             {
                 background = save.background;
@@ -198,7 +177,7 @@ namespace CitySkylines0._5alphabeta
             {
                 background = new Background(gridDimensions, gridDimensions, this, rectSize, 1);
             }
-    
+
             if (save != null && save.grid != null)
             {
                 grid = save.grid;
@@ -211,7 +190,7 @@ namespace CitySkylines0._5alphabeta
             if (save != null && save.calendar != null)
             {
                 calendar = save.calendar;
-                calendar.form1PassIn = this;
+                calendar.form1PassIn = this; //re-link form reference lost during serialisation
             }
             else
             {
@@ -246,8 +225,7 @@ namespace CitySkylines0._5alphabeta
             buildingPainter = new BuildingPainter(grid, this, g, rectSize, calendar, carManager);
             populationManager = new PopulationManager(grid);
             populationManager.Population = population;
-            
-            // Restore population wellbeing and desires
+
             if (save != null && save.averageWellBeing > 0)
             {
                 populationManager.AverageWellBeing = save.averageWellBeing;
@@ -257,9 +235,9 @@ namespace CitySkylines0._5alphabeta
                 populationManager.GlobalDesires = save.globalDesires;
             }
 
-            
             bulldozer = new Bulldozer(grid, this);
 
+            //[JsonIgnore] fields are stripped during serialisation so must be reconnected manually
             foreach (Building b in grid.buildings)
             {
                 b.InitializeAfterLoad();
@@ -294,6 +272,7 @@ namespace CitySkylines0._5alphabeta
                 road.lane2.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(road.lane2, 1);
             }
 
+            //rebuild A* pathfinding graph from the restored road network
             grid.RebuildEntireRoadGraph();
 
             List<EventHandler> allEventHandlers = new List<EventHandler>();
@@ -306,30 +285,24 @@ namespace CitySkylines0._5alphabeta
             allEventHandlers.Add(Form1_BulldozingButton);
             uiManager = new UIManager(zoomLevel, () => (this.ClientSize.Width, this.ClientSize.Height), grid, buttonManager, this, allEventHandlers, calendar);
             Form1_PlayRandomTrack();
-    
-            loadingForm.Close();
+
             lastTickTime = DateTime.Now;
         }
 
+        //changes the volume
         private void Form1_ChangeVolume(object? sender, EventArgs e)
         {
-            try
+            if (sender is TrackBar slider)
             {
-                if (sender is TrackBar slider)
+                float volume = slider.Value / 100f;
+                foreach (var volProvider in audioManager.trackVolumeProviders)
                 {
-                    float volume = slider.Value / 100f;
-                    foreach (var volProvider in audioManager.trackVolumeProviders)
-                    {
-                        volProvider.Volume = volume;
-                    }
+                    volProvider.Volume = volume;
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Volume change error: " + ex.Message);
             }
         }
 
+        //chooses a random track from the available tracks and plays it
         public void Form1_PlayRandomTrack()
         {
             Random rnd = new Random();
@@ -346,6 +319,7 @@ namespace CitySkylines0._5alphabeta
 
             if (elapsed >= 1.0)
             {
+                //atomically swap frame count to zero and read the value in one operation
                 long count = Interlocked.Exchange(ref _frameCount, 0);
                 lastFps = (int)(count / elapsed);
                 lastFpsUpdate = now;
@@ -354,7 +328,7 @@ namespace CitySkylines0._5alphabeta
             return lastFps;
         }
 
-
+        //resizes the UI when the window state changes
         private void Form1_Resize(object? sender, EventArgs e)
         {
             if (this.WindowState != FormWindowState.Minimized)
@@ -365,11 +339,12 @@ namespace CitySkylines0._5alphabeta
 
         private void TimerTick(object? sender, EventArgs e)
         {
+            //recalculate screen centre each tick in case the window has been resized
             screencentre = new Point(this.ClientSize.Width / 2, this.ClientSize.Height / 2);
             bottomLeft = new Point(0, this.ClientSize.Height);
             fps = GetFps();
-            
 
+            //calculate real milliseconds elapsed since last tick for time-based updates
             var now = DateTime.Now;
             double elapsedms = (now - lastTickTime).TotalMilliseconds;
             lastTickTime = now;
@@ -393,6 +368,7 @@ namespace CitySkylines0._5alphabeta
 
                 if (necessitiesFilled)
                 {
+                    //scale tax income by wellbeing - unhappy citizens pay less tax
                     float modifier = populationManager.AverageWellBeing / 100f;
                     grid.cash += b.tax * modifier;
                 }
@@ -402,17 +378,19 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            if (necessitiesManager.globalPowerSupply > necessitiesManager.globalPowerDemand) { grid.cash += (necessitiesManager.globalPowerSupply - necessitiesManager.globalPowerDemand) / 1000; } //sells excess electricity for cash
-            if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; } //sells excess water for cash
+            //sell excess electricity and water for passive income
+            if (necessitiesManager.globalPowerSupply > necessitiesManager.globalPowerDemand) { grid.cash += (necessitiesManager.globalPowerSupply - necessitiesManager.globalPowerDemand) / 1000; }
+            if (necessitiesManager.globalWaterSupply > necessitiesManager.globalWaterDemand) { grid.cash += (necessitiesManager.globalWaterSupply - necessitiesManager.globalWaterDemand) / 1000; }
 
             buildingPainter.buildingType = buildingType;
 
-            //spawns cars if there are less cars than houses and in a 1% chance
+            //spawn a car with 50% chance each tick, as long as there are fewer cars than buildings
             if (carManager.cars.Count() < grid.buildings.Count() && spawnCarRandom.Next(100) < 50)
             {
                 carManager.SpawnCarNearBuilding();
             }
 
+            //adds and removes cars
             List<Car> carsToRemove = new List<Car>();
             foreach (Car car in carManager.cars.ToList()) // iterate a copy to be safe
             {
@@ -425,18 +403,21 @@ namespace CitySkylines0._5alphabeta
                 carManager.DespawnCar(car);
             }
 
+            //updates population
             populationManager.UpdatePopulation();
             populationManager.UpdateWellBeing();
 
             this.Invalidate();
         }
 
+        //loads game items
         private void Form1_Load(object sender, EventArgs e)
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
             string iconPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "projectCityMain.ico");
 
             this.CreateGraphics();
+            //enable double buffering to prevent screen flicker during rendering
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.UpdateStyles();
             WindowState = FormWindowState.Maximized;
@@ -444,6 +425,7 @@ namespace CitySkylines0._5alphabeta
             this.Icon = new Icon(iconPath);
             this.Text = "PROJECT CITY";
         }
+
         private void Form1_ToggleNames(object? sender, EventArgs e)
         {
             edgePainter.toggleRoadNames = !edgePainter.toggleRoadNames;
@@ -456,6 +438,7 @@ namespace CitySkylines0._5alphabeta
             Pen bluePen = new Pen(Color.Blue, 1);
             Brush whiteBrush = new SolidBrush(Color.White);
 
+            //apply camera pan and zoom - translate to screen centre, scale, translate back
             g.TranslateTransform(screencentre.X - camera.X, screencentre.Y - camera.Y);
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
@@ -472,20 +455,20 @@ namespace CitySkylines0._5alphabeta
 
             edgePainter.RoadPaint(sender, g, mousePos);
 
-            // draw night BEFORE cars
+            //reset transform before drawing the night overlay so it covers the full screen
             g.ResetTransform();
-            calendar.TimePainter(sender, g);  // darkness overlay
+            calendar.TimePainter(sender, g);
 
-            // restore world transform
+            //reapply world transform so buildings and cars render on top of the overlay
             g.TranslateTransform(screencentre.X - camera.X, screencentre.Y - camera.Y);
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
 
-            // now draw cars on top of darkness
             buildingPainter.BuildingPaint(sender, g, mousePos);
             carManager.CarPaint(sender, g);
             bulldozer.BulldozerPainter(sender, g);
 
+            //reset transform so the UI draws in screen space, unaffected by camera
             g.ResetTransform();
             uiManager.ConstructUI(sender, g);
         }
@@ -495,7 +478,8 @@ namespace CitySkylines0._5alphabeta
             viewGrid = !viewGrid;
         }
 
-
+        //converts a screen-space mouse position into world-space coordinates
+        //accounts for the current camera offset and zoom level
         public Point Mouse_Pos(object? sender, MouseEventArgs m)
         {
             float x = m.X - (screencentre.X - camera.X);
@@ -516,11 +500,11 @@ namespace CitySkylines0._5alphabeta
             {
                 if (m.Button == MouseButtons.Left)
                 {
-                    //num decides whether to find point a or point b based off of whether num is even
                     edgePainter.LeftMouseDown(sender, m);
                 }
                 if (m.Button == MouseButtons.Right)
                 {
+                    //right click cancels current road placement
                     edgePainter.startPoint = null;
                 }
             }
@@ -539,6 +523,7 @@ namespace CitySkylines0._5alphabeta
             {
                 if (m.Button == MouseButtons.Left)
                 {
+                    //no tool selected - begin camera drag
                     movingtiles = true;
                     mousedown = true;
                     mouseXold = m.X;
@@ -549,12 +534,11 @@ namespace CitySkylines0._5alphabeta
 
         private void Form1_MouseWheel(object sender, MouseEventArgs m)
         {
-            //zoom based on wheel direction
-            float scaleFactor = (m.Delta > 0) ? 1.1f : 0.9f; //zoom in or out
+            //zoom in or out depending on scroll direction
+            float scaleFactor = (m.Delta > 0) ? 1.1f : 0.9f;
             float newZoomLevel = zoomLevel * scaleFactor;
             newZoomLevel = Math.Max(0.1f, Math.Min(newZoomLevel, 10f));
 
-            //update the zoom level
             zoomLevel = newZoomLevel;
         }
 
@@ -563,6 +547,7 @@ namespace CitySkylines0._5alphabeta
             mousePos = Mouse_Pos(sender, m);
             if (movingtiles && mousedown)
             {
+                //move camera opposite to mouse movement to create a drag-the-world effect
                 dx = m.X - mouseXold;
                 dy = m.Y - mouseYold;
 
@@ -648,6 +633,7 @@ namespace CitySkylines0._5alphabeta
             }
             else
             {
+                //clicking the same building type again deselects it
                 selectingBulldozing = false;
                 notselecting = true;
                 selectingBuildingPainting = false;
@@ -663,6 +649,8 @@ namespace CitySkylines0._5alphabeta
             edgePainter.viewBuildingSpaces = !edgePainter.viewBuildingSpaces;
         }
 
+        //draws text with a stroke outline by rendering it offset in every direction
+        //improves readability of text drawn over the game world
         public void AddStrokeToText(object? sender, Graphics g, string text, int strokeWidth, Font font, Brush brush, Point point)
         {
             for (float dx = -strokeWidth; dx <= strokeWidth; dx++)

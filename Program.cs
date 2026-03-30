@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -28,35 +28,48 @@ namespace CitySkylines0._5alphabeta
         private void ShowMainMenu()
         {
             MainMenuForm mainMenu = new MainMenuForm();
-            DialogResult result = mainMenu.ShowDialog();
+            this.MainForm = mainMenu;
 
-            if (result == DialogResult.OK)
+            mainMenu.FormClosed += async (s, e) =>
             {
-                _ = ShowLoadingAndLaunchGameAsync();
-            }
-            else
-            {
-                ExitThread();
-            }
+                if (mainMenu.DialogResult == DialogResult.OK)
+                {
+                    await ShowLoadingAndLaunchGameAsync(mainMenu);
+                }
+                else
+                {
+                    ExitThread();
+                }
+            };
+
+            mainMenu.Show();
         }
 
-        private async Task ShowLoadingAndLaunchGameAsync()
+        private async Task ShowLoadingAndLaunchGameAsync(MainMenuForm menu)
         {
             loadingForm = new LoadingForm();
+            this.MainForm = loadingForm;
+
             loadingForm.Show();
             loadingForm.Refresh();
 
-            // Create Form1 on UI thread (light initialization only)
-            mainForm = new Form1(new AudioManager());
-            
-            // Defer heavy background rendering to after the main window is visible
+
+            // Create game form
+            if (menu.IsNewGame)
+            {
+                mainForm = new Form1(menu.SelectedDifficulty, new AudioManager());
+            }
+            else
+            {
+                mainForm = new Form1(menu.LoadedSave, new AudioManager());
+            }
+
             mainForm.FormClosed += (s, e) => ExitThread();
-            mainForm.Show();
-            
-            // Hide loading form after main window appears
-            await Task.Delay(500);
+
             loadingForm.Hide();
-            loadingForm.Dispose();
+
+            this.MainForm = mainForm;
+            mainForm.Show();
         }
     }
 }
