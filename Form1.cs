@@ -398,12 +398,19 @@ namespace CitySkylines0._5alphabeta
                 carManager.SpawnCarNearBuilding();
             }
 
+            //clear occupying car states (to prevent grid locks)
+            foreach (Node n in grid.nodes.Where(n => n.isRoad))
+            {
+                n.OccupyingCar = null;
+            }
+
             //adds and removes cars
             List<Car> carsToRemove = new List<Car>();
             foreach (Car car in carManager.cars.ToList()) // iterate a copy to be safe
             {
                 bool needsRemoving = carManager.MoveCar(car);
                 if (needsRemoving) { carsToRemove.Add(car); }
+                if (car.currentNode != null) { car.currentNode.OccupyingCar = car; } //reassign nodes occupying car (to prevent grid locks)
             }
 
             foreach (Car car in carsToRemove)

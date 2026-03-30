@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Windows.Forms;
 
 namespace CitySkylines0._5alphabeta
 {
@@ -269,36 +270,14 @@ namespace CitySkylines0._5alphabeta
                     crime.DrawNecessity(sender, g, mousePos, new Point(building.coords.X + 16, building.coords.Y + 8));
                 }
 
-                if (building.isOnFire && !building.isAbandoned)
+                if (building.isOnFire /*&& !building.isAbandoned*/)
                 {
-                    //draw animated flames with reduced flickering - flames stay for multiple frames then disappear
-                    long frameTime = DateTime.Now.Ticks / 166667; //convert to frame number (60fps)
-                    float pulseTime = ((frameTime / 10) % 60) / 60f; //slow pulse
-                    float pulseIntensity = (float)Math.Sin(pulseTime * MathF.PI * 2) * 0.3f + 0.7f;
-
-                    for (int x = 0; x < building.size.Width; x++)
+                    foreach (int nodeNumber in building.occupyingNodesIndex)
                     {
-                        for (int y = 0; y < building.size.Height; y++)
+                        Node fireNode = grid.nodes.FirstOrDefault(n => n.nodeNumber == nodeNumber);
+                        if (fireNode != null)
                         {
-                            //consistent seed based on position - same flames in same places
-                            int seed = building.coords.X + (building.coords.Y * 73856093) + (x * 19349663) + (y * 83492791);
-                            Random flameRng = new Random(seed);
-
-                            //flames stay visible for 3-4 frames, then off for 2-3 frames
-                            int cycleDuration = (int)(7 - (pulseIntensity * 1.5f)); //5-7 frame cycle
-                            int timeInCycle = (int)(frameTime % cycleDuration);
-
-                            if (timeInCycle < 3) //show for first 3 frames of cycle
-                            {
-                                int drawX = building.coords.X + (x * rectSize);
-                                int drawY = building.coords.Y + (y * rectSize);
-
-                                //very subtle offset only
-                                int offsetX = flameRng.Next(0, 2);
-                                int offsetY = flameRng.Next(0, 2);
-
-                                g.DrawImage(fireImg, drawX + offsetX, drawY + offsetY, rectSize, rectSize);
-                            }
+                            g.DrawImage(fireImg, fireNode.coords.X, fireNode.coords.Y, rectSize, rectSize);
                         }
                     }
                 }

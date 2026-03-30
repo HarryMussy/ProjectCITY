@@ -256,7 +256,6 @@ namespace CitySkylines0._5alphabeta
                         for (int i = 0; i < ambulances.Length; i++)
                         {
                             if (!ambulances[i].inService
-                                && !ambulances[i].isMoving
                                 && ambulances[i].destBuilding == null
                                 && ambulances.Where(e => e.destBuilding == h).Count() == 0)
                             {
@@ -365,7 +364,6 @@ namespace CitySkylines0._5alphabeta
                     for (int i = 0; i < PoliceCars.Length; i++)
                     {
                         if (!PoliceCars[i].inService
-                            && !PoliceCars[i].isMoving
                             && PoliceCars[i].destBuilding == null
                             && PoliceCars.Where(e => e.destBuilding == h).Count() == 0)
                         {
@@ -468,7 +466,6 @@ namespace CitySkylines0._5alphabeta
                     for (int i = 0; i < fireTrucks.Length; i++)
                     {
                         if (!fireTrucks[i].inService
-                            && !fireTrucks[i].isMoving
                             && fireTrucks[i].destBuilding == null
                             && fireTrucks.Where(e => e.destBuilding == h).Count() == 0)
                         {
