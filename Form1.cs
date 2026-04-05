@@ -358,7 +358,7 @@ namespace CitySkylines0._5alphabeta
             lastTickTime = now;
             calendar.AdvanceTime(elapsedms);
 
-            // Reset both demand and supply at the start of each tick
+            //reset both demand and supply at the start of each tick
             necessitiesManager.globalPowerDemand = 0;
             necessitiesManager.globalWaterDemand = 0;
             necessitiesManager.globalPowerSupply = 0;

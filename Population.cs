@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace CitySkylines0._5alphabeta
 {
     public class Person
     {
-        public int Age {  get; set; }
+        public int Age { get; set; }
         public bool IsAlive { get; set; }
         public bool IsHealthy { get; set; }
         public bool IsPregnant { get; set; }
@@ -17,7 +12,7 @@ namespace CitySkylines0._5alphabeta
         public bool IsMale { get; set; }
         public float WellBeing { get; set; } = 100f;   // NEW
         public List<string> UnmetDesires { get; set; } = new(); // NEW
-        [JsonIgnore] public Building Residence {  get; set; }
+        [JsonIgnore] public Building Residence { get; set; }
         [JsonIgnore] public Building WorkPlace { get; set; }
 
         [JsonIgnore] static Random rng = new Random();
@@ -87,6 +82,7 @@ namespace CitySkylines0._5alphabeta
 
             int numOfShops = grid.buildings.Where(b => b.type == "shop").Count();
 
+
             foreach (Person p in Population)
             {
                 if (!p.IsAlive) continue;
@@ -138,13 +134,30 @@ namespace CitySkylines0._5alphabeta
                     p.UnmetDesires.Add("Police");
                 }
 
-                //other buildings
-                if (numOfShops > 0) 
+                if ((Population.Count / numOfShops) > 50) //if there is less than 1 shop for 50 people then wellbeing decreases
                 {
-                    if (Population.Count / numOfShops > 50) //if there is less than 1 shop for 50 people then wellbeing decreases
+                    well -= 5f;
+                    p.UnmetDesires.Add("Shops");
+                }
+
+                if (p.Residence != null)
+                {
+                    Building b = p.Residence;
+
+                    if (b.isAbandoned)
                     {
-                        well -= 5;
-                        p.UnmetDesires.Add("Shops");
+                        well -= 15f;
+                        p.UnmetDesires.Add("Abandoned Building");
+                    }
+                    if (b.isOnFire)
+                    {
+                        well -= 15f;
+                        p.UnmetDesires.Add("Fire");
+                    }
+                    if (b.isInCrime)
+                    {
+                        well -= 15f;
+                        p.UnmetDesires.Add("Crime");
                     }
                 }
 
@@ -154,8 +167,7 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (string desire in p.UnmetDesires)
                 {
-                    if (!GlobalDesires.ContainsKey(desire))
-                        GlobalDesires[desire] = 0;
+                    if (!GlobalDesires.ContainsKey(desire)) { GlobalDesires[desire] = 0; }
 
                     GlobalDesires[desire]++;
                 }
@@ -200,7 +212,7 @@ namespace CitySkylines0._5alphabeta
                             MakePregnant(female);
                         }
                     }
-                } 
+                }
             }
 
             foreach (Person p in Population.Where(p => p.IsPregnant))
@@ -265,11 +277,11 @@ namespace CitySkylines0._5alphabeta
                     }
                 }
 
-                foreach (Person p in b.Occupants) //1 in a hundred thou chance of being unhealthy each tick
+                foreach (Person p in b.Occupants) //1 in a million chance of being unhealthy each tick
                 {
                     if (p != null && p.IsHealthy)
                     {
-                        int illnessChance = 100000;
+                        int illnessChance = 1000000;
 
                         if (p.WellBeing < 50)
                         {
@@ -286,9 +298,9 @@ namespace CitySkylines0._5alphabeta
             }
 
             //add to possible workplaces
-            foreach (Building b in grid.buildings) 
+            foreach (Building b in grid.buildings)
             {
-                if (b.type != "house" && b.Occupants.Count(p => p != null) < b.MaxOccupants) 
+                if (b.type != "house" && b.Occupants.Count(p => p != null) < b.MaxOccupants)
                 {
                     possibleWorkplaces.Add(b);
                 }

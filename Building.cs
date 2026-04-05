@@ -73,12 +73,18 @@ namespace CitySkylines0._5alphabeta
         {
             if (this.type != "fireservice") //fireservice stations cannot be set on fire
             {
-                isOnFire = random.Next(25000) == 67; //chance of being on fire
+                if (random.Next(250000) == 67)
+                {
+                    isOnFire = true; //chance of being on fire
+                }
             }
 
             if (this.type != "policebuilding" && this.type != "hospital" && this.type != "fireservice") //essential buildings cannot be robbed
             {
-                isInCrime = random.Next(12500) == 67; //chance of being robbed
+                if (random.Next(125000) == 67)
+                {
+                    isInCrime = true; //chance of experiencing crime
+                }
             }
 
             bool isNecessityUnfulfilled = false;
