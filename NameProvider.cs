@@ -46,16 +46,16 @@ namespace CitySkylines0._5alphabeta
                 Random rng = new Random();
                 string genname = nameList.Forenames[rng.Next(0, nameList.Forenames.Count)] + " " + nameList.Surnames[rng.Next(0, nameList.Surnames.Count)];
 
-                // Check if the generated name is valid (not in invalidnames)
+                //check if the generated name is valid (not in invalidnames)
                 if (invalidnames.Contains(genname))
                 {
                     validity = false;
                 }
                 else
                 {
-                    invalidnames.Add(genname); // Add valid name to invalidnames list
-                    name = genname;  // Assign the valid name
-                    validity = true; // Exit the loop as a valid name was found
+                    invalidnames.Add(genname); //add valid name to invalidnames list
+                    name = genname;  //assign the valid name
+                    validity = true; //exit the loop as a valid name was found
                 }
             }
             return name;

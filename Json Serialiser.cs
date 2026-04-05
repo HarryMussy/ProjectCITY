@@ -28,7 +28,7 @@ namespace CitySkylines0._5alphabeta
     {
         public override Building Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            // Parse the incoming JSON object
+            //parse the incoming JSON object
             using JsonDocument doc = JsonDocument.ParseValue(ref reader);
             JsonElement root = doc.RootElement;
 

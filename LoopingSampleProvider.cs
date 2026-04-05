@@ -22,7 +22,7 @@ public class LoopingSampleProvider : ISampleProvider
             int samplesRead = source.Read(buffer, offset + totalSamplesRead, count - totalSamplesRead);
             if (samplesRead == 0)
             {
-                // Rewind source when it reaches the end
+                //rewind source when it reaches the end
                 if (source is AudioFileReader afr)
                 {
                     afr.Position = 0;

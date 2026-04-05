@@ -10,8 +10,8 @@ namespace CitySkylines0._5alphabeta
         public bool IsPregnant { get; set; }
         public int MonthTimer { get; set; }
         public bool IsMale { get; set; }
-        public float WellBeing { get; set; } = 100f;   // NEW
-        public List<string> UnmetDesires { get; set; } = new(); // NEW
+        public float WellBeing { get; set; } = 100f;
+        public List<string> UnmetDesires { get; set; } = new();
         [JsonIgnore] public Building Residence { get; set; }
         [JsonIgnore] public Building WorkPlace { get; set; }
 
@@ -29,7 +29,7 @@ namespace CitySkylines0._5alphabeta
             IsAlive = true;
         }
 
-        public Person(Building b, int Age) //babies
+        public Person(Building b, int Age) //used for babies
         {
             this.Age = Age;
             IsMale = new Random().Next(2) == 1;
@@ -68,6 +68,7 @@ namespace CitySkylines0._5alphabeta
             Population = new List<Person>();
         }
 
+        //calculates per-person wellbeing by deducting from 100 based on unmet needs, then averages across the population
         public void UpdateWellBeing()
         {
             if (Population.Count == 0) return;
@@ -75,6 +76,7 @@ namespace CitySkylines0._5alphabeta
             GlobalDesires.Clear();
             float total = 0f;
 
+            //check once whether essential service buildings exist rather than per-person
             bool hospitalExists = grid.buildings.Any(b => b.type == "hospital");
             bool policeBuildingExists = grid.buildings.Any(b => b.type == "policebuilding");
             bool fireServiceExists = grid.buildings.Any(b => b.type == "fireservice");
@@ -165,6 +167,7 @@ namespace CitySkylines0._5alphabeta
                 p.WellBeing = well;
                 total += well;
 
+                //track how many people share each unmet desire for the UI display
                 foreach (string desire in p.UnmetDesires)
                 {
                     if (!GlobalDesires.ContainsKey(desire)) { GlobalDesires[desire] = 0; }
@@ -192,13 +195,14 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            //all houses with a male and a female over 18 have a chance of the female becoming pregnant
             foreach (Building b in grid.buildings.Where(h => h.type == "house"))
             {
                 Person male = null;
                 Person female = null;
                 if (b.Occupants.Count() > 0 && b.Occupants.Count() < b.MaxOccupants) //if a building has enough occupants but the house isnt full
                 {
-                    foreach (Person p in b.Occupants)//all houses with a male and a female over 18 have a chance of the female becoming pregnant
+                    foreach (Person p in b.Occupants)
                     {
                         if (p == null) { continue; }
                         if (p.Age >= 18 && p.IsMale && male == null) { male = p; }
@@ -215,6 +219,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            //advance pregnancy timers by one month
             foreach (Person p in Population.Where(p => p.IsPregnant))
             {
                 p.MonthTimer++;
@@ -225,6 +230,7 @@ namespace CitySkylines0._5alphabeta
                 Person baby = new Person(pregnantWoman.Residence, 0);
                 Population.Add(baby);
 
+                //place the baby in the first available slot in the house
                 Building house = pregnantWoman.Residence;
 
                 for (int i = 0; i < house.Occupants.Length; i++)
@@ -257,6 +263,7 @@ namespace CitySkylines0._5alphabeta
                     int addToPop = rng.Next(1, b.MaxOccupants);
                     for (int i = 0; i < addToPop; i++)
                     {
+                        //wellbeing above 75 increases move-in chance, below 50 decreases it
                         float moveChance = AverageWellBeing;
 
                         if (AverageWellBeing < 50)
@@ -283,6 +290,7 @@ namespace CitySkylines0._5alphabeta
                     {
                         int illnessChance = 1000000;
 
+                        //wellbeing modifies illness probability by 15% in either direction
                         if (p.WellBeing < 50)
                         {
                             illnessChance = (int)(illnessChance * 0.85); //15% worse
@@ -314,6 +322,7 @@ namespace CitySkylines0._5alphabeta
                     Building job = possibleWorkplaces[rng.Next(possibleWorkplaces.Count)];
                     p.WorkPlace = job;
 
+                    //place the worker in the first available slot in the building
                     for (int i = 0; i < job.Occupants.Length; i++)
                     {
                         if (job.Occupants[i] == null)

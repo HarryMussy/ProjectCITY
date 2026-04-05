@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace CitySkylines0._5alphabeta
 {
-    // Simple dialog wrapper that exposes the chosen path via SelectedPath and DialogResult
+    //simple dialog wrapper that exposes the chosen path via SelectedPath and DialogResult
     public partial class LoadSaveForm : Form
     {
         private Button btnChoose;

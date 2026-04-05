@@ -48,37 +48,6 @@ namespace CitySkylines0._5alphabeta
             return newbutton;
         }
 
-        public TrackBar CreateSlider(string name, Point loc, Size size, Form form, int fontsize)
-        {
-            TrackBar slider = new TrackBar();
-
-            // These properties are standard for TrackBar
-            slider.BackColor = Color.White;
-            slider.Minimum = 0;
-            slider.Maximum = 100;
-            slider.Value = 0; // Default to max volume, for example
-            slider.TickFrequency = 10;
-
-            // Add controls
-            Objects.Add(slider); // Optional if you want to track it
-            form.Controls.Add(slider);
-
-            // Set slider position and size after label
-            slider.Location = loc;
-            slider.Size = size;
-
-            this.form = form;
-
-            slider.BackColor = Color.FromArgb(60, 60, 60);
-            slider.ForeColor = Color.White;
-            //slider.FlatStyle = FlatStyle.Flat;
-            slider.Cursor = Cursors.Hand;
-            //slider.FlatAppearance.BorderSize = 2;
-            //slider.FlatAppearance.BorderColor = Color.LightBlue;
-
-            return slider;
-        }
-
 
         public void RemoveButtons()
         {

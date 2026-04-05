@@ -320,6 +320,7 @@ namespace CitySkylines0._5alphabeta
             audioManager.PlayTrack(filepath, false);
         }
 
+        //FPS counter: counts frames over a 1 second window using an atomic exchange to avoid race conditions
         public int GetFps()
         {
             var now = DateTime.Now;
@@ -376,7 +377,7 @@ namespace CitySkylines0._5alphabeta
 
                 if (necessitiesFilled)
                 {
-                    //scale tax income by wellbeing - unhappy citizens pay less tax
+                    //scale tax income by wellbeing, unhappy citizens pay less tax
                     float modifier = populationManager.AverageWellBeing / 100f;
                     grid.cash += b.tax * modifier;
                 }
@@ -392,7 +393,7 @@ namespace CitySkylines0._5alphabeta
 
             buildingPainter.buildingType = buildingType;
 
-            //spawn a car with 50% chance each tick, as long as there are fewer cars than buildings
+            //spawn a car with 15% chance each tick, capped at 1 car per 3 buildings to avoid overcrowding roads
             if (carManager.cars.Count() < grid.buildings.Count() / 3 && spawnCarRandom.Next(100) < 15)
             {
                 carManager.SpawnCarNearBuilding();
@@ -446,6 +447,7 @@ namespace CitySkylines0._5alphabeta
             edgePainter.toggleRoadNames = !edgePainter.toggleRoadNames;
         }
 
+        //rendering pipeline: world transforms are applied before drawing world elements, then reset for UI so it always draws in screen space
         private void Form1_Paint(object? sender, PaintEventArgs p)
         {
             Interlocked.Increment(ref _frameCount);
@@ -453,7 +455,7 @@ namespace CitySkylines0._5alphabeta
             Pen bluePen = new Pen(Color.Blue, 1);
             Brush whiteBrush = new SolidBrush(Color.White);
 
-            //apply camera pan and zoom - translate to screen centre, scale, translate back
+            //apply camera pan and zoom, translate to screen centre, scale, translate back
             g.TranslateTransform(screencentre.X - camera.X, screencentre.Y - camera.Y);
             g.ScaleTransform(zoomLevel, zoomLevel);
             g.TranslateTransform(-screencentre.X, -screencentre.Y);
@@ -538,7 +540,7 @@ namespace CitySkylines0._5alphabeta
             {
                 if (m.Button == MouseButtons.Left)
                 {
-                    //no tool selected - begin camera drag
+                    //no tool selected, begin camera drag
                     movingtiles = true;
                     mousedown = true;
                     mouseXold = m.X;
@@ -633,6 +635,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //clicking the same building type again deselects it; clicking a different type switches to it
         public void Form1_BuildingBuilder(object? sender, EventArgs e, string typeIn)
         {
             if (selectingBuildingPainting == false || allOperations[2] != "Building " + typeIn.ToUpper())

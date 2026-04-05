@@ -20,7 +20,7 @@ namespace CitySkylines0._5alphabeta
         public float targetRotationAngle; //angle the car is rotating towards
         public float rotationSpeed = 6f; // degrees per tick
 
-        public bool isMoving = true; 
+        public bool isMoving = true;
         public bool hasPriority = false; //allows the car to overtake other cars
 
         public float stuckTimeSeconds = 0f;
@@ -35,8 +35,8 @@ namespace CitySkylines0._5alphabeta
             destinationNode = destinationNodeIn;
             this.speed = speed;
             type = "car";
-            if (startNodeIn != null) 
-            { 
+            if (startNodeIn != null)
+            {
                 currentPosition = new PointF(startNodeIn.coords.X + 8, startNodeIn.coords.Y + 8);
                 startNode.OccupyingCar = this;
             }
@@ -413,18 +413,24 @@ namespace CitySkylines0._5alphabeta
         }
 
         //pathfinding
+
+        //manhattan distance heuristic, movement is axis-aligned only
         private float Heuristic(Node a, Node b)
         {
             return Math.Abs(a.coords.X - b.coords.X) + Math.Abs(a.coords.Y - b.coords.Y);
         }
 
+        //A* pathfinding algorithm, finds the shortest route between two road nodes
+        //applies traffic penalties to encourage cars to avoid congested routes
         public Queue<Node> CreateCarRoute(Car car)
         {
             Node start = car.currentNode ?? car.startNode;
             Node destination = car.destinationNode;
 
+            //exclude nodes the car has previously identified as blocked
             List<Node> availableRoadNodes = grid.nodes.Where(node => node.isRoad).Where(n => !car.blockedNodes.Contains(n)).ToList();
 
+            //reset pathfinding costs from a previous search
             foreach (Node n in availableRoadNodes)
             {
                 n.parent = null;
@@ -441,10 +447,12 @@ namespace CitySkylines0._5alphabeta
 
             while (open.Count > 0)
             {
+                //select the node with the lowest fCost (gCost + hCost) from the open list
                 Node current = open.OrderBy(n => n.fCost).First();
                 open.Remove(current);
                 closed.Add(current);
 
+                //destination reached, reconstruct the path by walking back through parent references
                 if (current.coords == destination.coords)
                 {
                     Stack<Node> path = new();
@@ -466,6 +474,7 @@ namespace CitySkylines0._5alphabeta
                     //count how many neighbours of this node are also occupied to detect and heavily penalise queue build-up
                     int surroundingCars = neighbor.neighbors.Count(n => n.OccupyingCar != null && n.OccupyingCar != car);
 
+                    //traffic penalties: occupied node is heavily penalised, surrounding congestion adds a milder penalty
                     float trafficPenalty = 0f;
                     if (neighbor.OccupyingCar != null && neighbor.OccupyingCar != car) { trafficPenalty = 1000f; }
                     else if (surroundingCars >= 2) { trafficPenalty = 500f; }  //heavily penalise approach to a backed-up area
@@ -473,6 +482,7 @@ namespace CitySkylines0._5alphabeta
 
                     float tentativeG = current.gCost + Distance(current.coords, neighbor.coords) + trafficPenalty;
 
+                    //update the neighbour if this path is cheaper than any previously found path to it
                     if (!open.Contains(neighbor) || tentativeG < neighbor.gCost)
                     {
                         neighbor.parent = current;
@@ -483,7 +493,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            return null;
+            return null; //no path found
         }
 
         private float Distance(PointF a, PointF b)
@@ -493,6 +503,7 @@ namespace CitySkylines0._5alphabeta
             return MathF.Sqrt(dx * dx + dy * dy);
         }
 
+        //returns neighbours of a node that are not on the car's blocked list
         private List<Node> GetNeighbors(Node node, Car car)
         {
             return node.neighbors.Where(n => !car.blockedNodes.Contains(n)).ToList();

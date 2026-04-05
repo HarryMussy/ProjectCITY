@@ -44,8 +44,8 @@ namespace CitySkylines0._5alphabeta
         public void InitialiseAfterBoot(Grid g)
         {
             grid = g;
-            globalPowerStatus = $"{globalPowerDemand} / {globalPowerSupply}MW"; 
-            globalWaterStatus = $"{globalWaterDemand} / {globalWaterSupply}L"; 
+            globalPowerStatus = $"{globalPowerDemand} / {globalPowerSupply}MW";
+            globalWaterStatus = $"{globalWaterDemand} / {globalWaterSupply}L";
             LoadNecessityImages();
         }
 
@@ -56,6 +56,7 @@ namespace CitySkylines0._5alphabeta
 
             foreach (string path in Directory.GetFiles(necessityFolder, "*.png"))
             {
+                //load each icon into a 32bpp ARGB bitmap to preserve transparency
                 using var original = Image.FromFile(path);
                 Bitmap bmp = new Bitmap(original.Width, original.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (Graphics g = Graphics.FromImage(bmp))
@@ -69,6 +70,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //calculates total global supply and demand for power and water, then marks each building's necessities as fulfilled or not
         public void UpdateGlobalNecessities()
         {
             globalPowerSupply = 0;
@@ -78,6 +80,7 @@ namespace CitySkylines0._5alphabeta
 
             foreach (Building b in grid.buildings)
             {
+                //efficiency scales with workforce: a fully staffed plant produces at double base output
                 int workers = b.Occupants.Count(p => p != null);
                 b.efficiency = (float)workers / b.MaxOccupants * 2f; //at 100% workers, the plant doubles its efficiency
 
@@ -113,6 +116,8 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            //distribute available supply to buildings in order. first come first served
+            //once supply runs out, remaining buildings are marked as unfulfilled
             float availablePower = globalPowerSupply;
             float availableWater = globalWaterSupply;
 
@@ -173,7 +178,6 @@ namespace CitySkylines0._5alphabeta
     public class Necessity
     {
         public string type { get; set; }
-        // CHANGED: public set so JSON can deserialize
         public float demand { get; set; }
         public float decayRate { get; set; }
 
@@ -183,8 +187,8 @@ namespace CitySkylines0._5alphabeta
         static Brush brush = new SolidBrush(Color.White);
         static Brush brushOutline = new SolidBrush(Color.FromArgb(60, 60, 60));
         public bool fulFilled { get; set; }
-        
-        public Necessity() { } // Required for JSON deserialization
+
+        public Necessity() { } //required for JSON deserialization
 
         public Necessity(string typeIn, float initialValueIN, float decayRateIN, float demandIN)
         {
@@ -198,6 +202,7 @@ namespace CitySkylines0._5alphabeta
             return type;
         }
 
+        //draws the necessity icon above the building, shows a tooltip label when the mouse is nearby
         public void DrawNecessity(object? sender, Graphics g, Point mousePos, Point pos)
         {
             if (!this.fulFilled)
