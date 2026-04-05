@@ -63,9 +63,6 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
-        /// <summary>
-        /// Validates that a point is within the grid boundaries.
-        /// </summary>
         public bool IsPointOnGrid(Point p)
         {
             int maxX = grid.width * rectSize;
@@ -161,12 +158,13 @@ namespace CitySkylines0._5alphabeta
                 tempRoad = null;
             }
 
-            foreach (Edge edge in grid.roads)
+            if (!toggleRoadNames)
             {
-                if (!toggleRoadNames)
+                foreach (Road road in grid.roads)
                 {
-                    form1.AddStrokeToText(sender, g, edge.name, 1, roadFont, blackBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
-                    g.DrawString(edge.name, roadFont, whiteBrush, new Point((edge.a.X + edge.b.X) / 2, (edge.a.Y + edge.b.Y) / 2));
+                    Point displayAt = new Point((road.lane1.a.X + road.lane1.b.X) / 2, (road.lane1.a.Y + road.lane1.b.Y) / 2);
+                    form1.AddStrokeToText(sender, g, road.name, 1, roadFont, blackBrush, displayAt);
+                    g.DrawString(road.name, roadFont, whiteBrush, displayAt);
                 }
             }
         }
@@ -319,7 +317,7 @@ namespace CitySkylines0._5alphabeta
                     isOverlapping = true;
                 }
 
-                // Validate both start and end points are on the grid
+                //validate both start and end points are on the grid
                 bool startPointOnGrid = IsPointOnGrid(startPoint.Value);
                 bool endPointOnGrid = IsPointOnGrid(endPoint);
 

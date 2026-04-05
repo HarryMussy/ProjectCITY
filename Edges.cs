@@ -9,10 +9,6 @@ namespace CitySkylines0._5alphabeta
         public Point a { get; set; }
         public Point b { get; set; }
         public int angle { get; set; } // anywhere from 0 to 360
-
-        // runtime-only data
-        /*[JsonIgnore] public List<Node> occupyingNodes { get; set; } = new();*/
-
         public List<int> occupyingNodesIndex { get; set; }
         public List<Point> pointsOnTheEdge { get; set; }
 
@@ -58,15 +54,17 @@ namespace CitySkylines0._5alphabeta
     public class Road : Edge
     {
         public string type { get; set; }
+        public string name { get; set; }
 
         public Edge lane1 { get; set; }
         public Edge lane2 { get; set; }
 
         public Road() { }
 
-        public Road(Point a, Point b, string name, int angle)
+        public Road(Point a, Point b, string nameIn, int angle)
         {
             type = "road";
+            name = nameIn;
 
             int dx = b.X - a.X;
             int dy = b.Y - a.Y;
