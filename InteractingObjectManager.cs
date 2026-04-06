@@ -12,6 +12,7 @@ namespace CitySkylines0._5alphabeta
             Objects = new List<object>();
         }
 
+        //creates a text button, adds it to the form and registers it in the objects list
         public Button CreateButton(string name, Point loc, Size size, Form form, int fontsize)
         {
             Button newbutton = new Button();
@@ -30,6 +31,8 @@ namespace CitySkylines0._5alphabeta
             this.form = form;
             return newbutton;
         }
+
+        //creates an icon button using an image instead of a text label
         public Button CreateButton(Point loc, Size size, Form form, int fontsize, System.Drawing.Image img)
         {
             Button newbutton = new Button();
@@ -48,7 +51,8 @@ namespace CitySkylines0._5alphabeta
             return newbutton;
         }
 
-
+        //removes all tracked buttons from the form and clears the objects list
+        //called by UIManager when the window is resized so buttons can be repositioned
         public void RemoveButtons()
         {
             foreach (object obj in Objects)

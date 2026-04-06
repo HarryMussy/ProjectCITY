@@ -15,6 +15,8 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
+    //custom application context manages the form lifecycle so the app can transition
+    //between the main menu, loading screen and game without closing the process
     public class CustomApplicationContext : ApplicationContext
     {
         private LoadingForm loadingForm;
@@ -34,17 +36,18 @@ namespace CitySkylines0._5alphabeta
             {
                 if (mainMenu.DialogResult == DialogResult.OK)
                 {
-                    await ShowLoadingAndLaunchGameAsync(mainMenu);
+                    await ShowLoadingAndLaunchGameAsync(mainMenu); //player pressed play - show loading screen then start game
                 }
                 else
                 {
-                    ExitThread();
+                    ExitThread(); //player pressed quit - close the application
                 }
             };
 
             mainMenu.Show();
         }
 
+        //shows a loading screen while the game constructs its world, then swaps to Form1
         private async Task ShowLoadingAndLaunchGameAsync(MainMenuForm menu)
         {
             try
@@ -53,7 +56,7 @@ namespace CitySkylines0._5alphabeta
                 this.MainForm = loadingForm;
 
                 loadingForm.Show();
-                loadingForm.Refresh();
+                loadingForm.Refresh(); //force a repaint so the GIF is visible during world generation
 
                 if (menu.IsNewGame)
                 {
@@ -68,7 +71,7 @@ namespace CitySkylines0._5alphabeta
                 {
                     if (mainForm.ReturnToMenu)
                     {
-                        ShowMainMenu();
+                        ShowMainMenu(); //player used "quit to main menu" - return rather than closing the app
                     }
                     else
                     {

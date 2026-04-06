@@ -10,7 +10,7 @@ namespace CitySkylines0._5alphabeta
         private Button btnChoose;
         private Button btnCancel;
         public string SelectedPath { get; private set; } = "";
-        private readonly bool isSaving;
+        private readonly bool isSaving; //true when saving, false when loading - controls which file dialog opens
 
         public LoadSaveForm(bool isSaving)
         {
@@ -55,6 +55,7 @@ namespace CitySkylines0._5alphabeta
         {
             if (isSaving)
             {
+                //open a save file dialog and store the chosen path on OK
                 using (var sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "City Save (*.citysave)|*.citysave";
@@ -71,6 +72,7 @@ namespace CitySkylines0._5alphabeta
             }
             else
             {
+                //open a load file dialog and store the chosen path on OK
                 using (var ofd = new OpenFileDialog())
                 {
                     ofd.Filter = "City Save (*.citysave)|*.citysave";

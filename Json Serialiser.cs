@@ -10,6 +10,7 @@ namespace CitySkylines0._5alphabeta
 {
     public static class JsonSettings
     {
+        //shared serialiser options used by SaveManager - preserves object references to handle circular dependencies
         public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -24,6 +25,8 @@ namespace CitySkylines0._5alphabeta
         };
     }
 
+    //custom converter for Building - reads the "type" field first to determine which subclass to deserialise into
+    //required because System.Text.Json does not support polymorphic deserialisation by default
     public class BuildingConverter : JsonConverter<Building>
     {
         public override Building Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -37,6 +40,7 @@ namespace CitySkylines0._5alphabeta
 
             string type = typeElem.GetString()?.ToLowerInvariant();
 
+            //route to the correct subclass based on the type string
             return type switch
             {
                 "house" => JsonSerializer.Deserialize<House>(root.GetRawText(), options),
@@ -48,13 +52,13 @@ namespace CitySkylines0._5alphabeta
                 "policebuilding" => JsonSerializer.Deserialize<PoliceBuilding>(root.GetRawText(), options),
                 "fireservice" => JsonSerializer.Deserialize<FireService>(root.GetRawText(), options),
 
-
                 _ => throw new JsonException($"Unknown building type: {type}")
             };
         }
 
         public override void Write(Utf8JsonWriter writer, Building value, JsonSerializerOptions options)
         {
+            //serialise as the concrete subtype so the "type" field is written correctly on save
             switch (value)
             {
                 case House h:
@@ -95,6 +99,7 @@ namespace CitySkylines0._5alphabeta
         }
     }
 
+    //same pattern as BuildingConverter but for Necessity subclasses
     public class NecessityConverter : JsonConverter<Necessity>
     {
         public override Necessity Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

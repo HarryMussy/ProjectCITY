@@ -20,14 +20,13 @@ namespace CitySkylines0._5alphabeta
         {
             InitializeComponent();
 
-            // --- Form Settings ---
             this.Text = "PROJECT CITY - MAIN MENU";
             this.ClientSize = new Size(3, 3);
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
             audioManager = new AudioManager();
 
-            // --- Load background ---
+            //load and stretch the background art
             string projectRoot = AppContext.BaseDirectory;
             string backgroundPath = Path.Combine(projectRoot, "gameAssets", "gameArt", "projectCityMain.png");
 
@@ -39,7 +38,6 @@ namespace CitySkylines0._5alphabeta
             };
             this.Controls.Add(backgroundBox);
 
-            // --- Buttons ---
             btnPlay = CreateMenuButton("PLAY");
             btnOptions = CreateMenuButton("OPTIONS");
             btnQuit = CreateMenuButton("QUIT");
@@ -48,14 +46,13 @@ namespace CitySkylines0._5alphabeta
             btnOptions.Click += BtnOptions_Click;
             btnQuit.Click += BtnQuit_Click;
 
-            // add buttons AFTER background
+            //add buttons AFTER background so they render on top
             this.Controls.Add(btnPlay);
             this.Controls.Add(btnOptions);
             this.Controls.Add(btnQuit);
 
             backgroundBox.SendToBack();
 
-            // handle resizing to keep buttons centered
             this.Resize += MainMenuForm_Resize;
             CenterButtons();
         }
@@ -82,6 +79,7 @@ namespace CitySkylines0._5alphabeta
             CenterButtons();
         }
 
+        //repositions the three buttons to the horizontal centre of the form
         private void CenterButtons()
         {
             int centerX = (this.ClientSize.Width - btnPlay.Width) / 2;
@@ -92,9 +90,9 @@ namespace CitySkylines0._5alphabeta
             btnQuit.Location = new Point(centerX, startY + 140);
         }
 
-        
         private void BtnPlay_Click(object? sender, EventArgs e)
         {
+            //open a sub-menu that lets the player choose between new game and load game
             using (Form playMenu = new Form())
             {
                 playMenu.Text = "PLAY";
@@ -116,7 +114,8 @@ namespace CitySkylines0._5alphabeta
                             SelectedDifficulty = diffForm.SelectedDifficulty;
                             IsNewGame = true;
 
-                            playMenu.DialogResult = DialogResult.OK; 
+                            //close both the sub-menu and the main menu with OK so Program.cs launches the game
+                            playMenu.DialogResult = DialogResult.OK;
                             playMenu.Close();
 
                             this.DialogResult = DialogResult.OK;
@@ -147,8 +146,6 @@ namespace CitySkylines0._5alphabeta
                 playMenu.ShowDialog();
             }
         }
-
-
 
         private void BtnOptions_Click(object? sender, EventArgs e)
         {
@@ -191,7 +188,7 @@ namespace CitySkylines0._5alphabeta
                 AutoSize = true,
                 Location = new Point(250, 15)
             };
-            
+
             Controls.Add(title);
 
             AddLabel("EASY", 120);
@@ -203,6 +200,7 @@ namespace CitySkylines0._5alphabeta
             AddButton(3, Path.Combine(diffPath, "diff3.png"), 550);
         }
 
+        //creates an image button for a difficulty level and wires it to set SelectedDifficulty and close
         private void AddButton(int difficulty, string imagePath, int x)
         {
             Button btn = new Button();
@@ -222,6 +220,7 @@ namespace CitySkylines0._5alphabeta
 
             Controls.Add(btn);
         }
+
         private void AddLabel(string text, int centerX)
         {
             Label label = new Label

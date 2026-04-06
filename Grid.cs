@@ -6,8 +6,6 @@ namespace CitySkylines0._5alphabeta
     public class Grid
     {
         public List<Node> nodes { get; set; } = new();
-        /*public List<Node> roadNodes { get; set; } = new();
-        public List<Node> buildableNodes { get; set; } = new();*/
         public List<Road> roads { get; set; } = new();
         public List<Building> buildings { get; set; } = new();
         public float cash { get; set; }
@@ -17,7 +15,7 @@ namespace CitySkylines0._5alphabeta
         public int rectSize;
         [JsonIgnore] public Background background { get; set; }
 
-        public Grid() { } // required
+        public Grid() { } // required for JSON deserialisation
 
         public Grid(int width, int height, Background background, int rectSize)
         {
@@ -30,59 +28,7 @@ namespace CitySkylines0._5alphabeta
             InitializeWithBackground(background);
         }
 
-        /*public void RebuildRoadSystem()
-        {
-            //reset all node states
-            foreach (Node n in nodes)
-            {
-                n.isRoad = false;
-                n.isNearRoad = false;
-                n.isBuildable = false;
-            }
-
-            //rebuild lane node references
-            foreach (Road road in roads)
-            {
-                road.lane1.occupyingNodesIndex = FindRoadTilesForSpecificEdge(road.lane1, 0);
-                road.lane2.occupyingNodesIndex = FindRoadTilesForSpecificEdge(road.lane2, 1);
-            }
-
-            //recalculate road tiles
-            FindRoadTilesAndAdjacentRoadTiles();
-
-            //rebuild pathfinding graph
-            RebuildEntireRoadGraph();
-
-            Random rng = new Random();
-
-            foreach (Road road in roads)
-            {
-                foreach (int i in road.lane1.occupyingNodesIndex)
-                {
-                    Node n = nodes.FirstOrDefault(n => n.nodeNumber == i);
-                    int num = rng.Next(100);
-                    n.imagePath = "road_000.png";
-                    if (num > 95) n.imagePath = "road_001.png";
-                    if (num > 96) n.imagePath = "road_002.png";
-                    if (num > 97) n.imagePath = "road_003.png";
-                    if (num > 98) n.imagePath = "road_004.png";
-                    if (num > 99) n.imagePath = "road_005.png";
-                }
-
-                foreach (int i in road.lane2.occupyingNodesIndex)
-                {
-                    Node n = nodes.FirstOrDefault(n => n.nodeNumber == i);
-                    int num = rng.Next(100);
-                    n.imagePath = "road_000.png";
-                    if (num > 95) n.imagePath = "road_001.png";
-                    if (num > 96) n.imagePath = "road_002.png";
-                    if (num > 97) n.imagePath = "road_003.png";
-                    if (num > 98) n.imagePath = "road_004.png";
-                    if (num > 99) n.imagePath = "road_005.png";
-                }
-            }
-        }*/
-
+        //creates the 2D flat array of nodes that represents the game map
         public void CreateNodes()
         {
             int nodeNumber = 0;
@@ -95,8 +41,9 @@ namespace CitySkylines0._5alphabeta
                     nodes.Add(node);
                 }
             }
-
         }
+
+        //calculates road placement cost using euclidean distance between two points
         public float RoadCashCost(Point a, Point b)
         {
             float bsquared = (a.X - b.X) * (a.X - b.X);
@@ -107,6 +54,7 @@ namespace CitySkylines0._5alphabeta
             return expense;
         }
 
+        //copies terrain data (grass/water) from the background tiles into the grid nodes
         public void InitializeWithBackground(Background bg)
         {
             background = bg;
@@ -119,6 +67,7 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //returns all nodes within one tile of either lane of a given road
         public List<Node> FindAdjacentTilesToARoad(Road road)
         {
             List<Node> intersectingNodesWithEdge = new List<Node>();
@@ -127,7 +76,6 @@ namespace CitySkylines0._5alphabeta
                 node.isNearRoad = false;
                 foreach (Point point in road.lane1.pointsOnTheEdge)
                 {
-                    //check if the node intersects with the road edge (within range)
                     if (IsNodeAt(node, point))
                     {
                         intersectingNodesWithEdge.Add(node);
@@ -136,7 +84,6 @@ namespace CitySkylines0._5alphabeta
 
                 foreach (Point point in road.lane2.pointsOnTheEdge)
                 {
-                    //check if the node intersects with the road edge (within range)
                     if (IsNodeAt(node, point))
                     {
                         intersectingNodesWithEdge.Add(node);
@@ -146,11 +93,13 @@ namespace CitySkylines0._5alphabeta
             return intersectingNodesWithEdge;
         }
 
+        //marks each node on a specific lane as a road node and returns their indices
+        //also sets the allowed travel direction on each node based on the lane's orientation
         public List<int> FindRoadTilesForSpecificEdge(Edge e, int laneIndex)
         {
             List<Node> newRoadNodes = new();
             Point roadDir = new Point(Math.Sign(e.b.X - e.a.X), Math.Sign(e.b.Y - e.a.Y));
-            
+
             foreach (Point p in e.pointsOnTheEdge)
             {
                 Point roadPos = p;
@@ -175,11 +124,13 @@ namespace CitySkylines0._5alphabeta
             return newRoadNodes.Select(n => n.nodeNumber).ToList();
         }
 
+        //checks whether a node's centre falls within half a tile of a given point
         public bool IsNodeAt(Node node, Point p)
         {
             return Math.Abs(node.Center(rectSize).X - p.X) <= rectSize / 2 && Math.Abs(node.Center(rectSize).Y - p.Y) <= rectSize / 2;
         }
 
+        //checks whether a node's centre falls within tileCheckWidth tiles of a given point
         public bool IsNodeNear(Node node, Point p, int tileCheckWidth)
         {
             var center = node.Center(rectSize);
@@ -187,12 +138,13 @@ namespace CitySkylines0._5alphabeta
             return Math.Abs(center.X - p.X) <= rectSize * tileCheckWidth && Math.Abs(center.Y - p.Y) <= rectSize * tileCheckWidth;
         }
 
-
+        //iterates every road and marks which nodes are road tiles and which are near-road (buildable) tiles
+        //called whenever a road is added or removed
         public void FindRoadTilesAndAdjacentRoadTiles()
         {
             if (roads == null) return;
 
-            //clear previous state
+            //clear previous state before recalculating
             foreach (Node node in nodes)
             {
                 node.isNearRoad = false;
@@ -209,14 +161,13 @@ namespace CitySkylines0._5alphabeta
                 {
                     foreach (Node node in nodes)
                     {
-                        //is road node check
                         if (IsNodeAt(node, p))
                         {
                             node.isRoad = true;
                             road.lane1.occupyingNodesIndex.Add(node.nodeNumber);
                         }
 
-                        //near-road check
+                        //nodes within one tile of a road edge become buildable
                         else if (IsNodeNear(node, p, 1))
                         {
                             node.isNearRoad = true;
@@ -229,14 +180,12 @@ namespace CitySkylines0._5alphabeta
                 {
                     foreach (Node node in nodes)
                     {
-                        //is road node check
                         if (IsNodeAt(node, p))
                         {
                             node.isRoad = true;
                             road.lane2.occupyingNodesIndex.Add(node.nodeNumber);
                         }
 
-                        //near-road check
                         else if (IsNodeNear(node, p, 1))
                         {
                             node.isNearRoad = true;
@@ -247,8 +196,11 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //rebuilds the neighbour graph for every road node used by A* pathfinding
+        //called after any change to the road network
         public void RebuildEntireRoadGraph()
         {
+            //clear existing graph data before rebuilding
             foreach (Node n in nodes.Where(node => node.isRoad))
             {
                 n.allowedDirs.Clear();
@@ -271,16 +223,19 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //assigns allowed directions and neighbours to a single node
+        //lane ends connect to the opposite lane to allow u-turns like a culdesac
         private void BuildNodeGraph(Node node, Point roadDir, Edge lane, Edge otherLane)
         {
             if (!node.allowedDirs.Contains(roadDir)) { node.allowedDirs.Add(roadDir); }
 
+            //if this node is at the start or end of its lane, connect it to the opposite lane
             if (IsLaneEnd(lane, node))
             {
                 AddOppositeLaneDirection(lane, node, otherLane);
             }
 
-            //for every allowed direction, create a neighbor
+            //for every allowed direction, find and register the neighbouring road node
             foreach (Point dir in node.allowedDirs)
             {
                 int targetX = node.coords.X + dir.X * rectSize;
@@ -294,7 +249,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
-            //lane switch if same coordinate but different lane
+            //nodes on the same tile but different lanes are neighbours to allow lane switching at intersections
             Node opposite = nodes.Where(n => n.isRoad).FirstOrDefault(other => other.coords == node.coords && other.laneIndex != node.laneIndex);
             if (opposite != null && !node.neighbors.Contains(opposite))
             {
@@ -302,11 +257,13 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //returns true if this node is the first or last node in the lane
         private bool IsLaneEnd(Edge lane, Node n)
         {
             return lane.occupyingNodesIndex[0] == n.nodeNumber || lane.occupyingNodesIndex[lane.occupyingNodesIndex.Count() - 1] == n.nodeNumber;
         }
 
+        //connects a lane-end node to the corresponding end of the opposite lane so traffic can loop back
         private void AddOppositeLaneDirection(Edge lane, Node node, Edge otherLane)
         {
             if (lane.occupyingNodesIndex[0] == node.nodeNumber)

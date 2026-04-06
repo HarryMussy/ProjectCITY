@@ -20,8 +20,8 @@ public class UIManager
     private EventHandler toggleGridViewClickHandler;
     private EventHandler volSlider;
     private EventHandler bulldozingButtonClickHandler;
-    private bool buttonsCreated = false; // Flag to track if buttons are already created
-    private float displayWellbeing = 100f;
+    private bool buttonsCreated = false; // flag to avoid recreating buttons every frame
+    private float displayWellbeing = 100f; // smoothed display value for the wellbeing bar
 
 
     public UIManager(float zoomLevel, Func<(float, float)> getDimensions, Grid map, InteractingObjectManager buttonManager, Form1 form, List<EventHandler> allEventHandlers, Calendar calendarIn)
@@ -58,7 +58,7 @@ public class UIManager
         int padding = 20;
         int lineSpacing = 20;
 
-        // LEFT SIDE STATS
+        //left column - city stats
         int leftColumnX = padding;
         int statsY = (int)zoomedBottomLeftY + 10;
 
@@ -78,7 +78,7 @@ public class UIManager
             statsY += lineSpacing;
         }
 
-        // CURRENT ACTION (CENTER)
+        //centre - current tool label
         string doing = "Currently: " + form.allOperations[form.currentOperation];
         int centerX = (int)(windowWidth / 2 - 100);
         int centerY = (int)(zoomedBottomLeftY + zoomedHeight - 30);
@@ -86,9 +86,9 @@ public class UIManager
         form.AddStrokeToText(sender, g, doing, 2, font, outerBrush, new Point(centerX, centerY - 100));
         g.DrawString(doing, font, innerBrush, centerX, centerY - 100);
 
-        // WELLBEING (RIGHT SIDE)
+        //right side - smoothed wellbeing bar with lerp to avoid jumpy display
         float actualWellbeing = form.populationManager.AverageWellBeing;
-        displayWellbeing += (actualWellbeing - displayWellbeing) * 0.08f;
+        displayWellbeing += (actualWellbeing - displayWellbeing) * 0.08f; //lerp towards actual value
         displayWellbeing = Math.Clamp(displayWellbeing, 0f, 100f);
 
         int barWidth = 220;
@@ -104,6 +104,7 @@ public class UIManager
 
         int filledWidth = (int)(barWidth * (displayWellbeing / 100f));
 
+        //colour the bar based on wellbeing thresholds
         Color barColor = Color.LimeGreen;
         if (displayWellbeing < 60) barColor = Color.Gold;
         if (displayWellbeing < 40) barColor = Color.OrangeRed;
@@ -116,6 +117,7 @@ public class UIManager
             g.FillRectangle(fillBrush, wellnessX, wellnessY, filledWidth, barHeight);
         }
 
+        //display the top 3 most common unmet desires below the wellbeing bar
         int desireY = wellnessY + barHeight + 6;
 
         foreach (var desire in form.populationManager.GlobalDesires.OrderByDescending(d => d.Value).Take(3))
@@ -128,7 +130,7 @@ public class UIManager
             desireY += 18;
         }
 
-        // BUTTONS
+        //buttons are only created once and recreated by UpdateUI when the window is resized
         if (!buttonsCreated)
         {
             string projectRoot = AppContext.BaseDirectory;
@@ -136,6 +138,7 @@ public class UIManager
             int buttonSize = 48;
             int spacing = 12;
 
+            //calculate start X so the row of buttons is horizontally centred
             int totalButtons = 9;
             int totalWidth = (totalButtons * buttonSize) + ((totalButtons - 1) * spacing);
 
@@ -188,7 +191,7 @@ public class UIManager
                 Image.FromFile(Path.Combine(projectRoot, "gameAssets", "gameArt", "bulldozer.png")))
                 .Click += (s, e) => bulldozingButtonClickHandler(s, e);
 
-            // SECOND ROW UTILITY BUTTONS
+            //second row of smaller utility toggle buttons
             int smallButtonWidth = 100;
             int smallSpacing = 10;
             int smallY = buttonY + 60;
@@ -221,6 +224,7 @@ public class UIManager
         }
     }
 
+    //recalculates UI dimensions and forces buttons to be recreated at the new positions
     public void UpdateUI()
     {
         var (windowWidth, windowHeight) = getDimensions();
@@ -229,7 +233,7 @@ public class UIManager
         zoomedBottomLeftX = (windowWidth * zoomLevel) - zoomedWidth;
         zoomedBottomLeftY = (windowHeight * zoomLevel) - zoomedHeight;
         interactingObjectManager.RemoveButtons();
-        buttonsCreated = false; // Reset button creation flag
+        buttonsCreated = false;
     }
 
 

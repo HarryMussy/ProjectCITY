@@ -40,12 +40,13 @@ namespace CitySkylines0._5alphabeta
             screencentre = new Point(form1.Width / 2, form1.Height / 2);
             nameProvider = nameProviderPassIn;
             this.backgroundMap = backgroundMap;
-            waterNodes = FindWaterNodePoints(this.backgroundMap);
+            waterNodes = FindWaterNodePoints(this.backgroundMap); //cache all water tile positions once on init
             audioManager = form1.audioManager;
             LoadRoadTiles();
             this.rectSize = rectSize;
         }
 
+        //load all road tile images into a dictionary keyed by both full path and filename for flexible lookup
         private void LoadRoadTiles()
         {
             string projectRoot = AppContext.BaseDirectory;
@@ -57,22 +58,24 @@ namespace CitySkylines0._5alphabeta
                 roadImages[path] = img;
                 if (!roadImages.ContainsKey(filename))
                 {
-                    roadImages[filename] = img;
+                    roadImages[filename] = img; //also store by filename so nodes can look up by short name
                 }
                 roadImagePaths.Add(path);
             }
         }
 
+        //checks whether a world-space point falls within the grid boundaries
         public bool IsPointOnGrid(Point p)
         {
             int maxX = grid.width * rectSize;
             int maxY = grid.height * rectSize;
-            
+
             return p.X >= 0 && p.X <= maxX && p.Y >= 0 && p.Y <= maxY;
         }
 
         public void RoadPaint(object? sender, Graphics g, Point mousePos)
         {
+            //highlight all buildable tiles if the view is enabled
             foreach (Node node in grid.nodes.Where(node => node.isBuildable))
             {
                 if (viewBuildingSpaces == true)
@@ -81,11 +84,13 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            //draw the road tile image for every road node
             Image img = null;
             foreach (Node node in grid.nodes.Where(node => node.isRoad))
             {
                 if (!string.IsNullOrEmpty(node.imagePath))
                 {
+                    //try full path first, fall back to filename only
                     if (!roadImages.TryGetValue(node.imagePath, out img))
                     {
                         string filename = Path.GetFileName(node.imagePath);
@@ -99,6 +104,7 @@ namespace CitySkylines0._5alphabeta
                 }
             }
 
+            //draw directional arrows over each lane to indicate traffic flow
             foreach (Road r in grid.roads)
             {
                 using Pen p = new Pen(Color.FromArgb(55, 255, 255, 255), 5) { EndCap = System.Drawing.Drawing2D.LineCap.ArrowAnchor };
@@ -106,11 +112,13 @@ namespace CitySkylines0._5alphabeta
                 DrawArrowLine(g, p, r.lane2.a, r.lane2.b);
             }
 
+            //if the player has placed a start point, preview the road they are about to place
             if (startPoint != null)
             {
                 float cost = grid.RoadCashCost(startPoint.Value, mousePos);
-                Point setPoint = SnapTo4Directions(startPoint.Value, mousePos);
+                Point setPoint = SnapTo4Directions(startPoint.Value, mousePos); //snap end point to the 4 cardinal directions
 
+                //snap the end point to the nearest node centre
                 foreach (Node n in grid.nodes)
                 {
                     if (grid.IsNodeAt(n, setPoint))
@@ -120,13 +128,12 @@ namespace CitySkylines0._5alphabeta
                 }
                 Point pointB = setPoint;
 
-                // Validate endpoint is on grid
                 bool endPointOnGrid = IsPointOnGrid(pointB);
 
-                // highlight intersecting nodes as before
                 int edgeAngle = FindAngle(startPoint.Value, pointB);
                 Road tempRoad = new Road(startPoint.Value, pointB, "temp", edgeAngle);
 
+                //find all nodes the new road would occupy to check for conflicts
                 List<Node> nodes = grid.FindAdjacentTilesToARoad(tempRoad);
 
                 if (nodes.Contains(nodes.FirstOrDefault(n => n.hasTileData)))
@@ -135,6 +142,7 @@ namespace CitySkylines0._5alphabeta
                 }
                 else { doesNewRoadContainTileWithTileData = false; }
 
+                //colour the preview red if placement is invalid, grey if valid
                 if (cost > grid.cash || doesNewRoadContainTileWithTileData || !endPointOnGrid)
                 {
                     using var invalidroad = new SolidBrush(Color.Red);
@@ -146,7 +154,7 @@ namespace CitySkylines0._5alphabeta
                     foreach (Node n in nodes) { g.FillRectangle(lightGrayBrush, n.coords.X, n.coords.Y, 16, 16); }
                 }
 
-                // cost label
+                //display the cost label at the midpoint of the preview road
                 Point linecenter = new Point((startPoint.Value.X + mousePos.X) / 2, (startPoint.Value.Y + mousePos.Y) / 2);
                 string displayedcost = cost.ToString("F2");
                 g.DrawString(displayedcost, new Font("Comic Sans", 10), greenBrush, linecenter);
@@ -158,6 +166,7 @@ namespace CitySkylines0._5alphabeta
                 tempRoad = null;
             }
 
+            //draw road name labels at the midpoint of each road if toggled on
             if (!toggleRoadNames)
             {
                 foreach (Road road in grid.roads)
@@ -174,6 +183,7 @@ namespace CitySkylines0._5alphabeta
             g.DrawLine(p, a.X, a.Y, b.X, b.Y);
         }
 
+        //returns the angle in degrees between two points using atan2
         public int FindAngle(Point a, Point b)
         {
             float dx = b.X - a.X;
@@ -182,6 +192,7 @@ namespace CitySkylines0._5alphabeta
             return (int)angle;
         }
 
+        //builds a list of all water tile positions from the background for quick reference
         public List<Point> FindWaterNodePoints(Background bg)
         {
             List<Point> waterNodePoints = new List<Point>();
@@ -195,6 +206,7 @@ namespace CitySkylines0._5alphabeta
             return waterNodePoints;
         }
 
+        //checks whether a world-space point overlaps any cached water tile
         public bool IsOnWater(Point clickedPoint)
         {
             foreach (Point p in waterNodes)
@@ -206,57 +218,6 @@ namespace CitySkylines0._5alphabeta
                 }
             }
             return false;
-        }
-
-        public Point? GetClosestPoint(Point a, List<Point> b)
-        {
-            List<Point> extraPoints = null;
-            double closestDistance = int.MaxValue;
-            int snapRadius = 60;
-            if (b.Count == 0 && (extraPoints == null || extraPoints.Count == 0))
-            {
-                return null;
-            }
-
-            Point closestPoint = b.First();
-            double initialDistance = CalculateDistance(a, closestPoint);
-
-            if (initialDistance <= snapRadius)
-            {
-                closestDistance = initialDistance;
-            }
-
-            if (extraPoints != null)
-            {
-                foreach (Point point in extraPoints)
-                {
-                    double distance = CalculateDistance(a, point);
-
-                    if (distance <= snapRadius && distance < closestDistance)
-                    {
-                        closestDistance = distance;
-                        closestPoint = point;
-                    }
-                }
-            }
-
-            foreach (Point point in b)
-            {
-                double distance = CalculateDistance(a, point);
-
-                if (distance <= snapRadius && distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestPoint = point;
-                }
-            }
-
-            if (closestDistance <= snapRadius)
-            {
-                return closestPoint;
-            }
-
-            return null;
         }
 
         private double CalculateDistance(Point p1, Point p2)
@@ -271,6 +232,7 @@ namespace CitySkylines0._5alphabeta
 
             int tile = form1.rectSize;
 
+            //snap the clicked point to the nearest node centre if it is within the grid
             if (clickedPoint.Value.X <= grid.nodes.Last().coords.X && clickedPoint.Value.X >= grid.nodes.First().coords.X && clickedPoint.Value.Y <= grid.nodes.Last().coords.Y && clickedPoint.Value.Y >= grid.nodes.First().coords.Y)
             {
                 foreach (Node n in grid.nodes)
@@ -286,6 +248,7 @@ namespace CitySkylines0._5alphabeta
 
             if (startPoint == null && clickedPoint != null)
             {
+                //set the start point, cancelling if it lands on water
                 startPoint = clickedPoint;
                 foreach (Node n in grid.nodes)
                 {
@@ -317,7 +280,6 @@ namespace CitySkylines0._5alphabeta
                     isOverlapping = true;
                 }
 
-                //validate both start and end points are on the grid
                 bool startPointOnGrid = IsPointOnGrid(startPoint.Value);
                 bool endPointOnGrid = IsPointOnGrid(endPoint);
 
@@ -335,12 +297,14 @@ namespace CitySkylines0._5alphabeta
 
                         grid.FindRoadTilesAndAdjacentRoadTiles();
 
+                        //find which nodes each lane occupies and store them on the road
                         newroad.lane1.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane1, 0);
                         newroad.lane2.occupyingNodesIndex = grid.FindRoadTilesForSpecificEdge(newroad.lane2, 1);
 
                         string projectRoot = AppContext.BaseDirectory;
                         string roadFolder = Path.Combine(projectRoot, "gameAssets", "gameArt", "Roads");
 
+                        //randomly assign road texture variants to give visual variety
                         foreach (int index in newroad.lane1.occupyingNodesIndex)
                         {
                             Node n = grid.nodes.Where(node => node.nodeNumber == index).FirstOrDefault();
@@ -366,8 +330,9 @@ namespace CitySkylines0._5alphabeta
 
                         closest_x = float.MaxValue; closest_y = float.MaxValue;
                         startPoint = null;
-                        grid.RebuildEntireRoadGraph();
+                        grid.RebuildEntireRoadGraph(); //rebuild the A* graph now the road network has changed
 
+                        //recalculate routes for all active cars since the road network has changed
                         foreach (Car car in form1.carManager.cars)
                         {
                             car.route = form1.carManager.CreateCarRoute(car);
@@ -377,6 +342,8 @@ namespace CitySkylines0._5alphabeta
             }
         }
 
+        //snaps a direction vector to the nearest of the 4 cardinal angles (0, 90, 180, 270)
+        //prevents diagonal roads from being placed
         public Point SnapTo4Directions(Point a, Point b)
         {
             int[] allowedAngles = { 0, 90, 180, 270 };
@@ -395,8 +362,9 @@ namespace CitySkylines0._5alphabeta
                 return difference;
             }
 
-            int nearest = allowedAngles.OrderBy(ang => AngleDiff(ang, angle)).First();
+            int nearest = allowedAngles.OrderBy(ang => AngleDiff(ang, angle)).First(); //find whichever allowed angle is closest to the mouse direction
 
+            //project b onto the snapped angle at the same distance from a
             double length = Math.Sqrt(changeX * changeX + changeY * changeY);
             double rad = nearest * Math.PI / 180.0;
             int newX = (int)Math.Round(a.X + length * Math.Cos(rad));
