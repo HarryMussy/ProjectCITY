@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class Person
     {
@@ -136,7 +136,7 @@ namespace CitySkylines0._5alphabeta
                     p.UnmetDesires.Add("Police");
                 }
 
-                if ((Population.Count / numOfShops) > 50) //if there is less than 1 shop for 50 people then wellbeing decreases
+                if (numOfShops > 0 &&(Population.Count / numOfShops) > 50) //if there is less than 1 shop for 50 people then wellbeing decreases
                 {
                     well -= 5f;
                     p.UnmetDesires.Add("Shops");

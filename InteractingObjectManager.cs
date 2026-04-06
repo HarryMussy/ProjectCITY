@@ -1,7 +1,7 @@
 ﻿using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class InteractingObjectManager
     {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class NameList
     {

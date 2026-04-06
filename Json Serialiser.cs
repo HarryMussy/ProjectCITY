@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public static class JsonSettings
     {

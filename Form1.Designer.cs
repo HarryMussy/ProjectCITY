@@ -1,4 +1,4 @@
-﻿namespace CitySkylines0._5alphabeta
+﻿namespace ProjectCity
 {
     partial class Form1
     {

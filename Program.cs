@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     internal static class Program
     {
@@ -60,11 +60,12 @@ namespace CitySkylines0._5alphabeta
 
                 if (menu.IsNewGame)
                 {
-                    mainForm = new Form1(menu.SelectedDifficulty, new AudioManager());
+                    mainForm = new Form1(menu.SelectedDifficulty, menu.audioManager);
                 }
+
                 else
                 {
-                    mainForm = new Form1(menu.LoadedSave, new AudioManager());
+                    mainForm = new Form1(menu.LoadedSave, menu.audioManager);
                 }
 
                 mainForm.FormClosed += (s, e) =>

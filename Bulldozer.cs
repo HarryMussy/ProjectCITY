@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media.Media3D;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class Bulldozer
     {

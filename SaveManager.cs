@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public static class SaveManager
     {

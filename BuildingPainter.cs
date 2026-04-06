@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class BuildingPainter
     {

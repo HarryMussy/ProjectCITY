@@ -3,7 +3,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Windows.Forms.VisualStyles;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class EdgePainter
     {
@@ -218,11 +218,6 @@ namespace CitySkylines0._5alphabeta
                 }
             }
             return false;
-        }
-
-        private double CalculateDistance(Point p1, Point p2)
-        {
-            return Math.Sqrt(Math.Pow(p2.X - p1.X, 2) + Math.Pow(p2.Y - p1.Y, 2));
         }
 
         public void LeftMouseDown(object? sender, MouseEventArgs m)

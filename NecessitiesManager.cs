@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class NecessitiesManager
     {

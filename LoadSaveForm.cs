@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     //simple dialog wrapper that exposes the chosen path via SelectedPath and DialogResult
     public partial class LoadSaveForm : Form

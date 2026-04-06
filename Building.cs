@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Windows.Controls;
 
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public class Building
     {

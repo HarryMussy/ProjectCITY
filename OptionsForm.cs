@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     // Single non-partial OptionsForm. If you previously had another partial OptionsForm remove it.
     public partial class OptionsForm : Form
@@ -50,7 +50,6 @@ namespace CitySkylines0._5alphabeta
             InitializeLayout();
         }
 
-        private void OptionsForm_Load(object sender, EventHandler e) { }
         private void InitializeLayout()
         {
             var lblAudio = new Label()
@@ -66,33 +65,6 @@ namespace CitySkylines0._5alphabeta
             musicVolume = CreateSlider("Music Volume", 120);
             effectsVolume = CreateSlider("Effects Volume", 180);
 
-            var lblWindow = new Label()
-            {
-                Text = "Window",
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                Location = new Point(20, 240)
-            };
-            Controls.Add(lblWindow);
-
-            chkFullscreen = CreateCheckbox("Fullscreen Mode (borderless)", 280);
-
-            chkFullscreen.CheckedChanged += (s, e) =>
-            {
-                if (gameFormReference == null) return;
-
-                if (chkFullscreen.Checked)
-                {
-                    gameFormReference.FormBorderStyle = FormBorderStyle.None;
-                    gameFormReference.WindowState = FormWindowState.Normal;
-                    gameFormReference.Bounds = Screen.PrimaryScreen.Bounds;
-                }
-                else
-                {
-                    gameFormReference.FormBorderStyle = FormBorderStyle.Sizable;
-                    gameFormReference.WindowState = FormWindowState.Maximized;
-                }
-            };
 
             // If opened from inside the game, show game options (save/load/quit)
             if (openedInGame)
@@ -116,17 +88,45 @@ namespace CitySkylines0._5alphabeta
                     Close();
                     Application.Exit();
                 };
+
+                var lblWindow = new Label()
+                {
+                    Text = "Window",
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    Location = new Point(20, 240)
+                };
+                Controls.Add(lblWindow);
+
+                chkFullscreen = CreateCheckbox("Fullscreen Mode (borderless)", 280);
+
+                chkFullscreen.CheckedChanged += (s, e) =>
+                {
+                    if (gameFormReference == null) return;
+
+                    if (chkFullscreen.Checked)
+                    {
+                        gameFormReference.FormBorderStyle = FormBorderStyle.None;
+                        gameFormReference.WindowState = FormWindowState.Normal;
+                        gameFormReference.Bounds = Screen.PrimaryScreen.Bounds;
+                    }
+                    else
+                    {
+                        gameFormReference.FormBorderStyle = FormBorderStyle.Sizable;
+                        gameFormReference.WindowState = FormWindowState.Maximized;
+                    }
+                };
             }
 
-            // Close button
-            var btnClose = new Button()
-            {
-                Text = "Close",
-                Size = new Size(100, 36),
-                Location = new Point(ClientSize.Width - 120, ClientSize.Height - 76),
-                BackColor = Color.FromArgb(60, 60, 60),
-                ForeColor = Color.White
-            };
+                // Close button
+                var btnClose = new Button()
+                {
+                    Text = "Close",
+                    Size = new Size(100, 36),
+                    Location = new Point(ClientSize.Width - 120, ClientSize.Height - 76),
+                    BackColor = Color.FromArgb(60, 60, 60),
+                    ForeColor = Color.White
+                };
             btnClose.Click += (s, e) => Close();
             Controls.Add(btnClose);
         }
@@ -172,12 +172,9 @@ namespace CitySkylines0._5alphabeta
                 float v = slider.Value / 100f;
                 if (audioManager != null)
                 {
-                    if (label.Contains("Master"))
-                        audioManager.SetMasterVolume(v);
-                    else if (label.Contains("Music"))
-                        audioManager.SetMusicVolume(v);
-                    else if (label.Contains("Effects"))
-                        audioManager.SetEffectsVolume(v);
+                    if (label.Contains("Master")) { audioManager.SetMasterVolume(v); }
+                    else if (label.Contains("Music")) { audioManager.SetMusicVolume(v); }
+                    else if (label.Contains("Effects")) { audioManager.SetEffectsVolume(v); }
                 }
             };
 

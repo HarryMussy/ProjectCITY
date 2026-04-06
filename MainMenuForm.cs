@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace CitySkylines0._5alphabeta
+namespace ProjectCity
 {
     public partial class MainMenuForm : Form
     {
@@ -11,7 +11,7 @@ namespace CitySkylines0._5alphabeta
         private Button btnOptions;
         private Button btnQuit;
         private PictureBox backgroundBox;
-        private AudioManager audioManager;
+        public AudioManager audioManager;
         public int SelectedDifficulty { get; private set; }
         public bool IsNewGame { get; private set; }
         public SaveManager.SaveData? LoadedSave { get; private set; }
